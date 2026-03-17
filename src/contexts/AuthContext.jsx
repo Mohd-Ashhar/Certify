@@ -121,9 +121,6 @@ export function AuthProvider({ children }) {
 
   const logout = async () => {
     await supabase.auth.signOut();
-    localStorage.clear();
-    sessionStorage.clear();
-    window.location.href = '/login';
   };
 
   const resetPassword = async (email) => {
