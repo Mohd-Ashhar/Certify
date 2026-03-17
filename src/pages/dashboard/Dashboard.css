@@ -1,0 +1,124 @@
+.dashboard__stats {
+  margin-bottom: var(--spacing-lg);
+}
+
+.dashboard__grid {
+  display: grid;
+  grid-template-columns: 1fr 340px;
+  gap: var(--spacing-lg);
+}
+
+.dashboard__section {
+  min-width: 0;
+}
+
+.dashboard__section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--spacing-base);
+}
+
+.dashboard__section-title {
+  font-size: var(--font-size-md);
+  font-weight: 600;
+  color: var(--color-text-primary);
+}
+
+.dashboard__section-link {
+  font-size: var(--font-size-sm);
+  color: var(--color-accent);
+  font-weight: 500;
+}
+
+/* ---- Sidebar Section ---- */
+.dashboard__sidebar-section {
+  background: var(--color-bg-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: var(--spacing-lg);
+}
+
+.dashboard__regions {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-base);
+  margin-top: var(--spacing-base);
+}
+
+.dashboard__region-item {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+}
+
+.dashboard__region-info {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+}
+
+.dashboard__region-emoji {
+  font-size: var(--font-size-md);
+}
+
+.dashboard__region-label {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-primary);
+  font-weight: 500;
+}
+
+.dashboard__region-stats {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+}
+
+.dashboard__region-count {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-tertiary);
+  white-space: nowrap;
+  min-width: 80px;
+}
+
+.dashboard__region-bar {
+  flex: 1;
+  height: 6px;
+  background: var(--color-bg-primary);
+  border-radius: var(--radius-full);
+  overflow: hidden;
+}
+
+.dashboard__region-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--color-accent), #2EB87A);
+  border-radius: var(--radius-full);
+  transition: width 0.5s ease;
+}
+
+/* ---- Status Breakdown ---- */
+.dashboard__status-breakdown {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+  margin-top: var(--spacing-base);
+}
+
+.dashboard__status-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.dashboard__status-count {
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  color: var(--color-text-primary);
+}
+
+/* ---- Responsive ---- */
+@media (max-width: 1024px) {
+  .dashboard__grid {
+    grid-template-columns: 1fr;
+  }
+}

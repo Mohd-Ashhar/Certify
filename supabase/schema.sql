@@ -1,0 +1,148 @@
+-- ============================================
+-- Certify.cx — Database Schema Reference
+-- ============================================
+-- This file documents the intended schema for Supabase.
+-- Run these SQL statements in the Supabase SQL Editor
+-- WHEN YOU ARE READY to create the tables.
+--
+-- DO NOT RUN YET — this is a reference only.
+-- ============================================
+
+-- ============================================
+-- 1. PROFILES (extends Supabase auth.users)
+-- ============================================
+-- CREATE TABLE public.profiles (
+--   id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
+--   name TEXT,
+--   email TEXT UNIQUE NOT NULL,
+--   role TEXT NOT NULL DEFAULT 'client'
+--     CHECK (role IN ('super_admin','regional_admin','auditor','certification_body','client')),
+--   region TEXT
+--     CHECK (region IS NULL OR region IN ('middle_east','asia','india','europe','north_america')),
+--   company TEXT,
+--   avatar_url TEXT,
+--   created_at TIMESTAMPTZ DEFAULT now(),
+--   updated_at TIMESTAMPTZ DEFAULT now()
+-- );
+
+-- ============================================
+-- 2. COMPANIES
+-- ============================================
+-- CREATE TABLE public.companies (
+--   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+--   name TEXT NOT NULL,
+--   region TEXT NOT NULL
+--     CHECK (region IN ('middle_east','asia','india','europe','north_america')),
+--   contact_email TEXT,
+--   employees INTEGER,
+--   status TEXT DEFAULT 'active' CHECK (status IN ('active','inactive','pending')),
+--   created_by UUID REFERENCES public.profiles(id),
+--   created_at TIMESTAMPTZ DEFAULT now(),
+--   updated_at TIMESTAMPTZ DEFAULT now()
+-- );
+
+-- ============================================
+-- 3. CERTIFICATION REQUESTS
+-- ============================================
+-- CREATE TABLE public.certification_requests (
+--   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+--   company_id UUID REFERENCES public.companies(id) ON DELETE CASCADE,
+--   iso_standard TEXT NOT NULL,
+--   region TEXT NOT NULL,
+--   status TEXT DEFAULT 'pending'
+--     CHECK (status IN ('pending','in_review','approved','rejected')),
+--   priority TEXT DEFAULT 'medium' CHECK (priority IN ('low','medium','high')),
+--   auditor_id UUID REFERENCES public.profiles(id),
+--   notes TEXT,
+--   created_at TIMESTAMPTZ DEFAULT now(),
+--   updated_at TIMESTAMPTZ DEFAULT now()
+-- );
+
+-- ============================================
+-- 4. AUDITORS (profile extension)
+-- ============================================
+-- CREATE TABLE public.auditors (
+--   id UUID PRIMARY KEY REFERENCES public.profiles(id) ON DELETE CASCADE,
+--   specialization TEXT,
+--   certifications_count INTEGER DEFAULT 0,
+--   status TEXT DEFAULT 'active' CHECK (status IN ('active','inactive','on_leave')),
+--   created_at TIMESTAMPTZ DEFAULT now()
+-- );
+
+-- ============================================
+-- 5. CERTIFICATION BODIES
+-- ============================================
+-- CREATE TABLE public.certification_bodies (
+--   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+--   name TEXT NOT NULL,
+--   region TEXT NOT NULL,
+--   accreditation TEXT,
+--   active_certifications INTEGER DEFAULT 0,
+--   status TEXT DEFAULT 'active' CHECK (status IN ('active','inactive')),
+--   created_at TIMESTAMPTZ DEFAULT now(),
+--   updated_at TIMESTAMPTZ DEFAULT now()
+-- );
+
+-- ============================================
+-- ROW LEVEL SECURITY POLICIES (examples)
+-- ============================================
+--
+-- After creating tables, enable RLS:
+--   ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
+--   ALTER TABLE public.companies ENABLE ROW LEVEL SECURITY;
+--   ALTER TABLE public.certification_requests ENABLE ROW LEVEL SECURITY;
+--   ALTER TABLE public.auditors ENABLE ROW LEVEL SECURITY;
+--   ALTER TABLE public.certification_bodies ENABLE ROW LEVEL SECURITY;
+--
+-- Example policies:
+--
+-- Super admins can do everything:
+--   CREATE POLICY "super_admin_all" ON public.companies
+--     FOR ALL USING (
+--       EXISTS (
+--         SELECT 1 FROM public.profiles
+--         WHERE profiles.id = auth.uid() AND profiles.role = 'super_admin'
+--       )
+--     );
+--
+-- Regional admins can only access their own region:
+--   CREATE POLICY "regional_admin_own_region" ON public.companies
+--     FOR ALL USING (
+--       EXISTS (
+--         SELECT 1 FROM public.profiles
+--         WHERE profiles.id = auth.uid()
+--           AND profiles.role = 'regional_admin'
+--           AND profiles.region = companies.region
+--       )
+--     );
+--
+-- Clients can only view their own company:
+--   CREATE POLICY "client_own_company" ON public.companies
+--     FOR SELECT USING (
+--       created_by = auth.uid()
+--     );
+--
+-- ============================================
+-- AUTO-CREATE PROFILE TRIGGER
+-- ============================================
+-- This trigger auto-creates a profile row when a user signs up:
+--
+-- CREATE OR REPLACE FUNCTION public.handle_new_user()
+-- RETURNS TRIGGER AS $$
+-- BEGIN
+--   INSERT INTO public.profiles (id, email, name, role, region, company)
+--   VALUES (
+--     NEW.id,
+--     NEW.email,
+--     COALESCE(NEW.raw_user_meta_data->>'name', split_part(NEW.email, '@', 1)),
+--     COALESCE(NEW.raw_user_meta_data->>'role', 'client'),
+--     NEW.raw_user_meta_data->>'region',
+--     NEW.raw_user_meta_data->>'company'
+--   );
+--   RETURN NEW;
+-- END;
+-- $$ LANGUAGE plpgsql SECURITY DEFINER;
+--
+-- CREATE TRIGGER on_auth_user_created
+--   AFTER INSERT ON auth.users
+--   FOR EACH ROW EXECUTE FUNCTION public.handle_new_user();

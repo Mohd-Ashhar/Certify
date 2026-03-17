@@ -1,0 +1,121 @@
+import { useState, useRef, useEffect } from 'react';
+import { useAuth } from '../../contexts/AuthContext';
+import { REGIONS, ROLE_LABELS } from '../../utils/roles';
+import {
+  Menu,
+  Bell,
+  ChevronDown,
+  Globe,
+  LogOut,
+  User,
+  Settings,
+  ChevronRight,
+} from 'lucide-react';
+import './TopBar.css';
+
+export default function TopBar({ pageTitle, onMenuClick, collapsed }) {
+  const { user, logout } = useAuth();
+  const [regionOpen, setRegionOpen] = useState(false);
+  const [profileOpen, setProfileOpen] = useState(false);
+  const [selectedRegion, setSelectedRegion] = useState('all');
+  const regionRef = useRef(null);
+  const profileRef = useRef(null);
+
+  // Close dropdowns on outside click
+  useEffect(() => {
+    const handler = (e) => {
+      if (regionRef.current && !regionRef.current.contains(e.target)) setRegionOpen(false);
+      if (profileRef.current && !profileRef.current.contains(e.target)) setProfileOpen(false);
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, []);
+
+  const currentRegion = selectedRegion === 'all'
+    ? 'All Regions'
+    : REGIONS.find(r => r.id === selectedRegion)?.label || 'All Regions';
+
+  return (
+    <header className={`topbar ${collapsed ? 'topbar--expanded' : ''}`}>
+      <div className="topbar__left">
+        <button className="topbar__menu-btn" onClick={onMenuClick}>
+          <Menu size={20} />
+        </button>
+        <div className="topbar__title-section">
+          <h1 className="topbar__title">{pageTitle || 'Dashboard'}</h1>
+        </div>
+      </div>
+
+      <div className="topbar__right">
+        {/* Region Selector */}
+        <div className="topbar__dropdown" ref={regionRef}>
+          <button
+            className="topbar__dropdown-trigger"
+            onClick={() => { setRegionOpen(!regionOpen); setProfileOpen(false); }}
+          >
+            <Globe size={16} />
+            <span>{currentRegion}</span>
+            <ChevronDown size={14} className={`topbar__chevron ${regionOpen ? 'topbar__chevron--open' : ''}`} />
+          </button>
+          {regionOpen && (
+            <div className="topbar__dropdown-menu topbar__dropdown-menu--region">
+              <button
+                className={`topbar__dropdown-item ${selectedRegion === 'all' ? 'topbar__dropdown-item--active' : ''}`}
+                onClick={() => { setSelectedRegion('all'); setRegionOpen(false); }}
+              >
+                🌐 All Regions
+              </button>
+              {REGIONS.map((region) => (
+                <button
+                  key={region.id}
+                  className={`topbar__dropdown-item ${selectedRegion === region.id ? 'topbar__dropdown-item--active' : ''}`}
+                  onClick={() => { setSelectedRegion(region.id); setRegionOpen(false); }}
+                >
+                  {region.emoji} {region.label}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Notifications */}
+        <button className="topbar__icon-btn" title="Notifications">
+          <Bell size={18} />
+          <span className="topbar__badge">3</span>
+        </button>
+
+        {/* Profile */}
+        <div className="topbar__dropdown" ref={profileRef}>
+          <button
+            className="topbar__profile-trigger"
+            onClick={() => { setProfileOpen(!profileOpen); setRegionOpen(false); }}
+          >
+            <div className="topbar__avatar">
+              {user?.name?.charAt(0) || 'U'}
+            </div>
+            <ChevronDown size={14} className={`topbar__chevron ${profileOpen ? 'topbar__chevron--open' : ''}`} />
+          </button>
+          {profileOpen && (
+            <div className="topbar__dropdown-menu topbar__dropdown-menu--profile">
+              <div className="topbar__profile-info">
+                <span className="topbar__profile-name">{user?.name}</span>
+                <span className="topbar__profile-role">{ROLE_LABELS[user?.role]}</span>
+              </div>
+              <div className="topbar__dropdown-divider" />
+              <button className="topbar__dropdown-item" onClick={() => setProfileOpen(false)}>
+                <User size={16} /> Profile
+              </button>
+              <button className="topbar__dropdown-item" onClick={() => setProfileOpen(false)}>
+                <Settings size={16} /> Settings
+              </button>
+              <div className="topbar__dropdown-divider" />
+              <button className="topbar__dropdown-item topbar__dropdown-item--danger" onClick={logout}>
+                <LogOut size={16} /> Sign Out
+              </button>
+            </div>
+          )}
+        </div>
+      </div>
+    </header>
+  );
+}

@@ -1,0 +1,25 @@
+.dashboard-layout {
+  min-height: 100vh;
+}
+
+.dashboard-layout__content {
+  margin-left: var(--sidebar-width);
+  margin-top: var(--topbar-height);
+  min-height: calc(100vh - var(--topbar-height));
+  transition: margin-left var(--transition-slow);
+  background: var(--color-bg-primary);
+}
+
+.dashboard-layout--collapsed .dashboard-layout__content {
+  margin-left: 68px;
+}
+
+@media (max-width: 768px) {
+  .dashboard-layout__content {
+    margin-left: 0;
+  }
+
+  .dashboard-layout--collapsed .dashboard-layout__content {
+    margin-left: 0;
+  }
+}

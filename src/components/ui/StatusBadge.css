@@ -1,0 +1,57 @@
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 10px;
+  border-radius: var(--radius-full);
+  font-size: var(--font-size-xs);
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.status-badge__dot {
+  width: 6px;
+  height: 6px;
+  border-radius: var(--radius-full);
+}
+
+/* Variants */
+.status-badge--success {
+  background: var(--color-success-bg);
+  color: var(--color-success);
+}
+.status-badge--success .status-badge__dot {
+  background: var(--color-success);
+}
+
+.status-badge--warning {
+  background: var(--color-warning-bg);
+  color: var(--color-warning);
+}
+.status-badge--warning .status-badge__dot {
+  background: var(--color-warning);
+}
+
+.status-badge--danger {
+  background: var(--color-danger-bg);
+  color: var(--color-danger);
+}
+.status-badge--danger .status-badge__dot {
+  background: var(--color-danger);
+}
+
+.status-badge--info {
+  background: var(--color-info-bg);
+  color: var(--color-info);
+}
+.status-badge--info .status-badge__dot {
+  background: var(--color-info);
+}
+
+.status-badge--neutral {
+  background: var(--color-neutral-bg);
+  color: var(--color-neutral);
+}
+.status-badge--neutral .status-badge__dot {
+  background: var(--color-neutral);
+}

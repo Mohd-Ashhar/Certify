@@ -1,0 +1,183 @@
+/* ---- Auth Forms ---- */
+.auth-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-base);
+}
+
+.auth-form--wide {
+  width: 100%;
+}
+
+.auth-form__title {
+  font-size: var(--font-size-xl);
+  font-weight: 700;
+  color: var(--color-text-primary);
+  text-align: center;
+}
+
+.auth-form__subtitle {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+  text-align: center;
+  margin-bottom: var(--spacing-sm);
+}
+
+.auth-form__body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-base);
+}
+
+.auth-form__row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--spacing-base);
+}
+
+.auth-form__actions {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.auth-form__link {
+  font-size: var(--font-size-sm);
+  color: var(--color-accent);
+  font-weight: 500;
+}
+
+.auth-form__link:hover {
+  color: var(--color-accent-hover);
+}
+
+.auth-form__footer-text {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+  text-align: center;
+  margin-top: var(--spacing-sm);
+}
+
+.auth-form__error {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  padding: 10px 14px;
+  background: var(--color-danger-bg);
+  border: 1px solid rgba(248, 113, 113, 0.3);
+  border-radius: var(--radius-md);
+  color: var(--color-danger);
+  font-size: var(--font-size-sm);
+}
+
+.auth-form__success-icon {
+  text-align: center;
+  color: var(--color-accent);
+  margin-bottom: var(--spacing-sm);
+}
+
+/* ---- Multi-Step Indicator ---- */
+.signup-steps {
+  display: flex;
+  justify-content: center;
+  gap: var(--spacing-xl);
+  margin-bottom: var(--spacing-base);
+}
+
+.signup-steps__item {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  color: var(--color-text-tertiary);
+  font-size: var(--font-size-xs);
+  font-weight: 500;
+}
+
+.signup-steps__item--active {
+  color: var(--color-accent);
+}
+
+.signup-steps__item--done {
+  color: var(--color-accent);
+  opacity: 0.6;
+}
+
+.signup-steps__circle {
+  width: 28px; height: 28px;
+  border-radius: var(--radius-full);
+  border: 2px solid currentColor;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.signup-steps__item--active .signup-steps__circle {
+  background: var(--color-accent);
+  color: white;
+  border-color: var(--color-accent);
+}
+
+.signup-steps__item--done .signup-steps__circle {
+  background: transparent;
+  border-color: var(--color-accent);
+}
+
+/* ---- Certification Multi-Select ---- */
+.cert-multi-select {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.cert-multi-select__item {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  padding: 10px 14px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+  transition: all var(--transition-fast);
+}
+
+.cert-multi-select__item:hover {
+  border-color: var(--color-text-secondary);
+}
+
+.cert-multi-select__item--selected {
+  border-color: var(--color-accent);
+  background: var(--color-accent-light);
+  color: var(--color-accent);
+}
+
+.cert-multi-select__item input[type="checkbox"] {
+  accent-color: var(--color-accent);
+}
+
+/* ---- Signup Summary ---- */
+.signup-summary {
+  padding: var(--spacing-base);
+  background: var(--color-bg-primary);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+  line-height: 1.8;
+}
+
+.signup-summary strong {
+  color: var(--color-text-primary);
+}
+
+@media (max-width: 600px) {
+  .auth-form__row {
+    grid-template-columns: 1fr;
+  }
+  .signup-steps {
+    gap: var(--spacing-base);
+  }
+  .signup-steps__label {
+    display: none;
+  }
+}
