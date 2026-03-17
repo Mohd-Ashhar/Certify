@@ -6,7 +6,9 @@ import { ROLE_LABELS } from '../../utils/roles';
 import './Unauthorized.css';
 
 export default function Unauthorized() {
-  const { user } = useAuth();
+  const { user, getRoleDashboard } = useAuth();
+  
+  const backPath = user ? getRoleDashboard(user.role) : '/login';
 
   return (
     <div className="unauthorized">
@@ -24,9 +26,9 @@ export default function Unauthorized() {
           </p>
         )}
         <div className="unauthorized__actions">
-          <Link to="/dashboard">
+          <Link to={backPath}>
             <Button variant="primary" size="md">
-              <ArrowLeft size={16} /> Back to Dashboard
+              <ArrowLeft size={16} /> Back
             </Button>
           </Link>
         </div>

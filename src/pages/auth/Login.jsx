@@ -26,14 +26,10 @@ export default function Login() {
     setLoading(true);
 
     const result = await login(email, password);
-    if (result.success) {
-      // Get the user's role from session metadata for redirect
-      const role = result.data?.user?.user_metadata?.role || 'client';
-      navigate(getRoleDashboard(role));
-    } else {
+    if (!result.success) {
       setError(result.error);
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   return (

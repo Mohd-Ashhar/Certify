@@ -64,7 +64,7 @@ export default function Dashboard() {
       </div>
 
       {/* Stat Cards */}
-      <div className="grid-5 dashboard__stats" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))' }}>
+      <div className="dashboard__stats">
         <StatCard
           title="Total Companies"
           value={totalCompanies}

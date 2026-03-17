@@ -13,8 +13,7 @@ if (!supabaseUrl || !supabaseAnonKey) {
   );
 }
 
-// Clear stale session locks that may linger from previous sessions
-localStorage.removeItem('supabase.auth.token');
+// Supabase client instance using standard persistence
 
 export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   auth: {

@@ -61,10 +61,26 @@ function AppRoutes() {
             <Route path="/dashboard" element={<Dashboard />} />
 
             {/* Role-Specific Dashboards */}
-            <Route path="/admin/dashboard" element={<Dashboard />} />
-            <Route path="/auditor/dashboard" element={<Dashboard />} />
-            <Route path="/cert-body/dashboard" element={<Dashboard />} />
-            <Route path="/client/dashboard" element={<Dashboard />} />
+            <Route path="/admin/dashboard" element={
+              <ProtectedRoute allowedRoles={[ROLES.SUPER_ADMIN, ROLES.REGIONAL_ADMIN]}>
+                <Dashboard />
+              </ProtectedRoute>
+            } />
+            <Route path="/auditor/dashboard" element={
+              <ProtectedRoute allowedRoles={[ROLES.AUDITOR]}>
+                <Dashboard />
+              </ProtectedRoute>
+            } />
+            <Route path="/cert-body/dashboard" element={
+              <ProtectedRoute allowedRoles={[ROLES.CERTIFICATION_BODY]}>
+                <Dashboard />
+              </ProtectedRoute>
+            } />
+            <Route path="/client/dashboard" element={
+              <ProtectedRoute allowedRoles={[ROLES.CLIENT]}>
+                <Dashboard />
+              </ProtectedRoute>
+            } />
 
             {/* Admin User Management — create_admins */}
             <Route path="/admin/users" element={

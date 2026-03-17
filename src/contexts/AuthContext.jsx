@@ -15,56 +15,57 @@ export function AuthProvider({ children }) {
   useEffect(() => {
     let mounted = true;
 
-    // Safety timeout to prevent infinite loading
-    const timeout = setTimeout(() => {
-      if (mounted) setLoading(false);
-    }, 3000);
-
-    const init = async () => {
+    // Helper to fetch profile
+    const fetchProfile = async (sessionUser) => {
       try {
-        const { data } = await supabase.auth.getSession();
-        
-        const currentSession = data.session;
-        if (mounted) setSession(currentSession);
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("*")
+          .eq("id", sessionUser.id)
+          .maybeSingle();
 
-        if (currentSession?.user) {
-          const currentUser = currentSession.user;
-
-          const { data: profile } = await supabase
-            .from("profiles")
-            .select("*")
-            .eq("id", currentUser.id)
-            .maybeSingle();
-
-          if (profile) {
-            console.log("Profile found");
-            if (mounted) setUser({ ...currentUser, ...profile });
-          } else {
-            console.log("Creating profile");
-
-            await supabase.from("profiles").insert({
-              id: currentUser.id,
-              email: currentUser.email,
-              role: "super_admin"
-            });
-
-            if (mounted) setUser({ ...currentUser, role: "super_admin" });
-          }
+        if (profile && mounted) {
+          setUser({ ...sessionUser, ...profile });
+        } else if (mounted) {
+          setUser(sessionUser); // Fallback if no profile yet
         }
       } catch (err) {
-        console.error("Auth error", err);
+        console.error("Profile fetch error", err);
       } finally {
-        if (mounted) {
-          setLoading(false); // VERY IMPORTANT
-        }
+        if (mounted) setLoading(false);
       }
     };
 
-    init();
+    // 1. Initial Session Check
+    supabase.auth.getSession().then(({ data: { session: currentSession } }) => {
+      if (mounted) setSession(currentSession);
+      if (currentSession?.user) {
+        fetchProfile(currentSession.user);
+      } else {
+        if (mounted) setLoading(false);
+      }
+    });
+
+    // 2. Auth State Listener
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (_event, currentSession) => {
+        if (mounted) setSession(currentSession);
+        if (currentSession?.user) {
+          // If a new session comes in, ensure we are loading while fetching the profile
+          if (mounted) setLoading(true);
+          fetchProfile(currentSession.user);
+        } else {
+          if (mounted) {
+            setUser(null);
+            setLoading(false);
+          }
+        }
+      }
+    );
 
     return () => {
       mounted = false;
-      clearTimeout(timeout);
+      subscription.unsubscribe();
     };
   }, []);
 
