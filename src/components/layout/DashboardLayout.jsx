@@ -19,7 +19,9 @@ export default function DashboardLayout() {
   const [collapsed, setCollapsed] = useState(false);
   const location = useLocation();
 
-  const pageTitle = pageTitles[location.pathname] || 'Certify.cx';
+  const pageTitle = pageTitles[location.pathname] || (
+    <>Certify.cx<sup className="brand-tm">™</sup></>
+  );
 
   return (
     <div className={`dashboard-layout ${collapsed ? 'dashboard-layout--collapsed' : ''}`}>

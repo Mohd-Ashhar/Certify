@@ -81,7 +81,7 @@ export default function LandingPage() {
         <div className="landing__nav-inner">
           <Link to="/" className="landing__logo">
             <div className="landing__logo-icon"><Shield size={22} /></div>
-            <span>Certify.cx</span>
+            <span>Certify.cx<sup className="brand-tm">™</sup></span>
           </Link>
           <div className="landing__nav-links">
             <a href="#how-it-works" className="landing__nav-link">How It Works</a>
@@ -191,10 +191,10 @@ export default function LandingPage() {
       <section className="landing__section" id="benefits">
         <div className="landing__section-inner">
           <div className="landing__section-header">
-            <span className="landing__section-tag">Why Certify.cx</span>
+            <span className="landing__section-tag">Why Certify.cx<sup className="brand-tm">™</sup></span>
             <h2 className="landing__section-title">Benefits of Certification</h2>
             <p className="landing__section-desc">
-              Join thousands of companies that trust Certify.cx for their ISO needs
+              Join thousands of companies that trust Certify.cx<sup className="brand-tm">™</sup> for their ISO needs
             </p>
           </div>
           <div className="landing__benefits">
@@ -227,11 +227,10 @@ export default function LandingPage() {
         <div className="landing__footer-inner">
           <div className="landing__footer-logo">
             <Shield size={18} />
-            <span>Certify.cx</span>
+            <span>Certify.cx<sup className="brand-tm">™</sup></span>
           </div>
           <p className="landing__footer-text">
-            © {new Date().getFullYear()} Certify.cx — ISO Certification Platform.
-            IAF Accredited.
+            © 2026 Certify.cx<sup className="brand-tm">™</sup>. All rights reserved.
           </p>
         </div>
       </footer>

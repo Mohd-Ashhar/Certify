@@ -35,7 +35,7 @@ export default function Login() {
   return (
     <div className="auth-form">
       <h2 className="auth-form__title">Welcome back</h2>
-      <p className="auth-form__subtitle">Sign in to your Certify.cx account</p>
+      <p className="auth-form__subtitle">Sign in to your Certify.cx<sup className="brand-tm">™</sup> account</p>
 
       {error && (
         <div className="auth-form__error">

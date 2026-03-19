@@ -49,7 +49,7 @@ export default function Sidebar({ isOpen, onClose, collapsed, onToggleCollapse }
             <div className="sidebar__logo-icon">
               <Shield size={22} />
             </div>
-            {!collapsed && <span className="sidebar__logo-text">Certify.cx</span>}
+            {!collapsed && <span className="sidebar__logo-text">Certify.cx<sup className="brand-tm">™</sup></span>}
           </div>
           <button className="sidebar__close-mobile" onClick={onClose}>
             <X size={20} />

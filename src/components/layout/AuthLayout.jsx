@@ -10,13 +10,13 @@ export default function AuthLayout() {
           <div className="auth-layout__logo-icon">
             <Shield size={28} />
           </div>
-          <span className="auth-layout__logo-text">Certify.cx</span>
+          <span className="auth-layout__logo-text">Certify.cx<sup className="brand-tm">™</sup></span>
         </div>
         <div className="auth-layout__card">
           <Outlet />
         </div>
         <p className="auth-layout__footer">
-          © 2026 Certify.cx — ISO Certification Platform
+          © 2026 Certify.cx<sup className="brand-tm">™</sup>. All rights reserved.
         </p>
       </div>
     </div>
