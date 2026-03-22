@@ -1,0 +1,54 @@
+.application-form__container {
+  background: var(--surface-color);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border-color);
+  padding: var(--spacing-xl);
+  max-width: 800px;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+
+.application-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-lg);
+}
+
+.application-form__row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--spacing-lg);
+}
+
+.application-form__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--spacing-md);
+  margin-top: var(--spacing-md);
+  padding-top: var(--spacing-lg);
+  border-top: 1px solid var(--border-color);
+}
+
+.application-form__error {
+  background-color: rgba(239, 68, 68, 0.1);
+  color: var(--danger-color);
+  padding: var(--spacing-md);
+  border-radius: var(--radius-md);
+  font-size: 0.875rem;
+  border: 1px solid rgba(239, 68, 68, 0.2);
+}
+
+@media (max-width: 640px) {
+  .application-form__row {
+    grid-template-columns: 1fr;
+    gap: var(--spacing-lg);
+  }
+
+  .application-form__actions {
+    flex-direction: column;
+    width: 100%;
+  }
+
+  .application-form__actions button {
+    width: 100%;
+  }
+}

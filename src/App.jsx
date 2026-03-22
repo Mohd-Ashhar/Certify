@@ -26,6 +26,7 @@ import Auditors from './pages/auditors/Auditors';
 import CertificationBodies from './pages/bodies/CertificationBodies';
 import Reports from './pages/reports/Reports';
 import Settings from './pages/settings/Settings';
+import ApplicationForm from './pages/client/ApplicationForm';
 
 function AppRoutes() {
   const { loading } = useAuth();
@@ -79,6 +80,11 @@ function AppRoutes() {
             <Route path="/client/dashboard" element={
               <ProtectedRoute allowedRoles={[ROLES.CLIENT]}>
                 <Dashboard />
+              </ProtectedRoute>
+            } />
+            <Route path="/client/apply" element={
+              <ProtectedRoute allowedRoles={[ROLES.CLIENT]}>
+                <ApplicationForm />
               </ProtectedRoute>
             } />
 

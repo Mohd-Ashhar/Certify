@@ -15,11 +15,13 @@ import {
   ChevronLeft,
   Shield,
   X,
+  PlusCircle,
 } from 'lucide-react';
 import './Sidebar.css';
 
 const navItems = [
   { path: '/dashboard', label: 'Dashboard', icon: LayoutDashboard, permissions: [PERMISSIONS.VIEW_DASHBOARD] },
+  { path: '/client/apply', label: 'New Application', icon: PlusCircle, permissions: [PERMISSIONS.CREATE_CERTIFICATION] },
   { path: '/companies', label: 'Companies', icon: Building2, permissions: [PERMISSIONS.VIEW_COMPANIES, PERMISSIONS.REGISTER_COMPANY] },
   { path: '/certification-requests', label: 'Certifications', icon: FileCheck2, permissions: [PERMISSIONS.VIEW_CERTIFICATIONS, PERMISSIONS.CREATE_CERTIFICATION] },
   { path: '/auditors', label: 'Auditors', icon: UserCheck, permissions: [PERMISSIONS.VIEW_AUDITORS] },

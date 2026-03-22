@@ -1,7 +1,11 @@
-import { Building2, FileCheck2, Clock, UserCheck, Percent } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { Building2, FileCheck2, Clock, UserCheck, Percent, PlusCircle } from 'lucide-react';
 import StatCard from '../../components/ui/StatCard';
 import DataTable from '../../components/ui/DataTable';
 import StatusBadge from '../../components/ui/StatusBadge';
+import { Button } from '../../components/ui/FormElements';
+import { supabase } from '../../lib/supabase';
 import { 
   mockCertificationRequests, 
   mockCompanies, 
@@ -25,9 +29,30 @@ const columns = [
 
 export default function Dashboard() {
   const { user, loading } = useAuth();
+  const navigate = useNavigate();
+  
+  const [clientApplications, setClientApplications] = useState([]);
+  const [fetchingApps, setFetchingApps] = useState(false);
+
+  useEffect(() => {
+    if (user?.role === ROLES.CLIENT) {
+      const fetchApps = async () => {
+        setFetchingApps(true);
+        const { data } = await supabase
+          .from('applications')
+          .select('*')
+          .eq('client_id', user.id)
+          .order('created_at', { ascending: false });
+        if (data) setClientApplications(data);
+        setFetchingApps(false);
+      };
+      fetchApps();
+    }
+  }, [user]);
 
   if (!user || loading) return <div className="page-container"><p>Loading dashboard...</p></div>;
 
+  const isClient = user?.role === ROLES.CLIENT;
   const isRegionalAdmin = user?.role === ROLES.REGIONAL_ADMIN;
 
   // Filter data based on role
@@ -59,12 +84,49 @@ export default function Dashboard() {
       <div className="page-header">
         <div>
           <h1 className="page-title">Dashboard</h1>
-          <p className="page-subtitle">Overview of your certification platform</p>
+          <p className="page-subtitle">{isClient ? 'Manage your applications' : 'Overview of your certification platform'}</p>
         </div>
       </div>
 
-      {/* Stat Cards */}
-      <div className="dashboard__stats">
+      {isClient ? (
+        <div className="dashboard__grid" style={{ display: 'block' }}>
+          <div className="dashboard__section">
+            <div className="dashboard__section-header">
+              <h2 className="dashboard__section-title">Your Applications</h2>
+              {clientApplications.length > 0 && (
+                <Button onClick={() => navigate('/client/apply')} size="sm">
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <PlusCircle size={16} /> New Application
+                  </div>
+                </Button>
+              )}
+            </div>
+            {fetchingApps ? (
+              <p>Loading applications...</p>
+            ) : clientApplications.length > 0 ? (
+              <DataTable 
+                columns={[
+                  { key: 'company_name', label: 'Company' },
+                  { key: 'industry', label: 'Industry' },
+                  { key: 'status', label: 'Status', render: (val) => <StatusBadge status={val} /> },
+                  { key: 'created_at', label: 'Date', render: (val) => new Date(val).toLocaleDateString() }
+                ]} 
+                data={clientApplications} 
+              />
+            ) : (
+              <div style={{ textAlign: 'center', padding: '40px', background: 'var(--surface-color)', borderRadius: 'var(--radius-lg)', border: '1px solid var(--border-color)' }}>
+                <FileCheck2 size={48} color="var(--text-muted)" style={{ margin: '0 auto 16px' }} />
+                <h3 style={{ marginBottom: '8px' }}>No Applications Yet</h3>
+                <p style={{ color: 'var(--text-muted)', marginBottom: '24px' }}>Start your ISO certification journey today.</p>
+                <Button onClick={() => navigate('/client/apply')}>Create Application</Button>
+              </div>
+            )}
+          </div>
+        </div>
+      ) : (
+        <>
+          {/* Stat Cards */}
+          <div className="dashboard__stats">
         <StatCard
           title="Total Companies"
           value={totalCompanies}
@@ -176,6 +238,8 @@ export default function Dashboard() {
           </div>
         </div>
       </div>
+      </>
+      )}
     </div>
   );
 }
