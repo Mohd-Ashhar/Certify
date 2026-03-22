@@ -5,6 +5,9 @@
 }
 
 .form-label {
+  display: flex;
+  gap: 4px;
+  white-space: normal;
   font-size: var(--font-size-sm);
   font-weight: 500;
   color: var(--color-text-secondary);
@@ -68,6 +71,7 @@
 
 /* ---- Button ---- */
 .form-btn {
+  position: relative;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -78,6 +82,18 @@
   cursor: pointer;
   transition: all var(--transition-fast);
   white-space: nowrap;
+}
+
+.form-btn::after, .form-btn::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  transform: none;
+  border-radius: inherit;
+  pointer-events: none;
 }
 
 .form-btn:disabled {

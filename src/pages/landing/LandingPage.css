@@ -84,6 +84,7 @@
 
 .landing__nav-btn:hover {
   background: var(--color-accent-hover);
+  color: var(--color-text-inverse);
   transform: translateY(-1px);
 }
 
@@ -180,6 +181,7 @@
 
 .landing__btn--primary:hover {
   background: var(--color-accent-hover);
+  color: var(--color-text-inverse);
   transform: translateY(-2px);
   box-shadow: 0 6px 30px rgba(62, 207, 142, 0.4);
 }
