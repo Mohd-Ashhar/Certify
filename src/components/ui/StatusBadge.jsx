@@ -4,6 +4,7 @@ const variantMap = {
   // Status values
   active: 'success',
   approved: 'success',
+  awaiting_payment: 'warning',
   pending: 'warning',
   audit_scheduled: 'info',
   in_review: 'info',
@@ -21,6 +22,7 @@ const variantMap = {
 const labelMap = {
   active: 'Active',
   approved: 'Approved',
+  awaiting_payment: 'Awaiting Payment',
   pending: 'Pending',
   audit_scheduled: 'Audit Scheduled',
   in_review: 'In Review',

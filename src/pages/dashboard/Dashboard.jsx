@@ -106,10 +106,17 @@ export default function Dashboard() {
             ) : clientApplications.length > 0 ? (
               <DataTable 
                 columns={[
-                  { key: 'company_name', label: 'Company' },
+                  { key: 'company_name', label: 'Company Name' },
                   { key: 'industry', label: 'Industry' },
+                  { key: 'recommended_iso', label: 'Recommended ISO', render: (val) => val ? val : "Analyzing..." },
                   { key: 'status', label: 'Status', render: (val) => <StatusBadge status={val} /> },
-                  { key: 'created_at', label: 'Date', render: (val) => new Date(val).toLocaleDateString() }
+                  { 
+                    key: 'id', 
+                    label: 'Action', 
+                    render: (id, row) => row.status === 'awaiting_payment' 
+                      ? <Button size="sm" variant="primary" onClick={() => navigate(`/client/checkout/${id}`)}>Pay Now</Button> 
+                      : <span style={{ color: 'var(--text-muted)' }}>Pending</span> 
+                  }
                 ]} 
                 data={clientApplications} 
               />

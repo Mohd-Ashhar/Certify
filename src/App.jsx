@@ -27,6 +27,7 @@ import CertificationBodies from './pages/bodies/CertificationBodies';
 import Reports from './pages/reports/Reports';
 import Settings from './pages/settings/Settings';
 import ApplicationForm from './pages/client/ApplicationForm';
+import PaymentPlaceholder from './pages/client/PaymentPlaceholder';
 
 function AppRoutes() {
   const { loading } = useAuth();
@@ -85,6 +86,11 @@ function AppRoutes() {
             <Route path="/client/apply" element={
               <ProtectedRoute allowedRoles={[ROLES.CLIENT]}>
                 <ApplicationForm />
+              </ProtectedRoute>
+            } />
+            <Route path="/client/checkout/:applicationId" element={
+              <ProtectedRoute allowedRoles={[ROLES.CLIENT]}>
+                <PaymentPlaceholder />
               </ProtectedRoute>
             } />
 
