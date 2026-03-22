@@ -13,6 +13,7 @@ import {
 } from '../../utils/mockData';
 import { REGIONS, ROLES } from '../../utils/roles';
 import { useAuth } from '../../contexts/AuthContext';
+import { getPriceForISO } from '../../utils/pricing';
 import './Dashboard.css';
 
 const columns = [
@@ -114,7 +115,7 @@ export default function Dashboard() {
                     key: 'id', 
                     label: 'Action', 
                     render: (id, row) => row.status === 'awaiting_payment' 
-                      ? <Button size="sm" variant="primary" onClick={() => navigate(`/client/checkout/${id}`)}>Pay Now</Button> 
+                      ? <Button size="sm" variant="primary" onClick={() => navigate(`/client/checkout/${id}`, { state: { price: getPriceForISO(row.recommended_iso), iso: row.recommended_iso } })}>Pay ${getPriceForISO(row.recommended_iso).toLocaleString()}</Button> 
                       : <span style={{ color: 'var(--text-muted)' }}>Pending</span> 
                   }
                 ]} 
