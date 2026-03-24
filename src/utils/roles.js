@@ -173,11 +173,8 @@ const ROLE_PERMISSIONS = {
   // ---- Client (Company) ----
   [ROLES.CLIENT]: [
     PERMISSIONS.VIEW_DASHBOARD,
-    // Companies — register own
-    PERMISSIONS.REGISTER_COMPANY,
     // Certifications — create requests + view status
     PERMISSIONS.CREATE_CERTIFICATION,
-    PERMISSIONS.VIEW_CERTIFICATIONS,
     PERMISSIONS.VIEW_CERTIFICATION_STATUS,
     // Settings (own profile)
     PERMISSIONS.MANAGE_SETTINGS,

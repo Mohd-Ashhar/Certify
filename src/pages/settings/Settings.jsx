@@ -51,28 +51,156 @@ export default function Settings() {
 }
 
 function ProfileTab({ user }) {
+  const { updatePassword, supabase } = useAuth();
+  
+  const [formData, setFormData] = useState({
+    full_name: user?.full_name || user?.name || '',
+    company_name: user?.company_name || '',
+  });
+
+  const [passwordData, setPasswordData] = useState({
+    newPassword: '',
+    confirmPassword: '',
+  });
+
+  const [profileLoading, setProfileLoading] = useState(false);
+  const [passwordLoading, setPasswordLoading] = useState(false);
+  const [message, setMessage] = useState(null); // { type, text }
+
+  const handleProfileUpdate = async () => {
+    setProfileLoading(true);
+    setMessage(null);
+    try {
+      const { error } = await supabase
+        .from('profiles')
+        .update({ 
+          full_name: formData.full_name, 
+          company_name: formData.company_name 
+        })
+        .eq('id', user.id);
+
+      if (error) throw error;
+      
+      setMessage({ type: 'success', text: 'Profile updated successfully! Refreshing...' });
+      setTimeout(() => window.location.reload(), 1500);
+    } catch (err) {
+      setMessage({ type: 'error', text: err.message || 'Failed to update profile' });
+    } finally {
+      setProfileLoading(false);
+    }
+  };
+
+  const handlePasswordUpdate = async () => {
+    if (!passwordData.newPassword || !passwordData.confirmPassword) {
+      setMessage({ type: 'error', text: 'Please fill in both password fields.' });
+      return;
+    }
+    if (passwordData.newPassword !== passwordData.confirmPassword) {
+      setMessage({ type: 'error', text: 'Passwords do not match!' });
+      return;
+    }
+    
+    setPasswordLoading(true);
+    setMessage(null);
+    try {
+      const { success, error } = await updatePassword(passwordData.newPassword);
+      if (!success) throw new Error(error);
+      
+      setPasswordData({ newPassword: '', confirmPassword: '' });
+      setMessage({ type: 'success', text: 'Password updated successfully!' });
+    } catch (err) {
+      setMessage({ type: 'error', text: err.message || 'Failed to update password' });
+    } finally {
+      setPasswordLoading(false);
+    }
+  };
+
   return (
     <div className="settings__section">
       <h2 className="settings__section-title">Profile Information</h2>
       <p className="settings__section-desc">Update your account details</p>
-      <div className="settings__form">
+      
+      {message && (
+        <div className="application-form__error" style={{
+          backgroundColor: message.type === 'error' ? 'var(--color-bg-error, #fee2e2)' : 'var(--color-bg-success, #dcfce7)',
+          color: message.type === 'error' ? 'var(--color-text-error, #b91c1c)' : 'var(--color-text-success, #15803d)',
+          border: `1px solid ${message.type === 'error' ? '#fca5a5' : '#86efac'}`,
+          padding: '12px',
+          borderRadius: '8px',
+          marginBottom: '20px'
+        }}>
+          {message.text}
+        </div>
+      )}
+
+      <div className="settings__form" style={{ marginBottom: '40px' }}>
         <div className="settings__avatar-section">
           <div className="settings__avatar-large">
-            {user?.name?.charAt(0) || 'U'}
+            {(user?.full_name || user?.name || 'U').charAt(0)}
           </div>
-          <Button variant="secondary" size="sm">Change Avatar</Button>
+          <div style={{ display: 'flex', flexDirection: 'column' }}>
+            <span style={{ fontWeight: 600, fontSize: '1.2rem', marginBottom: '4px' }}>{user?.full_name || user?.name || 'User'}</span>
+            <span style={{ color: 'var(--color-text-secondary)', fontSize: '0.9rem' }}>{ROLE_LABELS[user?.role] || 'Role'}</span>
+          </div>
         </div>
         <div className="settings__form-grid">
-          <Input label="Full Name" id="settings-name" defaultValue={user?.name || ''} />
-          <Input label="Email" id="settings-email" type="email" defaultValue={user?.email || ''} />
-          <Input label="Company" id="settings-company" defaultValue="" placeholder="Your company" />
-          <Select label="Region" id="settings-region" defaultValue={user?.region || ''}>
-            {REGIONS.map(r => <option key={r.id} value={r.id}>{r.label}</option>)}
-          </Select>
+          <Input 
+            label="Full Name" 
+            id="settings-name" 
+            value={formData.full_name} 
+            onChange={(e) => setFormData({...formData, full_name: e.target.value})} 
+          />
+          <Input 
+            label="Email" 
+            id="settings-email" 
+            type="email" 
+            value={user?.email || ''} 
+            disabled 
+          />
+          <Input 
+            label="Company" 
+            id="settings-company" 
+            value={formData.company_name} 
+            onChange={(e) => setFormData({...formData, company_name: e.target.value})} 
+            placeholder="Your company" 
+          />
+          <Input 
+            label="Role" 
+            id="settings-role" 
+            value={ROLE_LABELS[user?.role] || 'Role'} 
+            disabled 
+          />
         </div>
         <div className="settings__form-actions">
-          <Button variant="primary" size="md">Save Changes</Button>
-          <Button variant="ghost" size="md">Cancel</Button>
+          <Button variant="primary" size="md" onClick={handleProfileUpdate} loading={profileLoading}>Save Changes</Button>
+          <Button variant="ghost" size="md" onClick={() => setFormData({ full_name: user?.full_name || user?.name || '', company_name: user?.company_name || '' })}>Cancel</Button>
+        </div>
+      </div>
+
+      <h2 className="settings__section-title" style={{ marginTop: '40px', paddingTop: '40px', borderTop: '1px solid var(--border-color, #e5e7eb)' }}>Security</h2>
+      <p className="settings__section-desc">Update your password</p>
+      
+      <div className="settings__form">
+        <div className="settings__form-grid">
+          <Input 
+            label="New Password" 
+            id="settings-new-password" 
+            type="password" 
+            placeholder="Enter new password"
+            value={passwordData.newPassword} 
+            onChange={(e) => setPasswordData({...passwordData, newPassword: e.target.value})} 
+          />
+          <Input 
+            label="Confirm Password" 
+            id="settings-confirm-password" 
+            type="password" 
+            placeholder="Confirm new password"
+            value={passwordData.confirmPassword} 
+            onChange={(e) => setPasswordData({...passwordData, confirmPassword: e.target.value})} 
+          />
+        </div>
+        <div className="settings__form-actions">
+          <Button variant="primary" size="md" onClick={handlePasswordUpdate} loading={passwordLoading}>Update Password</Button>
         </div>
       </div>
     </div>

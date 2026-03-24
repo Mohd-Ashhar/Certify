@@ -22,8 +22,8 @@ import './Sidebar.css';
 const navItems = [
   { path: '/dashboard', label: 'Dashboard', icon: LayoutDashboard, permissions: [PERMISSIONS.VIEW_DASHBOARD] },
   { path: '/client/apply', label: 'New Application', icon: PlusCircle, permissions: [PERMISSIONS.CREATE_CERTIFICATION] },
-  { path: '/companies', label: 'Companies', icon: Building2, permissions: [PERMISSIONS.VIEW_COMPANIES, PERMISSIONS.REGISTER_COMPANY] },
-  { path: '/certification-requests', label: 'Certifications', icon: FileCheck2, permissions: [PERMISSIONS.VIEW_CERTIFICATIONS, PERMISSIONS.CREATE_CERTIFICATION] },
+  { path: '/companies', label: 'Companies', icon: Building2, permissions: [PERMISSIONS.VIEW_COMPANIES] },
+  { path: '/certification-requests', label: 'Certifications', icon: FileCheck2, permissions: [PERMISSIONS.VIEW_CERTIFICATIONS] },
   { path: '/auditors', label: 'Auditors', icon: UserCheck, permissions: [PERMISSIONS.VIEW_AUDITORS] },
   { path: '/certification-bodies', label: 'Cert Bodies', icon: Award, permissions: [PERMISSIONS.VIEW_BODIES] },
   { path: '/reports', label: 'Reports', icon: BarChart3, permissions: [PERMISSIONS.VIEW_REPORTS] },
@@ -90,7 +90,11 @@ export default function Sidebar({ isOpen, onClose, collapsed, onToggleCollapse }
             {!collapsed && (
               <div className="sidebar__user-info">
                 <span className="sidebar__user-name">{user?.name || 'User'}</span>
-                <span className="sidebar__user-role">{ROLE_LABELS[user?.role] || 'Unknown'}</span>
+                <span className="sidebar__user-role">
+                  {user?.role === 'client' && user?.company_name
+                    ? user.company_name
+                    : ROLE_LABELS[user?.role] || 'Unknown'}
+                </span>
               </div>
             )}
           </div>

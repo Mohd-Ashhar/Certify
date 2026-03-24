@@ -15,7 +15,7 @@ const INDUSTRIES = [
 ];
 
 export default function ApplicationForm() {
-  const { user } = useAuth();
+  const { user, getRoleDashboard } = useAuth();
   const navigate = useNavigate();
   
   const [formData, setFormData] = useState({
@@ -42,7 +42,9 @@ export default function ApplicationForm() {
     setLoading(true);
     setError(null);
 
-    if (!formData.companyName || !formData.industry || !formData.scope || !formData.employeeCount || !formData.locationsCount) {
+    const submittedCompanyName = user?.company_name || formData.companyName;
+
+    if (!submittedCompanyName || !formData.industry || !formData.scope || !formData.employeeCount || !formData.locationsCount) {
       setError('Please fill in all fields.');
       setLoading(false);
       return;
@@ -53,7 +55,7 @@ export default function ApplicationForm() {
         .from('applications')
         .insert({
           client_id: user.id,
-          company_name: formData.companyName,
+          company_name: submittedCompanyName,
           industry: formData.industry,
           scope: formData.scope,
           employee_count: parseInt(formData.employeeCount, 10),
@@ -63,7 +65,22 @@ export default function ApplicationForm() {
 
       if (submitError) throw submitError;
 
-      navigate('/client/dashboard');
+      if (!user?.company_name) {
+        const { error: profileError } = await supabase
+          .from('profiles')
+          .update({ company_name: formData.companyName })
+          .eq('id', user.id);
+          
+        if (profileError) {
+          console.error('Failed to update profile company name:', profileError);
+        }
+        
+        // Force reload to update context and navigate
+        window.location.href = getRoleDashboard(user?.role);
+        return;
+      }
+
+      navigate(getRoleDashboard(user?.role));
     } catch (err) {
       console.error('Application submission error:', err);
       setError(err.message || 'Failed to submit application. Please try again.');
@@ -85,15 +102,17 @@ export default function ApplicationForm() {
         <form className="application-form" onSubmit={handleSubmit}>
           {error && <div className="application-form__error">{error}</div>}
           
-          <Input
-            id="companyName"
-            label="Company Name"
-            placeholder="Enter your company name"
-            value={formData.companyName}
-            onChange={handleChange}
-            required
-            disabled={loading}
-          />
+          {!user?.company_name && (
+            <Input
+              id="companyName"
+              label="Company Name"
+              placeholder="Enter your company name"
+              value={formData.companyName}
+              onChange={handleChange}
+              required
+              disabled={loading}
+            />
+          )}
 
           <Select
             id="industry"
@@ -150,7 +169,7 @@ export default function ApplicationForm() {
             <Button
               type="button"
               variant="secondary"
-              onClick={() => navigate('/client/dashboard')}
+              onClick={() => navigate(getRoleDashboard(user?.role))}
               disabled={loading}
             >
               Cancel
