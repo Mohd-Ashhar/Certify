@@ -28,6 +28,7 @@ import Reports from './pages/reports/Reports';
 import Settings from './pages/settings/Settings';
 import ApplicationForm from './pages/client/ApplicationForm';
 import PaymentPlaceholder from './pages/client/PaymentPlaceholder';
+import GapAnalysis from './pages/client/GapAnalysis';
 
 function AppRoutes() {
   const { loading } = useAuth();
@@ -86,6 +87,11 @@ function AppRoutes() {
             <Route path="/client/apply" element={
               <ProtectedRoute allowedRoles={[ROLES.CLIENT, ROLES.SUPER_ADMIN, ROLES.REGIONAL_ADMIN]}>
                 <ApplicationForm />
+              </ProtectedRoute>
+            } />
+            <Route path="/client/gap-analysis" element={
+              <ProtectedRoute allowedRoles={[ROLES.CLIENT]}>
+                <GapAnalysis />
               </ProtectedRoute>
             } />
             <Route path="/client/checkout/:applicationId" element={

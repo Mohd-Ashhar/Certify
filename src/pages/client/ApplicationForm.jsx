@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { supabase } from '../../lib/supabase';
 import { Input, Select, Textarea, Button } from '../../components/ui/FormElements';
@@ -17,6 +17,8 @@ const INDUSTRIES = [
 export default function ApplicationForm() {
   const { user, getRoleDashboard } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
+  const selectedPackage = location.state?.package || null;
   
   const [formData, setFormData] = useState({
     companyName: '',
@@ -60,7 +62,8 @@ export default function ApplicationForm() {
           scope: formData.scope,
           employee_count: parseInt(formData.employeeCount, 10),
           locations_count: parseInt(formData.locationsCount, 10),
-          status: 'pending'
+          status: 'pending',
+          selected_package: selectedPackage || 'Standard'
         });
 
       if (submitError) throw submitError;
@@ -100,6 +103,12 @@ export default function ApplicationForm() {
 
       <div className="application-form__container">
         <form className="application-form" onSubmit={handleSubmit}>
+          {selectedPackage && (
+            <div className="application-form__package-badge" style={{ padding: '12px', background: 'var(--color-bg-primary)', border: '1px solid var(--color-accent)', borderRadius: 'var(--radius-md)', marginBottom: '20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <span style={{ fontWeight: 600, color: 'var(--color-text-primary)' }}>Selected Package:</span>
+              <span style={{ color: 'var(--color-accent)', fontWeight: 700 }}>{selectedPackage}</span>
+            </div>
+          )}
           {error && <div className="application-form__error">{error}</div>}
           
           {!user?.company_name && (

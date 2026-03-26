@@ -88,7 +88,7 @@ export default function LandingPage() {
             <a href="#standards" className="landing__nav-link">Standards</a>
             <a href="#benefits" className="landing__nav-link">Benefits</a>
             <Link to="/login" className="landing__nav-link landing__nav-link--login">Login</Link>
-            <Link to="/signup" className="landing__nav-btn">Apply for Certification</Link>
+            <Link to="/signup" className="landing__nav-btn">Start Your Free Gap Analysis</Link>
           </div>
         </div>
       </nav>
@@ -111,7 +111,7 @@ export default function LandingPage() {
           </p>
           <div className="landing__hero-actions">
             <Link to="/signup" className="landing__btn landing__btn--primary">
-              Apply for Certification <ArrowRight size={18} />
+              Start Your Free Gap Analysis <ArrowRight size={18} />
             </Link>
             <Link to="/login" className="landing__btn landing__btn--secondary">
               Login
@@ -217,7 +217,7 @@ export default function LandingPage() {
             Start your ISO certification journey today. It takes less than 5 minutes to apply.
           </p>
           <Link to="/signup" className="landing__btn landing__btn--primary landing__btn--lg">
-            Apply for Certification <ArrowRight size={18} />
+            Start Your Free Gap Analysis <ArrowRight size={18} />
           </Link>
         </div>
       </section>

@@ -1,0 +1,222 @@
+.gap-analysis-page {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: calc(100vh - 120px);
+  padding: 2rem;
+}
+
+.gap-analysis__content {
+  background: var(--color-bg-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: 3rem;
+  max-width: 600px;
+  width: 100%;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  text-align: center;
+}
+
+.gap-analysis__content--success {
+  max-width: 900px;
+}
+
+.gap-analysis__header {
+  margin-bottom: 2rem;
+}
+
+.gap-analysis__header h2 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin: 1rem 0 0.5rem;
+  color: var(--color-text-primary);
+}
+
+.gap-analysis__header p {
+  color: var(--color-text-secondary);
+}
+
+.gap-analysis__progress {
+  text-align: left;
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+  margin-bottom: 2rem;
+  font-weight: 500;
+}
+
+.gap-analysis__progress-bar {
+  height: 6px;
+  background: var(--color-border);
+  border-radius: var(--radius-full);
+  margin-top: 0.5rem;
+  overflow: hidden;
+}
+
+.gap-analysis__progress-fill {
+  height: 100%;
+  background: var(--color-accent);
+  transition: width 0.3s ease;
+}
+
+.gap-analysis__question-card {
+  text-align: left;
+  margin-bottom: 2rem;
+}
+
+.gap-analysis__question {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--color-text-primary);
+  margin-bottom: 1.5rem;
+  line-height: 1.5;
+}
+
+.gap-analysis__options {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.gap-analysis__option {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem 1.5rem;
+  border: 2px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: transparent;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: 1rem;
+  font-weight: 500;
+  color: var(--color-text-primary);
+  text-align: left;
+}
+
+.gap-analysis__option:hover {
+  border-color: var(--color-accent);
+  background: rgba(37, 99, 235, 0.05); /* very light accent */
+}
+
+.gap-analysis__option.selected {
+  border-color: var(--color-accent);
+  background: rgba(37, 99, 235, 0.05);
+}
+
+.gap-analysis__option-radio {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  border: 2px solid var(--color-border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.gap-analysis__option.selected .gap-analysis__option-radio {
+  border-color: var(--color-accent);
+}
+
+.gap-analysis__option-radio-fill {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--color-accent);
+}
+
+.gap-analysis__actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.gap-analysis__score {
+  font-size: 2rem;
+  font-weight: 800;
+  color: var(--color-text-primary);
+  margin: 1rem 0;
+}
+
+.gap-analysis__score--success {
+  color: var(--color-success);
+}
+
+.gap-analysis__text {
+  color: var(--color-text-secondary);
+  font-size: 1.1rem;
+  margin-bottom: 2rem;
+  line-height: 1.6;
+}
+
+.gap-analysis__packages {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 1.5rem;
+  text-align: left;
+}
+
+.gap-package-card {
+  position: relative;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: 2rem;
+  background: var(--color-bg-primary);
+  display: flex;
+  flex-direction: column;
+}
+
+.gap-package-card--popular {
+  border: 2px solid var(--color-accent);
+  box-shadow: 0 10px 15px -3px rgba(37, 99, 235, 0.1);
+  transform: translateY(-4px);
+}
+
+.gap-package-card__badge {
+  position: absolute;
+  top: -12px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--color-accent);
+  color: white;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  padding: 4px 12px;
+  border-radius: var(--radius-full);
+}
+
+.gap-package-card__title {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--color-text-primary);
+  margin-bottom: 0.5rem;
+}
+
+.gap-package-card__price {
+  font-size: 2rem;
+  font-weight: 800;
+  color: var(--color-text-primary);
+  margin-bottom: 1.5rem;
+}
+
+.gap-package-card__features {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.gap-package-card__features li {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  font-size: 0.95rem;
+  color: var(--color-text-secondary);
+}
+
+.gap-package-card__features li svg {
+  flex-shrink: 0;
+  margin-top: 2px;
+}

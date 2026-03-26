@@ -120,9 +120,24 @@ export default function Dashboard() {
           {!fetchingApps && clientApplications.length === 0 ? (
             <div className="dashboard__empty-state" style={{ textAlign: 'center', padding: '40px', background: 'var(--surface-color)', borderRadius: 'var(--radius-lg)', border: '1px solid var(--border-color)' }}>
               <FileCheck2 size={48} color="var(--text-muted)" style={{ margin: '0 auto 16px' }} />
-              <h3 style={{ marginBottom: '8px' }}>No Applications Yet</h3>
-              <p style={{ color: 'var(--text-muted)', marginBottom: '24px' }}>Start your ISO certification journey today.</p>
-              <Button onClick={() => navigate('/client/apply')}>Create Application</Button>
+              {user?.gap_analysis_score == null ? (
+                <>
+                  <h3 style={{ marginBottom: '8px' }}>Take Your Free Gap Analysis</h3>
+                  <p style={{ color: 'var(--text-muted)', marginBottom: '24px' }}>Find out if your organization is ready for ISO certification.</p>
+                  <Button onClick={() => navigate('/client/gap-analysis')}>Take Gap Analysis Quiz</Button>
+                </>
+              ) : user?.gap_analysis_score < 60 ? (
+                <>
+                  <h3 style={{ marginBottom: '8px' }}>Gap Analysis Completed</h3>
+                  <p style={{ color: 'var(--text-muted)', marginBottom: '24px' }}>Please contact support to improve your readiness before applying.</p>
+                </>
+              ) : (
+                <>
+                  <h3 style={{ marginBottom: '8px' }}>No Applications Yet</h3>
+                  <p style={{ color: 'var(--text-muted)', marginBottom: '24px' }}>Start your ISO certification journey today.</p>
+                  <Button onClick={() => navigate('/client/apply')}>Create Application</Button>
+                </>
+              )}
             </div>
           ) : fetchingApps ? (
             <p>Loading applications...</p>
@@ -272,6 +287,13 @@ export default function Dashboard() {
               <div className="dashboard__section past-applications-section" style={{ marginTop: '2rem' }}>
                 <div className="dashboard__section-header">
                   <h2 className="dashboard__section-title">Past Applications</h2>
+                  {clientApplications.length > 0 && (user?.gap_analysis_score == null || user?.gap_analysis_score >= 60) && (
+                    <Button onClick={() => navigate('/client/apply')} size="sm">
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <PlusCircle size={16} /> New Application
+                      </div>
+                    </Button>
+                  )}
                 </div>
                 {clientApplications.length > 0 ? (
                   <DataTable 
