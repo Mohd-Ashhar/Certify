@@ -1,9 +1,9 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
-import { Input, Select, Button } from '../../components/ui/FormElements';
+import { Input, Select, Button, Autocomplete } from '../../components/ui/FormElements';
 import { REGIONS } from '../../utils/roles';
-import { AlertCircle, CheckCircle } from 'lucide-react';
+import { AlertCircle, CheckCircle, Eye, EyeOff } from 'lucide-react';
 import './Auth.css';
 
 const ISO_STANDARDS = [
@@ -15,6 +15,19 @@ const ISO_STANDARDS = [
 
 const EMPLOYEE_RANGES = [
   '1-10', '11-50', '51-200', '201-500', '501-1000', '1000+',
+];
+
+const COUNTRY_DIAL_CODES = [
+  { code: '+971', label: 'UAE (+971)' },
+  { code: '+966', label: 'Saudi Arabia (+966)' },
+  { code: '+1', label: 'USA/Canada (+1)' },
+  { code: '+44', label: 'UK (+44)' },
+  { code: '+91', label: 'India (+91)' },
+  { code: '+61', label: 'Australia (+61)' },
+  { code: '+65', label: 'Singapore (+65)' },
+  { code: '+33', label: 'France (+33)' },
+  { code: '+49', label: 'Germany (+49)' },
+  { code: '+81', label: 'Japan (+81)' },
 ];
 
 export default function SignUp() {
@@ -32,6 +45,7 @@ export default function SignUp() {
     country: '',
     // Step 2 — Contact & Certs
     contact_person_name: '',
+    contact_code: '+971',
     contact_number: '',
     email: '',
     certification_types: [],
@@ -39,6 +53,8 @@ export default function SignUp() {
     password: '',
     confirmPassword: '',
   });
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
@@ -111,7 +127,7 @@ export default function SignUp() {
       website: formData.website,
       city: formData.city,
       country: formData.country,
-      contact_number: formData.contact_number,
+      contact_number: `${formData.contact_code} ${formData.contact_number}`,
       certification_types: formData.certification_types,
     });
 
@@ -176,12 +192,14 @@ export default function SignUp() {
               value={formData.website} onChange={handleChange} />
 
             <div className="auth-form__row">
-              <Input label="City *" id="signup-city" name="city"
-                placeholder="Dubai" value={formData.city}
+              <Autocomplete label="City *" id="signup-city" name="city"
+                placeholder="Dubai" value={formData.city} freeSolo
+                options={['Dubai', 'Abu Dhabi', 'Sharjah', 'Riyadh', 'Jeddah', 'Dammam', 'London', 'New York', 'Sydney', 'Singapore', 'Paris', 'Berlin', 'Tokyo']}
                 onChange={handleChange} required />
 
-              <Input label="Country *" id="signup-country" name="country"
-                placeholder="United Arab Emirates"
+              <Autocomplete label="Country *" id="signup-country" name="country"
+                placeholder="United Arab Emirates" freeSolo
+                options={['United Arab Emirates', 'Saudi Arabia', 'United States', 'United Kingdom', 'India', 'Australia', 'Singapore', 'France', 'Germany', 'Japan']}
                 value={formData.country} onChange={handleChange} required />
             </div>
 
@@ -202,9 +220,33 @@ export default function SignUp() {
               placeholder="you@company.com" value={formData.email}
               onChange={handleChange} required />
 
-            <Input label="Contact Number *" id="signup-phone" name="contact_number"
-              placeholder="+971 XX XXX XXXX" value={formData.contact_number}
-              onChange={handleChange} required />
+            <div className="form-group">
+              <label className="form-label" htmlFor="signup-phone">Contact Number *</label>
+              <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                <select 
+                  className="form-select" 
+                  style={{ flex: '1 1 120px', minWidth: '120px' }} 
+                  name="contact_code" 
+                  value={formData.contact_code} 
+                  onChange={handleChange}
+                >
+                  {COUNTRY_DIAL_CODES.map(c => (
+                    <option key={c.code} value={c.code}>{c.label}</option>
+                  ))}
+                </select>
+                <div style={{ flex: 1 }}>
+                  <input 
+                    className="form-input" 
+                    id="signup-phone" 
+                    name="contact_number" 
+                    placeholder="50 123 4567" 
+                    value={formData.contact_number} 
+                    onChange={handleChange} 
+                    required 
+                  />
+                </div>
+              </div>
+            </div>
 
             <div className="form-group">
               <label className="form-label">Certification Types *</label>
@@ -239,13 +281,33 @@ export default function SignUp() {
               <p><strong>Certifications:</strong> {formData.certification_types.join(', ')}</p>
             </div>
 
-            <Input label="Password *" type="password" id="signup-password" name="password"
+            <Input label="Password *" type={showPassword ? "text" : "password"} id="signup-password" name="password"
               placeholder="Min 6 characters" value={formData.password}
-              onChange={handleChange} required />
+              onChange={handleChange} required 
+              rightElement={
+                <button 
+                  type="button" 
+                  onClick={() => setShowPassword(!showPassword)}
+                  style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'inherit', display: 'flex', padding: '4px' }}
+                >
+                  {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                </button>
+              }
+            />
 
-            <Input label="Confirm Password *" type="password" id="signup-confirm" name="confirmPassword"
+            <Input label="Confirm Password *" type={showConfirmPassword ? "text" : "password"} id="signup-confirm" name="confirmPassword"
               placeholder="Re-enter password" value={formData.confirmPassword}
-              onChange={handleChange} required />
+              onChange={handleChange} required 
+              rightElement={
+                <button 
+                  type="button" 
+                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                  style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'inherit', display: 'flex', padding: '4px' }}
+                >
+                  {showConfirmPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                </button>
+              }
+            />
 
             <div className="auth-form__row">
               <Button type="button" variant="secondary" size="lg" fullWidth onClick={handleBack}>

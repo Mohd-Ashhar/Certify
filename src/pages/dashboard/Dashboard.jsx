@@ -182,7 +182,7 @@ export default function Dashboard() {
                           <div className="task-card action-required">
                             <h4>Complete Payment for {activeApp.recommended_iso || 'ISO Application'}</h4>
                             <p>Your application is ready for processing. Please complete the payment to proceed.</p>
-                            <Button onClick={() => navigate(`/client/checkout/${activeApp.id}`, { state: { price: getPriceForISO(activeApp.recommended_iso), iso: activeApp.recommended_iso } })}>Pay ${getPriceForISO(activeApp.recommended_iso)?.toLocaleString()}</Button>
+                            <Button style={{ width: '100%' }} onClick={() => navigate(`/client/checkout/${activeApp.id}`, { state: { price: getPriceForISO(activeApp.recommended_iso), iso: activeApp.recommended_iso } })}>Pay ${getPriceForISO(activeApp.recommended_iso)?.toLocaleString()}</Button>
                           </div>
                         ) : activeApp.status === 'in_review' ? (
                           <div className="task-card action-required">

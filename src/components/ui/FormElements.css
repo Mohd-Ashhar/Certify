@@ -154,5 +154,47 @@
 
 @keyframes spin {
   from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
+}
+
+/* ---- Autocomplete ---- */
+.autocomplete-dropdown {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  margin-top: 4px;
+  background: var(--color-bg-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-md);
+  max-height: 200px;
+  overflow-y: auto;
+  z-index: 50;
+  padding: 4px;
+}
+
+.autocomplete-option {
+  padding: 8px 12px;
+  cursor: pointer;
+  border-radius: var(--radius-sm);
+  font-size: var(--font-size-sm);
+  color: var(--color-text-primary);
+  transition: background var(--transition-fast);
+}
+
+.autocomplete-option:hover {
+  background: var(--color-bg-primary);
+}
+
+.autocomplete-option--selected {
+  background: var(--color-accent-light);
+  color: var(--color-accent);
+  font-weight: 500;
+}
+
+.autocomplete-no-opts {
+  padding: 8px 12px;
+  font-size: var(--font-size-sm);
+  color: var(--color-text-tertiary);
+  text-align: center;
 }

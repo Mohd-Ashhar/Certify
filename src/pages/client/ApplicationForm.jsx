@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
+import { CheckCircle2 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { supabase } from '../../lib/supabase';
 import { Input, Select, Textarea, Button } from '../../components/ui/FormElements';
@@ -104,38 +105,52 @@ export default function ApplicationForm() {
       <div className="application-form__container">
         <form className="application-form" onSubmit={handleSubmit}>
           {selectedPackage && (
-            <div className="application-form__package-badge" style={{ padding: '12px', background: 'var(--color-bg-primary)', border: '1px solid var(--color-accent)', borderRadius: 'var(--radius-md)', marginBottom: '20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <span style={{ fontWeight: 600, color: 'var(--color-text-primary)' }}>Selected Package:</span>
-              <span style={{ color: 'var(--color-accent)', fontWeight: 700 }}>{selectedPackage}</span>
+            <div className="alert alert-info" style={{ 
+              marginBottom: '20px', 
+              display: 'flex', 
+              gap: '8px', 
+              alignItems: 'center', 
+              background: 'rgba(59, 130, 246, 0.1)', 
+              color: 'var(--color-accent)', 
+              padding: '12px 16px', 
+              borderRadius: 'var(--radius-md)',
+              border: '1px solid rgba(59, 130, 246, 0.2)'
+            }}>
+              <CheckCircle2 size={18}/> 
+              <span>You are applying for the <strong style={{ fontWeight: 700 }}>{selectedPackage}</strong> package.</span>
             </div>
           )}
           {error && <div className="application-form__error">{error}</div>}
           
-          {!user?.company_name && (
-            <Input
-              id="companyName"
-              label="Company Name"
-              placeholder="Enter your company name"
-              value={formData.companyName}
-              onChange={handleChange}
-              required
-              disabled={loading}
-            />
-          )}
+          <div className="application-form__row">
+            {!user?.company_name && (
+              <Input
+                id="companyName"
+                label="Company Name"
+                placeholder="Enter your company name"
+                value={formData.companyName}
+                onChange={handleChange}
+                required
+                disabled={loading}
+              />
+            )}
 
-          <Select
-            id="industry"
-            label="Industry"
-            value={formData.industry}
-            onChange={handleChange}
-            required
-            disabled={loading}
-          >
-            <option value="" disabled>Select your industry</option>
-            {INDUSTRIES.map(ind => (
-              <option key={ind} value={ind}>{ind}</option>
-            ))}
-          </Select>
+            <div style={user?.company_name ? { gridColumn: '1 / -1' } : {}}>
+              <Select
+                id="industry"
+                label="Industry"
+                value={formData.industry}
+                onChange={handleChange}
+                required
+                disabled={loading}
+              >
+                <option value="" disabled>Select your industry</option>
+                {INDUSTRIES.map(ind => (
+                  <option key={ind} value={ind}>{ind}</option>
+                ))}
+              </Select>
+            </div>
+          </div>
 
           <Textarea
             id="scope"

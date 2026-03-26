@@ -195,24 +195,31 @@
 }
 
 .stepper-item.completed .stepper-icon {
-  background: var(--color-success);
-  border-color: var(--color-success);
+  background: var(--color-accent);
+  border-color: var(--color-accent);
   color: white;
 }
 
 .stepper-item.completed .stepper-connector {
-  background: var(--color-success);
+  background: var(--color-accent);
+}
+
+@keyframes pulseActive {
+  0% { box-shadow: 0 0 0 0 rgba(37, 99, 235, 0.4); }
+  70% { box-shadow: 0 0 0 15px rgba(37, 99, 235, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(37, 99, 235, 0); }
 }
 
 .stepper-item.active .stepper-icon {
   border-color: var(--color-accent);
   color: var(--color-accent);
-  box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.1);
+  animation: pulseActive 2s infinite;
+  background: var(--color-bg-surface);
 }
 
 .stepper-item.active .stepper-label {
-  color: var(--color-text-primary);
-  font-weight: 600;
+  color: var(--color-accent);
+  font-weight: 700;
 }
 
 .section-subtitle-container {

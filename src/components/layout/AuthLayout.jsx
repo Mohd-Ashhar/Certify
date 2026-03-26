@@ -1,11 +1,14 @@
-import { Outlet } from 'react-router-dom';
+import { Outlet, useLocation } from 'react-router-dom';
 import { Shield } from 'lucide-react';
 import './AuthLayout.css';
 
 export default function AuthLayout() {
+  const location = useLocation();
+  const isWide = location.pathname === '/signup' || location.pathname === '/client/apply';
+
   return (
     <div className="auth-layout">
-      <div className="auth-layout__container">
+      <div className={`auth-layout__container ${isWide ? 'auth-layout__container--wide' : ''}`}>
         <div className="auth-layout__logo">
           <div className="auth-layout__logo-icon">
             <Shield size={28} />

@@ -127,7 +127,7 @@ export default function GapAnalysis() {
                     style={{ width: '100%' }}
                     onClick={() => handleSelectPackage(pkg)}
                   >
-                    Select Package
+                    Select {pkg.id === 'FREE' ? 'Basic' : pkg.id === 'POPULAR' ? 'Popular' : 'Bundle'}
                   </Button>
                 </div>
               </div>
@@ -161,7 +161,7 @@ export default function GapAnalysis() {
           <h3 className="gap-analysis__question">{QUESTIONS[currentIdx]}</h3>
           <div className="gap-analysis__options">
             <button 
-              className={`gap-analysis__option ${answers[currentIdx] === true ? 'selected' : ''}`}
+              className={`gap-analysis__option ${answers[currentIdx] === true ? 'selected-yes' : ''}`}
               onClick={() => handleAnswer(true)}
             >
               <div className="gap-analysis__option-radio">
@@ -170,7 +170,7 @@ export default function GapAnalysis() {
               Yes
             </button>
             <button 
-              className={`gap-analysis__option ${answers[currentIdx] === false ? 'selected' : ''}`}
+              className={`gap-analysis__option ${answers[currentIdx] === false ? 'selected-no' : ''}`}
               onClick={() => handleAnswer(false)}
             >
               <div className="gap-analysis__option-radio">

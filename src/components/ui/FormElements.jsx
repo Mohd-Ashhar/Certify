@@ -1,11 +1,24 @@
 import { Loader2 } from 'lucide-react';
 import './FormElements.css';
+export { Autocomplete } from './Autocomplete';
 
-export function Input({ label, error, id, ...props }) {
+export function Input({ label, error, id, rightElement, ...props }) {
   return (
     <div className="form-group">
       {label && <label className="form-label" htmlFor={id}>{label}</label>}
-      <input className={`form-input ${error ? 'form-input--error' : ''}`} id={id} {...props} />
+      <div style={{ position: 'relative' }}>
+        <input 
+          className={`form-input ${error ? 'form-input--error' : ''}`} 
+          style={rightElement ? { paddingRight: '40px' } : {}}
+          id={id} 
+          {...props} 
+        />
+        {rightElement && (
+          <div style={{ position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)', display: 'flex', alignItems: 'center', color: 'var(--color-text-tertiary)' }}>
+            {rightElement}
+          </div>
+        )}
+      </div>
       {error && <span className="form-error">{error}</span>}
     </div>
   );

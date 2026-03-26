@@ -40,24 +40,18 @@ const ISO_STANDARDS = [
 const STEPS = [
   {
     step: '01',
-    title: 'Register Your Company',
-    desc: 'Create an account and provide your company details to get started.',
-    icon: Building2,
-  },
-  {
-    step: '02',
-    title: 'Select ISO Standard',
-    desc: 'Choose the certification type that fits your business needs.',
+    title: 'Apply & Select Standard',
+    desc: 'Create an account and choose the certification type that fits your needs.',
     icon: FileCheck2,
   },
   {
-    step: '03',
+    step: '02',
     title: 'Auditor Assignment',
     desc: 'An IAF-accredited auditor is assigned to evaluate your processes.',
     icon: Users,
   },
   {
-    step: '04',
+    step: '03',
     title: 'Receive Certification',
     desc: 'After a successful audit, receive your internationally recognized certificate.',
     icon: Award,

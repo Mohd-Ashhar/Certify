@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { Input, Button } from '../../components/ui/FormElements';
-import { AlertCircle } from 'lucide-react';
+import { AlertCircle, Eye, EyeOff } from 'lucide-react';
 import './Auth.css';
 
 export default function Login() {
@@ -10,6 +10,7 @@ export default function Login() {
   const navigate = useNavigate();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
@@ -57,12 +58,22 @@ export default function Login() {
 
         <Input
           label="Password"
-          type="password"
+          type={showPassword ? 'text' : 'password'}
           id="login-password"
           placeholder="••••••••"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           required
+          rightElement={
+            <button 
+              type="button" 
+              onClick={() => setShowPassword(!showPassword)}
+              style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'inherit', display: 'flex', padding: '4px' }}
+              title={showPassword ? "Hide password" : "Show password"}
+            >
+              {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+            </button>
+          }
         />
 
         <div className="auth-form__actions">
