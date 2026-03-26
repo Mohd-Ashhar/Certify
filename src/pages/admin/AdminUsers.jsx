@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { Input, Select, Button } from '../../components/ui/FormElements';
 import Modal from '../../components/ui/Modal';
@@ -9,117 +9,76 @@ import { supabase } from '../../lib/supabase';
 import { UserPlus, AlertCircle, CheckCircle, Shield } from 'lucide-react';
 import './AdminUsers.css';
 
-
-
 export default function AdminUsers() {
   const { user } = useAuth();
-  const [showModal, setShowModal] = useState(false);
-  const allowedRoles = getCreatableRoles(user?.role);
-  const isRegionalAdmin = user?.role === ROLES.REGIONAL_ADMIN;
-
-  const [formData, setFormData] = useState({
-    name: '',
-    email: '',
-    role: '',
-    region: isRegionalAdmin ? (user?.region || '') : '',
-    password: '',
-  });
+  const [editingUser, setEditingUser] = useState(null);
+  const [newRole, setNewRole] = useState('');
+  const [showEditModal, setShowEditModal] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [createdUsers, setCreatedUsers] = useState([]);
+  const [fetchingUsers, setFetchingUsers] = useState(false);
 
-  const handleChange = (e) => {
-    setFormData(prev => ({ ...prev, [e.target.name]: e.target.value }));
-  };
+  useEffect(() => {
+    const fetchUsers = async () => {
+      setFetchingUsers(true);
+      const { data } = await supabase.from('profiles').select('*').order('created_at', { ascending: false });
+      if (data) setCreatedUsers(data);
+      setFetchingUsers(false);
+    };
+    fetchUsers();
+  }, []);
 
-  const resetForm = () => {
-    setFormData({ 
-      name: '', 
-      email: '', 
-      role: '', 
-      region: isRegionalAdmin ? (user?.region || '') : '', 
-      password: '' 
-    });
-    setError('');
-    setSuccess('');
-  };
-
-  const handleCreateUser = async (e) => {
+  const handleUpdateRole = async (e) => {
     e.preventDefault();
     setError('');
     setSuccess('');
-
-    if (!formData.name || !formData.email || !formData.role || !formData.password) {
-      setError('Please fill in all required fields');
-      return;
-    }
-
-    if (formData.password.length < 6) {
-      setError('Password must be at least 6 characters');
-      return;
-    }
-
-    if (!allowedRoles.includes(formData.role)) {
-      setError('You do not have permission to create this role');
+    
+    if (!allowedRoles.includes(newRole)) {
+      setError('You do not have permission to assign this role');
       return;
     }
 
     setLoading(true);
-
+    
     try {
-      // Use Supabase Auth admin API via service role or signUp endpoint
-      // Since we're using the anon key, we use signUp (user won't be auto-logged-in
-      // because we're creating for someone else)
-      const { data, error: signUpError } = await supabase.auth.signUp({
-        email: formData.email,
-        password: formData.password,
-        options: {
-          data: {
-            name: formData.name,
-            role: formData.role,
-            region: formData.region || null,
-          },
-        },
-      });
+      const { data, error: updateError } = await supabase
+        .from('profiles')
+        .update({ role: newRole })
+        .eq('id', editingUser.id)
+        .select();
 
-      if (signUpError) {
-        setError(signUpError.message);
-        setLoading(false);
-        return;
+      if (updateError) throw updateError;
+
+      if (data) {
+        setSuccess(`Updated role for ${editingUser.full_name} to ${ROLE_LABELS[newRole]}`);
+        setCreatedUsers(prev => prev.map(u => u.id === editingUser.id ? { ...u, role: newRole } : u));
+        setShowEditModal(false);
       }
-
-      // Track the created user locally
-      const newUser = {
-        id: data.user?.id || Date.now().toString(),
-        name: formData.name,
-        email: formData.email,
-        role: formData.role,
-        region: formData.region || '—',
-        created_at: new Date().toISOString(),
-      };
-      setCreatedUsers(prev => [newUser, ...prev]);
-      setSuccess(`User "${formData.name}" (${ROLE_LABELS[formData.role]}) created successfully`);
-      resetForm();
     } catch (err) {
       setError(err.message || 'An error occurred');
     }
-
     setLoading(false);
   };
 
   const columns = [
-    { key: 'name', label: 'Name' },
+    { key: 'full_name', label: 'Name' },
     { key: 'email', label: 'Email' },
+    { key: 'role', label: 'Role', render: (val) => <StatusBadge status={val} label={ROLE_LABELS[val] || val} /> },
+    { key: 'status', label: 'Status', render: (val) => <StatusBadge status={val} /> },
+    { key: 'created_at', label: 'Joined', render: (val) => new Date(val).toLocaleDateString() },
     {
-      key: 'role', label: 'Role',
-      render: (val) => <StatusBadge status={val} label={ROLE_LABELS[val] || val} />
-    },
-    { key: 'region', label: 'Region', render: (val) => val || '—' },
-    {
-      key: 'created_at', label: 'Created',
-      render: (val) => new Date(val).toLocaleDateString()
-    },
+      key: 'actions', label: 'Action', render: (_, userRow) => (
+        <Button size="sm" variant="ghost" onClick={() => {
+          setEditingUser(userRow);
+          setNewRole(userRow.role);
+          setShowEditModal(true);
+        }}>
+          Edit Role
+        </Button>
+      )
+    }
   ];
 
   return (
@@ -129,8 +88,8 @@ export default function AdminUsers() {
           <h1 className="page-title">User Management</h1>
           <p className="page-subtitle">Create and manage platform users</p>
         </div>
-        <Button variant="primary" size="md" onClick={() => { resetForm(); setShowModal(true); }}>
-          <UserPlus size={18} /> Create User
+        <Button variant="primary" size="md" onClick={() => alert('To add users, have them register via the Sign Up page first, then update their role here.')}>
+          <UserPlus size={18} /> Invite User
         </Button>
       </div>
 
@@ -149,20 +108,24 @@ export default function AdminUsers() {
         </div>
       )}
 
-      {/* Recently Created Users */}
-      <DataTable
-        columns={columns}
-        data={createdUsers}
-        emptyMessage="No users created in this session. Click 'Create User' to add new users."
-      />
+      {/* Users Table */}
+      {fetchingUsers ? (
+        <p>Loading users...</p>
+      ) : (
+        <DataTable
+          columns={columns}
+          data={createdUsers}
+          emptyMessage="No users found."
+        />
+      )}
 
-      {/* Create User Modal */}
+      {/* Edit Role Modal */}
       <Modal
-        isOpen={showModal}
-        onClose={() => setShowModal(false)}
-        title="Create New User"
+        isOpen={showEditModal}
+        onClose={() => setShowEditModal(false)}
+        title="Edit User Role"
       >
-        <form onSubmit={handleCreateUser} className="admin-users__form">
+        <form onSubmit={handleUpdateRole} className="admin-users__form">
           {error && (
             <div className="auth-form__error">
               <AlertCircle size={16} />
@@ -170,33 +133,16 @@ export default function AdminUsers() {
             </div>
           )}
 
-          <Input
-            label="Full Name *"
-            id="create-user-name"
-            name="name"
-            placeholder="John Doe"
-            value={formData.name}
-            onChange={handleChange}
-            required
-          />
-
-          <Input
-            label="Email *"
-            type="email"
-            id="create-user-email"
-            name="email"
-            placeholder="user@certifycx.com"
-            value={formData.email}
-            onChange={handleChange}
-            required
-          />
+          <p style={{ marginBottom: '16px', color: 'var(--color-text-secondary)' }}>
+            Updating role for <strong>{editingUser?.full_name}</strong> ({editingUser?.email})
+          </p>
 
           <Select
-            label="Role *"
-            id="create-user-role"
+            label="New Role *"
+            id="update-user-role"
             name="role"
-            value={formData.role}
-            onChange={handleChange}
+            value={newRole}
+            onChange={(e) => setNewRole(e.target.value)}
             required
           >
             <option value="">Select a role</option>
@@ -205,37 +151,12 @@ export default function AdminUsers() {
             ))}
           </Select>
 
-          <Select
-            label={`Region ${isRegionalAdmin ? '(Locked to your region)' : ''}`}
-            id="create-user-region"
-            name="region"
-            value={formData.region}
-            onChange={handleChange}
-            disabled={isRegionalAdmin}
-          >
-            <option value="">No specific region</option>
-            {REGIONS.map(r => (
-              <option key={r.id} value={r.id}>{r.emoji} {r.label}</option>
-            ))}
-          </Select>
-
-          <Input
-            label="Password *"
-            type="password"
-            id="create-user-password"
-            name="password"
-            placeholder="Min 6 characters"
-            value={formData.password}
-            onChange={handleChange}
-            required
-          />
-
           <div className="admin-users__form-actions">
-            <Button type="button" variant="ghost" size="md" onClick={() => setShowModal(false)}>
+            <Button type="button" variant="ghost" size="md" onClick={() => setShowEditModal(false)}>
               Cancel
             </Button>
             <Button type="submit" variant="primary" size="md" loading={loading}>
-              Create User
+              Update Role
             </Button>
           </div>
         </form>

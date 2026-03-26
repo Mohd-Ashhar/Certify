@@ -84,7 +84,7 @@ function AppRoutes() {
               </ProtectedRoute>
             } />
             <Route path="/client/apply" element={
-              <ProtectedRoute allowedRoles={[ROLES.CLIENT]}>
+              <ProtectedRoute allowedRoles={[ROLES.CLIENT, ROLES.SUPER_ADMIN, ROLES.REGIONAL_ADMIN]}>
                 <ApplicationForm />
               </ProtectedRoute>
             } />

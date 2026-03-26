@@ -1,9 +1,9 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import DataTable from '../../components/ui/DataTable';
 import StatusBadge from '../../components/ui/StatusBadge';
-import { Button, Select } from '../../components/ui/FormElements';
-import { mockAuditors } from '../../utils/mockData';
-import { REGIONS, ROLES } from '../../utils/roles';
+import Modal from '../../components/ui/Modal';
+import { Button, Input } from '../../components/ui/FormElements';
+import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
 import { hasPermission, PERMISSIONS } from '../../utils/roles';
 import { Plus, Search } from 'lucide-react';
@@ -11,49 +11,86 @@ import { Plus, Search } from 'lucide-react';
 export default function Auditors() {
   const { user, loading } = useAuth();
   const [search, setSearch] = useState('');
-  const [regionFilter, setRegionFilter] = useState('all');
+  const [auditors, setAuditors] = useState([]);
+  const [fetching, setFetching] = useState(false);
+  const [certificationBodies, setCertificationBodies] = useState([]);
+  const [showCBModal, setShowCBModal] = useState(false);
+  const [editingAuditor, setEditingAuditor] = useState(null);
+  const [selectedCbId, setSelectedCbId] = useState('');
+  const [assigning, setAssigning] = useState(false);
+
+  const fetchAuditors = async () => {
+    setFetching(true);
+    const { data } = await supabase
+      .from('profiles')
+      .select('*, certification_bodies(name)')
+      .eq('role', 'auditor')
+      .order('created_at', { ascending: false });
+    if (data) {
+      const flattened = data.map(item => ({
+        ...item,
+        cb_name: item.certification_bodies?.name || 'Unassigned'
+      }));
+      setAuditors(flattened);
+    }
+    setFetching(false);
+  };
+
+  const fetchCBs = async () => {
+    const { data } = await supabase.from('certification_bodies').select('id, name').order('name');
+    if (data) setCertificationBodies(data);
+  };
+
+  useEffect(() => {
+    if (!user) return;
+    fetchAuditors();
+    fetchCBs();
+  }, [user]);
 
   if (!user || loading) return <div className="page-container"><p>Loading dashboard...</p></div>;
 
   const canManage = hasPermission(user?.role, PERMISSIONS.MANAGE_AUDITORS);
-  const isRegionalAdmin = user?.role === ROLES.REGIONAL_ADMIN;
 
-  const filtered = mockAuditors.filter(a => {
-    // 1. Role-based region filter
-    if (isRegionalAdmin && a.region !== user.region) return false;
+  const handleAssignCB = async (e) => {
+    e.preventDefault();
+    setAssigning(true);
+    const { error } = await supabase
+      .from('profiles')
+      .update({ cb_id: selectedCbId || null })
+      .eq('id', editingAuditor.id);
+      
+    if (error) {
+       console.error('Update error:', error);
+       alert('Failed to assign CB: ' + error.message);
+    } else {
+       await fetchAuditors();
+       setShowCBModal(false);
+    }
+    setAssigning(false);
+  };
 
-    // 2. User-selected region filter
-    const matchesRegion = regionFilter === 'all' || a.region === regionFilter;
-    
-    // 3. Search filter
-    const matchesSearch = a.name.toLowerCase().includes(search.toLowerCase()) ||
-                          a.email.toLowerCase().includes(search.toLowerCase());
-                          
-    return matchesSearch && matchesRegion;
+  const filtered = auditors.filter(a => {
+    const matchesSearch = (a.full_name?.toLowerCase() || '').includes(search.toLowerCase()) ||
+                          (a.email?.toLowerCase() || '').includes(search.toLowerCase());
+    return matchesSearch;
   });
 
   const columns = [
-    { key: 'name', label: 'Name', render: (val) => (
-      <span style={{ fontWeight: 500, color: 'var(--color-text-primary)' }}>{val}</span>
-    )},
-    { key: 'email', label: 'Email', render: (val) => (
-      <span style={{ color: 'var(--color-text-secondary)' }}>{val}</span>
-    )},
-    { key: 'region', label: 'Region', render: (val) => {
-      const region = REGIONS.find(r => r.id === val);
-      return region ? (
-        <span className="companies__cert-tag" style={{ background: 'var(--color-accent-light)', color: 'var(--color-accent)' }}>
-          {region.emoji} {region.label}
-        </span>
-      ) : val;
-    }},
-    { key: 'specialization', label: 'Specialization', render: (val) => (
-      <span style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-text-secondary)' }}>{val}</span>
-    )},
-    { key: 'certifications', label: 'Assignments', render: (val) => (
-      <span style={{ fontWeight: 600 }}>{val}</span>
-    )},
+    { key: 'full_name', label: 'Name' },
+    { key: 'email', label: 'Email' },
+    { key: 'cb_name', label: 'Certification Body' },
     { key: 'status', label: 'Status', render: (val) => <StatusBadge status={val} /> },
+    {
+      key: 'actions', label: 'Action', render: (_, row) => (
+        <Button size="sm" variant="ghost" onClick={() => {
+          setEditingAuditor(row);
+          setSelectedCbId(row.cb_id || '');
+          setShowCBModal(true);
+        }}>
+          Assign CB
+        </Button>
+      )
+    }
   ];
 
   return (
@@ -64,8 +101,8 @@ export default function Auditors() {
           <p className="page-subtitle">{filtered.length} auditors registered</p>
         </div>
         {canManage && (
-          <Button variant="primary" size="md">
-            <Plus size={16} /> Add Auditor
+          <Button variant="primary" size="md" onClick={() => alert('To add auditors, have them register via the Sign Up page first, then update their role to Auditor in User Management.')}>
+            <Plus size={16} /> Invite Auditor
           </Button>
         )}
       </div>
@@ -81,25 +118,41 @@ export default function Auditors() {
             className="companies__search-input"
           />
         </div>
-        {!isRegionalAdmin && (
-          <Select
-            id="auditor-region-filter"
-            value={regionFilter}
-            onChange={(e) => setRegionFilter(e.target.value)}
-          >
-            <option value="all">All Regions</option>
-            {REGIONS.map(r => (
-              <option key={r.id} value={r.id}>{r.emoji} {r.label}</option>
-            ))}
-          </Select>
-        )}
       </div>
 
-      <DataTable
-        columns={columns}
-        data={filtered}
-        emptyMessage="No auditors found"
-      />
+      {fetching ? (
+        <p>Loading auditors...</p>
+      ) : (
+        <DataTable
+          columns={columns}
+          data={filtered}
+          emptyMessage="No auditors found"
+        />
+      )}
+
+      {/* Assign CB Modal */}
+      <Modal isOpen={showCBModal} onClose={() => setShowCBModal(false)} title="Assign Certification Body">
+        <form onSubmit={handleAssignCB} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+          <p style={{ color: 'var(--color-text-secondary)', marginBottom: '8px' }}>
+            Assigning CB to <strong>{editingAuditor?.full_name}</strong>
+          </p>
+          <Select
+            label="Certification Body"
+            id="assign-cb-select"
+            value={selectedCbId}
+            onChange={(e) => setSelectedCbId(e.target.value)}
+          >
+            <option value="">Unassigned (Independent)</option>
+            {certificationBodies.map(cb => (
+              <option key={cb.id} value={cb.id}>{cb.name}</option>
+            ))}
+          </Select>
+          <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end', marginTop: '8px' }}>
+            <Button type="button" variant="ghost" onClick={() => setShowCBModal(false)}>Cancel</Button>
+            <Button type="submit" variant="primary" loading={assigning}>Assign CB</Button>
+          </div>
+        </form>
+      </Modal>
     </div>
   );
 }

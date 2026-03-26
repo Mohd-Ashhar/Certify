@@ -1,8 +1,9 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import DataTable from '../../components/ui/DataTable';
 import StatusBadge from '../../components/ui/StatusBadge';
-import { Button, Select } from '../../components/ui/FormElements';
-import { mockCertificationBodies } from '../../utils/mockData';
+import Modal from '../../components/ui/Modal';
+import { Button, Input } from '../../components/ui/FormElements';
+import { supabase } from '../../lib/supabase';
 import { REGIONS, ROLES } from '../../utils/roles';
 import { useAuth } from '../../contexts/AuthContext';
 import { hasPermission, PERMISSIONS } from '../../utils/roles';
@@ -11,44 +12,62 @@ import { Plus, Search } from 'lucide-react';
 export default function CertificationBodies() {
   const { user, loading } = useAuth();
   const [search, setSearch] = useState('');
-  const [regionFilter, setRegionFilter] = useState('all');
+  const [bodies, setBodies] = useState([]);
+  const [fetching, setFetching] = useState(false);
+  const [showModal, setShowModal] = useState(false);
+  const [formData, setFormData] = useState({ name: '', country: '', website: '' });
+  const [adding, setAdding] = useState(false);
 
   if (!user || loading) return <div className="page-container"><p>Loading dashboard...</p></div>;
 
+  const fetchBodies = async () => {
+    setFetching(true);
+    const { data } = await supabase.from('certification_bodies').select('*').order('created_at', { ascending: false });
+    if (data) setBodies(data);
+    setFetching(false);
+  };
+
+  useEffect(() => { fetchBodies(); }, []);
+
+  const handleAddBody = async (e) => {
+    e.preventDefault();
+    setAdding(true);
+    const newBody = {
+      name: formData.name,
+      country: formData.country,
+      website: formData.website,
+      status: 'active'
+    };
+    
+    const { data, error } = await supabase.from('certification_bodies').insert([newBody]).select();
+    
+    if (error) {
+      console.error('Insert error:', error);
+      alert('Failed to add Certification Body: ' + error.message);
+    } else if (data) {
+      setBodies(prev => [data[0], ...prev]);
+    }
+    
+    setAdding(false);
+    setShowModal(false);
+    setFormData({ name: '', country: '', website: '' });
+  };
+
   const canManage = hasPermission(user?.role, PERMISSIONS.MANAGE_BODIES);
-  const isRegionalAdmin = user?.role === ROLES.REGIONAL_ADMIN;
 
-  const filtered = mockCertificationBodies.filter(b => {
-    // 1. Role-based region filter
-    if (isRegionalAdmin && b.region !== user.region) return false;
-
-    // 2. User-selected region filter
-    const matchesRegion = regionFilter === 'all' || b.region === regionFilter;
-    
-    // 3. Search filter
-    const matchesSearch = b.name.toLowerCase().includes(search.toLowerCase());
-    
-    return matchesSearch && matchesRegion;
+  const filtered = bodies.filter(b => {
+    const matchesSearch = (b.name?.toLowerCase() || '').includes(search.toLowerCase());
+    return matchesSearch;
   });
 
   const columns = [
     { key: 'name', label: 'Body Name', render: (val) => (
-      <span style={{ fontWeight: 500, color: 'var(--color-text-primary)' }}>{val}</span>
+      <span style={{ fontWeight: 500, color: 'var(--color-text-primary)' }}>{val || '—'}</span>
     )},
-    { key: 'region', label: 'Region', render: (val) => {
-      const region = REGIONS.find(r => r.id === val);
-      return region ? (
-        <span className="companies__cert-tag" style={{ background: 'var(--color-accent-light)', color: 'var(--color-accent)' }}>
-          {region.emoji} {region.label}
-        </span>
-      ) : val;
-    }},
-    { key: 'accreditation', label: 'Accreditation', render: (val) => (
-      <span style={{ fontWeight: 500, color: 'var(--color-info)' }}>{val}</span>
+    { key: 'country', label: 'Country', render: (val) => (
+      <span style={{ fontWeight: 500, color: 'var(--color-info)' }}>{val || '—'}</span>
     )},
-    { key: 'activeCertifications', label: 'Active Certs', render: (val) => (
-      <span style={{ fontWeight: 600 }}>{val}</span>
-    )},
+    { key: 'website', label: 'Website', render: (val) => val || '—' },
     { key: 'status', label: 'Status', render: (val) => <StatusBadge status={val} /> },
   ];
 
@@ -60,7 +79,7 @@ export default function CertificationBodies() {
           <p className="page-subtitle">{filtered.length} certification bodies registered</p>
         </div>
         {canManage && (
-          <Button variant="primary" size="md">
+          <Button variant="primary" size="md" onClick={() => setShowModal(true)}>
             <Plus size={16} /> Add Body
           </Button>
         )}
@@ -77,25 +96,31 @@ export default function CertificationBodies() {
             className="companies__search-input"
           />
         </div>
-        {!isRegionalAdmin && (
-          <Select
-            id="body-region-filter"
-            value={regionFilter}
-            onChange={(e) => setRegionFilter(e.target.value)}
-          >
-            <option value="all">All Regions</option>
-            {REGIONS.map(r => (
-              <option key={r.id} value={r.id}>{r.emoji} {r.label}</option>
-            ))}
-          </Select>
-        )}
       </div>
 
-      <DataTable
-        columns={columns}
-        data={filtered}
-        emptyMessage="No certification bodies found"
-      />
+      {fetching ? (
+        <p>Loading certification bodies...</p>
+      ) : (
+        <DataTable
+          columns={columns}
+          data={filtered}
+          emptyMessage="No certification bodies found"
+        />
+      )}
+
+      {/* Create Body Modal */}
+      <Modal isOpen={showModal} onClose={() => setShowModal(false)} title="Add Certification Body">
+        <form onSubmit={handleAddBody} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+          <Input label="Body Name *" name="name" value={formData.name} onChange={e => setFormData({ ...formData, name: e.target.value })} required />
+          <Input label="Country *" name="country" value={formData.country} onChange={e => setFormData({ ...formData, country: e.target.value })} required />
+          <Input label="Website" name="website" type="url" placeholder="https://..." value={formData.website} onChange={e => setFormData({ ...formData, website: e.target.value })} />
+          
+          <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end', marginTop: '8px' }}>
+            <Button type="button" variant="ghost" onClick={() => setShowModal(false)}>Cancel</Button>
+            <Button type="submit" variant="primary" loading={adding}>Add Body</Button>
+          </div>
+        </form>
+      </Modal>
     </div>
   );
 }

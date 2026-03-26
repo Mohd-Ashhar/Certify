@@ -1,9 +1,9 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import DataTable from '../../components/ui/DataTable';
 import StatusBadge from '../../components/ui/StatusBadge';
-import { Button, Input, Select } from '../../components/ui/FormElements';
-import { mockCompanies } from '../../utils/mockData';
-import { REGIONS, ROLES } from '../../utils/roles';
+import { Button } from '../../components/ui/FormElements';
+import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
 import { hasPermission, PERMISSIONS } from '../../utils/roles';
 import { Plus, Search } from 'lucide-react';
@@ -11,46 +11,43 @@ import './Companies.css';
 
 export default function Companies() {
   const { user, loading } = useAuth();
+  const navigate = useNavigate();
   const [search, setSearch] = useState('');
-  const [regionFilter, setRegionFilter] = useState('all');
+  const [companies, setCompanies] = useState([]);
+  const [fetching, setFetching] = useState(false);
+
+  useEffect(() => {
+    if (!user) return;
+    const fetchCompanies = async () => {
+      setFetching(true);
+      const { data } = await supabase
+        .from('applications')
+        .select('*')
+        .order('created_at', { ascending: false });
+      if (data) setCompanies(data);
+      setFetching(false);
+    };
+    fetchCompanies();
+  }, [user]);
 
   if (!user || loading) return <div className="page-container"><p>Loading dashboard...</p></div>;
 
   const canManage = hasPermission(user?.role, PERMISSIONS.MANAGE_COMPANIES);
-  const isRegionalAdmin = user?.role === ROLES.REGIONAL_ADMIN;
 
-  const filtered = mockCompanies.filter(c => {
-    // 1. Role-based region filter (Regional Admin only sees their region)
-    if (isRegionalAdmin && c.region !== user.region) return false;
-
-    // 2. User-selected region filter
-    const matchesRegion = regionFilter === 'all' || c.region === regionFilter;
-    
-    // 3. Search text
-    const matchesSearch = c.name.toLowerCase().includes(search.toLowerCase()) ||
-                          c.contact.toLowerCase().includes(search.toLowerCase());
-                          
-    return matchesSearch && matchesRegion;
+  const filtered = companies.filter(c => {
+    const matchesSearch =
+      (c.company_name?.toLowerCase() || '').includes(search.toLowerCase()) ||
+      (c.industry?.toLowerCase() || '').includes(search.toLowerCase());
+    return matchesSearch;
   });
 
   const columns = [
-    { key: 'name', label: 'Company Name', render: (val) => (
-      <span style={{ fontWeight: 500, color: 'var(--color-text-primary)' }}>{val}</span>
-    )},
-    { key: 'region', label: 'Region', render: (val) => {
-      const region = REGIONS.find(r => r.id === val);
-      return region ? <span>{region.emoji} {region.label}</span> : val;
-    }},
-    { key: 'certifications', label: 'Certifications', render: (val) => (
-      <div className="companies__certs">
-        {val.map(c => <span key={c} className="companies__cert-tag">{c}</span>)}
-      </div>
-    )},
-    { key: 'employees', label: 'Employees' },
+    { key: 'company_name', label: 'Company' },
+    { key: 'industry', label: 'Industry' },
+    { key: 'employee_count', label: 'Employees', render: (val) => val || 0 },
+    { key: 'locations_count', label: 'Locations', render: (val) => val || 0 },
     { key: 'status', label: 'Status', render: (val) => <StatusBadge status={val} /> },
-    { key: 'contact', label: 'Contact', render: (val) => (
-      <span style={{ color: 'var(--color-text-secondary)' }}>{val}</span>
-    )},
+    { key: 'created_at', label: 'Date', render: (val) => new Date(val).toLocaleDateString() },
   ];
 
   return (
@@ -61,8 +58,8 @@ export default function Companies() {
           <p className="page-subtitle">{filtered.length} companies registered</p>
         </div>
         {canManage && (
-          <Button variant="primary" size="md">
-            <Plus size={16} /> Add Company
+          <Button variant="primary" size="md" onClick={() => navigate('/client/apply')}>
+            <Plus size={16} /> New Application
           </Button>
         )}
       </div>
@@ -78,25 +75,17 @@ export default function Companies() {
             className="companies__search-input"
           />
         </div>
-        {!isRegionalAdmin && (
-          <Select
-            id="region-filter"
-            value={regionFilter}
-            onChange={(e) => setRegionFilter(e.target.value)}
-          >
-            <option value="all">All Regions</option>
-            {REGIONS.map(r => (
-              <option key={r.id} value={r.id}>{r.emoji} {r.label}</option>
-            ))}
-          </Select>
-        )}
       </div>
 
-      <DataTable
-        columns={columns}
-        data={filtered}
-        emptyMessage="No companies found"
-      />
+      {fetching ? (
+        <p>Loading companies...</p>
+      ) : (
+        <DataTable
+          columns={columns}
+          data={filtered}
+          emptyMessage="No companies found"
+        />
+      )}
     </div>
   );
 }
