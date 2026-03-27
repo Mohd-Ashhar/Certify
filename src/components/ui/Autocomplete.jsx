@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { ChevronDown, Search } from 'lucide-react';
+import { ChevronDown, Loader2 } from 'lucide-react';
 import './FormElements.css';
 
 export function Autocomplete({ 
@@ -11,25 +11,31 @@ export function Autocomplete({
   onChange, 
   placeholder = 'Select option...', 
   required = false,
-  freeSolo = false 
+  freeSolo = false,
+  fetchOptions
 }) {
   const [isOpen, setIsOpen] = useState(false);
   const [inputValue, setInputValue] = useState(value);
+  const [internalOptions, setInternalOptions] = useState(options);
+  const [isLoading, setIsLoading] = useState(false);
   const containerRef = useRef(null);
 
-  // Sync internal input value with external value if it changes
   useEffect(() => {
     setInputValue(value);
   }, [value]);
 
-  // Click outside listener to close the dropdown
+  useEffect(() => {
+    if (!fetchOptions) {
+      setInternalOptions(options);
+    }
+  }, [options, fetchOptions]);
+
   useEffect(() => {
     const handleClickOutside = (e) => {
       if (containerRef.current && !containerRef.current.contains(e.target)) {
         setIsOpen(false);
-        // On blur, if not freeSolo, enforce matching an option
         if (!freeSolo) {
-          const matchingOption = options.find(opt => opt.toLowerCase() === inputValue.toLowerCase());
+          const matchingOption = internalOptions.find(opt => opt.toLowerCase() === inputValue.toLowerCase());
           if (matchingOption) {
             if (onChange) onChange({ target: { name: id, value: matchingOption } });
             setInputValue(matchingOption);
@@ -41,17 +47,31 @@ export function Autocomplete({
     };
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, [inputValue, options, freeSolo, value, onChange, id]);
+  }, [inputValue, internalOptions, freeSolo, value, onChange, id]);
 
-  const filteredOptions = options.filter(opt => 
-    opt.toLowerCase().includes(inputValue.toLowerCase())
-  );
-
-  const handleInputChange = (e) => {
-    setInputValue(e.target.value);
+  const handleInputChange = async (e) => {
+    const val = e.target.value;
+    setInputValue(val);
     setIsOpen(true);
-    if (freeSolo) {
-      if (onChange) onChange({ target: { name: id, value: e.target.value } });
+    
+    if (freeSolo && onChange) {
+      onChange({ target: { name: id, value: val } });
+    }
+
+    if (fetchOptions) {
+      if (val.trim().length >= 2) {
+        setIsLoading(true);
+        try {
+          const results = await fetchOptions(val);
+          setInternalOptions(results || []);
+        } catch (err) {
+          console.error('Fetch options error:', err);
+        } finally {
+          setIsLoading(false);
+        }
+      } else {
+        setInternalOptions([]);
+      }
     }
   };
 
@@ -60,6 +80,10 @@ export function Autocomplete({
     if (onChange) onChange({ target: { name: id, value: option } });
     setIsOpen(false);
   };
+
+  const displayOptions = fetchOptions 
+    ? internalOptions 
+    : internalOptions.filter(opt => opt.toLowerCase().includes(inputValue.toLowerCase()));
 
   return (
     <div className="form-group" ref={containerRef}>
@@ -72,19 +96,25 @@ export function Autocomplete({
           placeholder={placeholder}
           value={inputValue}
           onChange={handleInputChange}
-          onClick={() => setIsOpen(true)}
-          onFocus={() => setIsOpen(true)}
+          onClick={() => {
+            setIsOpen(true);
+            if (fetchOptions && internalOptions.length === 0 && inputValue.length >= 2) {
+              handleInputChange({ target: { value: inputValue } });
+            }
+          }}
           required={required}
           autoComplete="off"
         />
-        <div style={{ position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--color-text-tertiary)', pointerEvents: 'none' }}>
-          <ChevronDown size={18} />
+        <div style={{ position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--color-text-tertiary)', pointerEvents: 'none', display: 'flex' }}>
+          {isLoading ? <Loader2 size={16} className="form-btn__spinner" /> : <ChevronDown size={18} />}
         </div>
         
         {isOpen && (
           <div className="autocomplete-dropdown">
-            {filteredOptions.length > 0 ? (
-              filteredOptions.map((opt, idx) => (
+            {isLoading ? (
+              <div className="autocomplete-no-opts">Loading...</div>
+            ) : displayOptions.length > 0 ? (
+              displayOptions.map((opt, idx) => (
                 <div 
                   key={idx} 
                   className={`autocomplete-option ${opt === value ? 'autocomplete-option--selected' : ''}`}
@@ -94,7 +124,7 @@ export function Autocomplete({
                 </div>
               ))
             ) : (
-              <div className="autocomplete-no-opts">No options found</div>
+              <div className="autocomplete-no-opts">{fetchOptions && inputValue.length < 2 ? 'Type to search...' : 'No options found'}</div>
             )}
           </div>
         )}

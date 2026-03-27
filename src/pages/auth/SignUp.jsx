@@ -30,6 +30,21 @@ const COUNTRY_DIAL_CODES = [
   { code: '+81', label: 'Japan (+81)' },
 ];
 
+const fetchGeoapifyOptions = async (text, type) => {
+  try {
+    const apiKey = import.meta.env.VITE_GEOAPIFY_API_KEY;
+    const res = await fetch(`https://api.geoapify.com/v1/geocode/autocomplete?text=${encodeURIComponent(text)}&type=${type}&apiKey=${apiKey}`);
+    const data = await res.json();
+    if (data.features) {
+      return [...new Set(data.features.map(f => f.properties.formatted))];
+    }
+    return [];
+  } catch (error) {
+    console.error('Geoapify error:', error);
+    return [];
+  }
+};
+
 export default function SignUp() {
   const { signup } = useAuth();
   const navigate = useNavigate();
@@ -41,6 +56,7 @@ export default function SignUp() {
     number_of_employees: '',
     number_of_locations: '',
     website: '',
+    location: '',
     city: '',
     country: '',
     // Step 2 — Contact & Certs
@@ -59,7 +75,28 @@ export default function SignUp() {
   const [loading, setLoading] = useState(false);
 
   const handleChange = (e) => {
-    setFormData(prev => ({ ...prev, [e.target.name]: e.target.value }));
+    const { name, value } = e.target;
+    setFormData(prev => {
+      const updates = { [name]: value };
+      
+      // Auto-fill country and extract city name if a complete location was selected
+      if (name === 'location') {
+        if (value && typeof value === 'string' && value.includes(',')) {
+          const parts = value.split(',');
+          const possibleCountry = parts[parts.length - 1].trim();
+          const possibleCity = parts[0].trim();
+          
+          if (possibleCountry) updates.country = possibleCountry;
+          if (possibleCity) updates.city = possibleCity;
+        } else {
+          // If manually typed without commas, treat the whole thing as city for now
+          updates.city = value;
+          updates.country = '';
+        }
+      }
+      
+      return { ...prev, ...updates };
+    });
   };
 
   const toggleCert = (val) => {
@@ -74,7 +111,7 @@ export default function SignUp() {
   const validateStep = () => {
     setError('');
     if (step === 1) {
-      if (!formData.company_name || !formData.activity || !formData.city || !formData.country) {
+      if (!formData.company_name || !formData.activity || !formData.location) {
         setError('Please fill in all required company fields');
         return false;
       }
@@ -191,17 +228,10 @@ export default function SignUp() {
               placeholder="https://yourcompany.com"
               value={formData.website} onChange={handleChange} />
 
-            <div className="auth-form__row">
-              <Autocomplete label="City *" id="signup-city" name="city"
-                placeholder="Dubai" value={formData.city} freeSolo
-                options={['Dubai', 'Abu Dhabi', 'Sharjah', 'Riyadh', 'Jeddah', 'Dammam', 'London', 'New York', 'Sydney', 'Singapore', 'Paris', 'Berlin', 'Tokyo']}
-                onChange={handleChange} required />
-
-              <Autocomplete label="Country *" id="signup-country" name="country"
-                placeholder="United Arab Emirates" freeSolo
-                options={['United Arab Emirates', 'Saudi Arabia', 'United States', 'United Kingdom', 'India', 'Australia', 'Singapore', 'France', 'Germany', 'Japan']}
-                value={formData.country} onChange={handleChange} required />
-            </div>
+            <Autocomplete label="Location *" id="signup-location" name="location"
+              placeholder="e.g. Dubai, United Arab Emirates" freeSolo
+              fetchOptions={(text) => fetchGeoapifyOptions(text, 'city')}
+              value={formData.location} onChange={handleChange} required />
 
             <Button type="button" variant="primary" size="lg" fullWidth onClick={handleNext}>
               Continue →

@@ -279,12 +279,17 @@
 
 /* ---- Steps ---- */
 .landing__steps {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
   gap: var(--spacing-lg);
+  max-width: 1000px;
+  margin: 0 auto;
 }
 
 .landing__step {
+  flex: 1 1 280px;
+  max-width: 320px;
   position: relative;
   text-align: center;
   padding: var(--spacing-lg);
@@ -486,8 +491,7 @@
 
 /* ---- Responsive ---- */
 @media (max-width: 1024px) {
-  .landing__standards,
-  .landing__steps {
+  .landing__standards {
     grid-template-columns: repeat(2, 1fr);
   }
 }
@@ -514,8 +518,7 @@
     width: 40px; height: 1px;
   }
   .landing__standards,
-  .landing__benefits,
-  .landing__steps {
+  .landing__benefits {
     grid-template-columns: 1fr;
   }
   .landing__section {

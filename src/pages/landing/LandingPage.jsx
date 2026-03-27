@@ -40,15 +40,15 @@ const ISO_STANDARDS = [
 const STEPS = [
   {
     step: '01',
-    title: 'Apply & Select Standard',
-    desc: 'Create an account and choose the certification type that fits your needs.',
-    icon: FileCheck2,
+    title: 'Register Your Company',
+    desc: 'Create an account and provide your company details to get started.',
+    icon: Building2,
   },
   {
     step: '02',
-    title: 'Auditor Assignment',
-    desc: 'An IAF-accredited auditor is assigned to evaluate your processes.',
-    icon: Users,
+    title: 'Select ISO Standard',
+    desc: 'Choose the certification type that fits your business needs.',
+    icon: FileCheck2,
   },
   {
     step: '03',
@@ -137,7 +137,7 @@ export default function LandingPage() {
             <span className="landing__section-tag">Process</span>
             <h2 className="landing__section-title">How Certification Works</h2>
             <p className="landing__section-desc">
-              From registration to certification in four simple steps
+              From registration to certification in three simple steps
             </p>
           </div>
           <div className="landing__steps">
