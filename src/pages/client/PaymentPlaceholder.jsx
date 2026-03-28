@@ -15,6 +15,7 @@ export default function PaymentPlaceholder() {
   const [loading, setLoading] = useState(true);
   const [processing, setProcessing] = useState(false);
   const [isMonthly, setIsMonthly] = useState(false); // Default to one-time
+  const [checkoutError, setCheckoutError] = useState(null);
 
   useEffect(() => {
     let isMounted = true;
@@ -45,6 +46,7 @@ export default function PaymentPlaceholder() {
   const handleCheckout = async () => {
     if (!application) return;
     setProcessing(true);
+    setCheckoutError(null);
     
     try {
       const isoName = application.recommended_iso || 'ISO 9001:2015 (Quality Management)';
@@ -68,18 +70,20 @@ export default function PaymentPlaceholder() {
       
       const data = await response.json();
       
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to initialize checkout');
+      }
+      
       if (data.url) {
         window.location.href = data.url;
       } else {
-        throw new Error(data.error || 'Failed to create checkout session');
+        throw new Error('Failed to create checkout session');
       }
     } catch (err) {
       console.error('Checkout error:', err);
-      alert('Error initiating checkout. Please try again.');
+      setCheckoutError(err.message);
     } finally {
-      if (isMounted) {
-         setProcessing(false);
-      }
+      setProcessing(false);
     }
   };
 
@@ -151,13 +155,16 @@ export default function PaymentPlaceholder() {
               style={{
                 textAlign: 'left',
                 padding: '20px', 
-                border: `2px solid ${!isMonthly ? 'var(--primary-color, #2563eb)' : 'var(--border-color, #e2e8f0)'}`,
+                border: !isMonthly ? '2px solid var(--primary-color, #2563eb)' : '2px solid var(--border-color, #e2e8f0)',
                 borderRadius: '12px', 
-                background: !isMonthly ? 'rgba(37,99,235,0.03)' : 'white', 
+                background: !isMonthly ? 'rgba(37,99,235,0.04)' : '#f8fafc', 
                 cursor: 'pointer',
-                transition: 'all 0.2s',
+                transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
                 position: 'relative',
-                overflow: 'hidden'
+                overflow: 'hidden',
+                opacity: !isMonthly ? 1 : 0.7,
+                transform: !isMonthly ? 'translateY(-2px)' : 'none',
+                boxShadow: !isMonthly ? '0 4px 6px -1px rgba(37, 99, 235, 0.1)' : 'none'
               }}
             >
               {!isMonthly && (
@@ -165,8 +172,8 @@ export default function PaymentPlaceholder() {
                   ✓
                 </div>
               )}
-              <h4 style={{ margin: '0 0 8px 0', fontSize: '1rem', fontWeight: !isMonthly ? 700 : 500, color: !isMonthly ? 'var(--primary-color, #2563eb)' : 'var(--text-color, #334155)' }}>Pay in Full</h4>
-              <div style={{ fontSize: '1.25rem', fontWeight: 700, color: 'var(--text-color, #0f172a)' }}>${priceOptions.oneTime}</div>
+              <h4 style={{ margin: '0 0 8px 0', fontSize: '1.05rem', fontWeight: !isMonthly ? 700 : 500, color: !isMonthly ? 'var(--primary-color, #2563eb)' : 'var(--text-light, #64748b)' }}>Pay in Full</h4>
+              <div style={{ fontSize: '1.35rem', fontWeight: 700, color: 'var(--text-color, #0f172a)' }}>${priceOptions.oneTime}</div>
               <p style={{ margin: '4px 0 0 0', fontSize: '0.8rem', color: 'var(--text-light, #64748b)' }}>One-time payment</p>
             </button>
             
@@ -175,13 +182,16 @@ export default function PaymentPlaceholder() {
               style={{
                 textAlign: 'left',
                 padding: '20px', 
-                border: `2px solid ${isMonthly ? 'var(--primary-color, #2563eb)' : 'var(--border-color, #e2e8f0)'}`,
+                border: isMonthly ? '2px solid var(--primary-color, #2563eb)' : '2px solid var(--border-color, #e2e8f0)',
                 borderRadius: '12px', 
-                background: isMonthly ? 'rgba(37,99,235,0.03)' : 'white', 
+                background: isMonthly ? 'rgba(37,99,235,0.04)' : '#f8fafc', 
                 cursor: 'pointer',
-                transition: 'all 0.2s',
+                transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
                 position: 'relative',
-                overflow: 'hidden'
+                overflow: 'hidden',
+                opacity: isMonthly ? 1 : 0.7,
+                transform: isMonthly ? 'translateY(-2px)' : 'none',
+                boxShadow: isMonthly ? '0 4px 6px -1px rgba(37, 99, 235, 0.1)' : 'none'
               }}
             >
               {isMonthly && (
@@ -189,8 +199,8 @@ export default function PaymentPlaceholder() {
                   ✓
                 </div>
               )}
-              <h4 style={{ margin: '0 0 8px 0', fontSize: '1rem', fontWeight: isMonthly ? 700 : 500, color: isMonthly ? 'var(--primary-color, #2563eb)' : 'var(--text-color, #334155)' }}>Pay Monthly</h4>
-              <div style={{ fontSize: '1.25rem', fontWeight: 700, color: 'var(--text-color, #0f172a)' }}>${priceOptions.monthly} <span style={{ fontSize: '0.875rem', fontWeight: 400, color: 'var(--text-light, #64748b)' }}>/mo</span></div>
+              <h4 style={{ margin: '0 0 8px 0', fontSize: '1.05rem', fontWeight: isMonthly ? 700 : 500, color: isMonthly ? 'var(--primary-color, #2563eb)' : 'var(--text-light, #64748b)' }}>Pay Monthly</h4>
+              <div style={{ fontSize: '1.35rem', fontWeight: 700, color: 'var(--text-color, #0f172a)' }}>${priceOptions.monthly} <span style={{ fontSize: '0.875rem', fontWeight: 400, color: 'var(--text-light, #64748b)' }}>/mo</span></div>
               <p style={{ margin: '4px 0 0 0', fontSize: '0.8rem', color: 'var(--text-light, #64748b)' }}>12 installments</p>
             </button>
 
@@ -209,6 +219,13 @@ export default function PaymentPlaceholder() {
         </div>
 
         {/* CHECKOUT ACTION */}
+        {checkoutError && (
+          <div className="alert alert-danger mb-4" style={{ padding: '12px 16px', background: '#fef2f2', color: '#991b1b', borderRadius: '8px', marginBottom: '16px', border: '1px solid #fecaca', fontSize: '0.875rem', fontWeight: 500, display: 'flex', alignItems: 'center' }}>
+            <span style={{ marginRight: '8px', fontSize: '1.25rem' }}>⚠</span>
+            {checkoutError}
+          </div>
+        )}
+        
         <Button 
           onClick={handleCheckout} 
           disabled={processing} 

@@ -19,7 +19,7 @@ export default async function handler(req, res) {
           name: `${isoName} - ${tier} Package`,
           description: isMonthly ? 'Monthly Subscription' : 'One-Time Payment',
         },
-        unit_amount: price * 100, // Stripe expects cents
+        unit_amount: Math.round(price * 100), // Stripe expects exact cents integer
       },
       quantity: 1,
     };
