@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import DataTable from '../../components/ui/DataTable';
 import StatusBadge from '../../components/ui/StatusBadge';
 import { Button, Select } from '../../components/ui/FormElements';
@@ -10,6 +11,7 @@ import './CertificationRequests.css';
 
 export default function CertificationRequests() {
   const { user, loading } = useAuth();
+  const navigate = useNavigate();
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [requests, setRequests] = useState([]);
@@ -54,6 +56,15 @@ export default function CertificationRequests() {
     { key: 'recommended_iso', label: 'ISO Standard', render: (val) => val || 'Analyzing...' },
     { key: 'status', label: 'Status', render: (val) => <StatusBadge status={val} /> },
     { key: 'created_at', label: 'Date', render: (val) => new Date(val).toLocaleDateString() },
+    { 
+      key: 'actions', 
+      label: 'Action', 
+      render: (_, row) => (
+        <Button size="sm" onClick={() => navigate(`/admin/applications/${row.id}`)}>
+          Manage
+        </Button>
+      ) 
+    },
   ];
 
   return (

@@ -17,6 +17,7 @@ import Unauthorized from './pages/auth/Unauthorized';
 
 // Admin Pages
 import AdminUsers from './pages/admin/AdminUsers';
+import ApplicationDetails from './pages/admin/ApplicationDetails';
 
 // Dashboard Pages
 import Dashboard from './pages/dashboard/Dashboard';
@@ -104,6 +105,13 @@ function AppRoutes() {
             <Route path="/admin/users" element={
               <ProtectedRoute allowedRoles={[ROLES.SUPER_ADMIN, ROLES.REGIONAL_ADMIN]}>
                 <AdminUsers />
+              </ProtectedRoute>
+            } />
+
+            {/* Admin Application Details */}
+            <Route path="/admin/applications/:id" element={
+              <ProtectedRoute allowedRoles={[ROLES.SUPER_ADMIN, ROLES.REGIONAL_ADMIN]}>
+                <ApplicationDetails />
               </ProtectedRoute>
             } />
 
