@@ -2,18 +2,20 @@ import { useState, useRef, useEffect } from 'react';
 import { ChevronDown, Loader2 } from 'lucide-react';
 import './FormElements.css';
 
-export function Autocomplete({ 
-  label, 
-  error, 
-  id, 
-  options = [], 
-  value = '', 
-  onChange, 
-  placeholder = 'Select option...', 
+export function Autocomplete({
+  label,
+  error,
+  id,
+  name,
+  options = [],
+  value = '',
+  onChange,
+  placeholder = 'Select option...',
   required = false,
   freeSolo = false,
   fetchOptions
 }) {
+  const fieldName = name || id;
   const [isOpen, setIsOpen] = useState(false);
   const [inputValue, setInputValue] = useState(value);
   const [internalOptions, setInternalOptions] = useState(options);
@@ -37,7 +39,7 @@ export function Autocomplete({
         if (!freeSolo) {
           const matchingOption = internalOptions.find(opt => opt.toLowerCase() === inputValue.toLowerCase());
           if (matchingOption) {
-            if (onChange) onChange({ target: { name: id, value: matchingOption } });
+            if (onChange) onChange({ target: { name: fieldName, value: matchingOption } });
             setInputValue(matchingOption);
           } else {
             setInputValue(value);
@@ -47,7 +49,7 @@ export function Autocomplete({
     };
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, [inputValue, internalOptions, freeSolo, value, onChange, id]);
+  }, [inputValue, internalOptions, freeSolo, value, onChange, fieldName]);
 
   const handleInputChange = async (e) => {
     const val = e.target.value;
@@ -55,7 +57,7 @@ export function Autocomplete({
     setIsOpen(true);
     
     if (freeSolo && onChange) {
-      onChange({ target: { name: id, value: val } });
+      onChange({ target: { name: fieldName, value: val } });
     }
 
     if (fetchOptions) {
@@ -77,7 +79,7 @@ export function Autocomplete({
 
   const handleOptionClick = (option) => {
     setInputValue(option);
-    if (onChange) onChange({ target: { name: id, value: option } });
+    if (onChange) onChange({ target: { name: fieldName, value: option } });
     setIsOpen(false);
   };
 
