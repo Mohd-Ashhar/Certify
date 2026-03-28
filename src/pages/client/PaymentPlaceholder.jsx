@@ -6,16 +6,19 @@ import { calculatePrice } from '../../utils/pricing';
 import { Button } from '../../components/ui/FormElements';
 import { Lock } from 'lucide-react';
 
+const TIERS = ['START', 'POPULAR', 'CORPORATE'];
+
 export default function PaymentPlaceholder() {
   const { applicationId } = useParams();
   const navigate = useNavigate();
   const { user } = useAuth();
-  
+
   const [application, setApplication] = useState(null);
   const [loading, setLoading] = useState(true);
   const [processing, setProcessing] = useState(false);
-  const [isMonthly, setIsMonthly] = useState(false); // Default to one-time
+  const [isMonthly, setIsMonthly] = useState(false);
   const [checkoutError, setCheckoutError] = useState(null);
+  const [activeTier, setActiveTier] = useState('START');
 
   useEffect(() => {
     let isMounted = true;
@@ -26,20 +29,23 @@ export default function PaymentPlaceholder() {
           .select('*')
           .eq('id', applicationId)
           .single();
-          
+
         if (error) throw error;
-        if (isMounted) setApplication(data);
+        if (isMounted) {
+          setApplication(data);
+          if (data.selected_package) setActiveTier(data.selected_package.toUpperCase());
+        }
       } catch (err) {
         console.error('Failed to fetch application:', err);
       } finally {
         if (isMounted) setLoading(false);
       }
     };
-    
+
     if (applicationId) {
       fetchApp();
     }
-    
+
     return () => { isMounted = false; };
   }, [applicationId]);
 
@@ -47,12 +53,11 @@ export default function PaymentPlaceholder() {
     if (!application) return;
     setProcessing(true);
     setCheckoutError(null);
-    
+
     try {
       const isoName = application.recommended_iso || 'ISO 9001:2015 (Quality Management)';
-      const tier = application.selected_package ? application.selected_package.toUpperCase() : 'START';
-      const price = calculatePrice(isoName, tier, isMonthly);
-      
+      const price = calculatePrice(isoName, activeTier, isMonthly);
+
       const response = await fetch('/api/checkout', {
         method: 'POST',
         headers: {
@@ -60,20 +65,20 @@ export default function PaymentPlaceholder() {
         },
         body: JSON.stringify({
           isoName,
-          tier,
+          tier: activeTier,
           isMonthly,
           price,
           applicationId,
           clientId: user?.id
         }),
       });
-      
+
       const data = await response.json();
-      
+
       if (!response.ok) {
         throw new Error(data.error || 'Failed to initialize checkout');
       }
-      
+
       if (data.url) {
         window.location.href = data.url;
       } else {
@@ -109,20 +114,12 @@ export default function PaymentPlaceholder() {
   }
 
   const isoName = application.recommended_iso || 'ISO 9001:2015 (Quality Management)';
-  const rawTier = application.selected_package ? application.selected_package.replace(/_/g, ' ').toUpperCase() : 'STANDARD';
-  const tierForCalc = application.selected_package ? application.selected_package.toUpperCase() : 'START';
-
-  const priceOptions = {
-    oneTime: calculatePrice(isoName, tierForCalc, false),
-    monthly: calculatePrice(isoName, tierForCalc, true)
-  };
-
-  const currentPrice = isMonthly ? priceOptions.monthly : priceOptions.oneTime;
+  const currentPrice = calculatePrice(isoName, activeTier, isMonthly);
 
   return (
     <div className="page-container" style={{ display: 'flex', justifyContent: 'center', alignItems: 'flex-start', paddingTop: '4vh', minHeight: '80vh' }}>
-      <div style={{ padding: '40px', background: 'white', borderRadius: '16px', border: '1px solid var(--border-color, #e5e7eb)', maxWidth: '600px', width: '100%', boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.05), 0 4px 6px -2px rgba(0, 0, 0, 0.025)' }}>
-        
+      <div style={{ padding: '40px', background: 'white', borderRadius: '16px', border: '1px solid var(--border-color, #e5e7eb)', maxWidth: '680px', width: '100%', boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.05), 0 4px 6px -2px rgba(0, 0, 0, 0.025)' }}>
+
         <div style={{ textAlign: 'center', marginBottom: '32px' }}>
           <h2 style={{ fontSize: '1.75rem', fontWeight: 700, marginBottom: '8px', color: 'var(--text-color, #111827)' }}>Checkout Summary</h2>
           <p style={{ color: 'var(--text-light, #6b7280)', fontSize: '1rem', margin: 0 }}>Review your certification package</p>
@@ -134,14 +131,80 @@ export default function PaymentPlaceholder() {
             <span style={{ color: 'var(--text-light, #64748b)', fontWeight: 500, fontSize: '0.875rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Standard</span>
             <strong style={{ color: 'var(--text-color, #0f172a)', fontSize: '0.95rem' }}>{isoName}</strong>
           </div>
-          
+
           <div style={{ borderTop: '1px solid var(--border-color, #e2e8f0)', margin: '16px 0' }}></div>
-          
+
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <span style={{ color: 'var(--text-light, #64748b)', fontWeight: 500, fontSize: '0.875rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Selected Package</span>
             <span style={{ background: 'var(--primary-color, #2563eb)', color: 'white', padding: '4px 12px', borderRadius: '9999px', fontSize: '0.75rem', fontWeight: 600, letterSpacing: '0.025em' }}>
-              {rawTier}
+              {activeTier}
             </span>
+          </div>
+        </div>
+
+        {/* TIER SELECTOR */}
+        <div style={{ marginBottom: '32px' }}>
+          <h3 style={{ fontSize: '1rem', fontWeight: 600, marginBottom: '16px', color: 'var(--text-color, #111827)' }}>Choose Your Plan</h3>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '12px' }}>
+            {TIERS.map((tier) => {
+              const isActive = activeTier === tier;
+              const oneTimePrice = calculatePrice(isoName, tier, false);
+              const monthlyPrice = calculatePrice(isoName, tier, true);
+              return (
+                <button
+                  key={tier}
+                  onClick={() => setActiveTier(tier)}
+                  style={{
+                    textAlign: 'center',
+                    padding: '20px 12px',
+                    border: isActive ? '2.5px solid var(--primary-color, #2563eb)' : '2px solid var(--border-color, #e2e8f0)',
+                    borderRadius: '12px',
+                    background: isActive ? 'rgba(37,99,235,0.04)' : '#f8fafc',
+                    cursor: 'pointer',
+                    transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+                    position: 'relative',
+                    opacity: isActive ? 1 : 0.75,
+                    transform: isActive ? 'translateY(-2px)' : 'none',
+                    boxShadow: isActive ? '0 4px 12px rgba(37, 99, 235, 0.15)' : 'none',
+                  }}
+                >
+                  {tier === 'POPULAR' && (
+                    <span style={{
+                      position: 'absolute',
+                      top: '-10px',
+                      left: '50%',
+                      transform: 'translateX(-50%)',
+                      background: 'linear-gradient(135deg, #2563eb, #7c3aed)',
+                      color: 'white',
+                      padding: '2px 10px',
+                      borderRadius: '9999px',
+                      fontSize: '0.65rem',
+                      fontWeight: 700,
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.05em',
+                      whiteSpace: 'nowrap',
+                    }}>
+                      Recommended
+                    </span>
+                  )}
+                  {isActive && (
+                    <div style={{ position: 'absolute', top: 0, right: 0, background: 'var(--primary-color, #2563eb)', width: '1.75rem', height: '1.75rem', borderBottomLeftRadius: '10px', borderTopRightRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontSize: '0.75rem' }}>
+                      ✓
+                    </div>
+                  )}
+                  <h4 style={{ margin: '0 0 12px 0', fontSize: '0.95rem', fontWeight: 700, color: isActive ? 'var(--primary-color, #2563eb)' : 'var(--text-color, #334155)' }}>
+                    {tier}
+                  </h4>
+                  <div style={{ fontSize: '1.25rem', fontWeight: 700, color: 'var(--text-color, #0f172a)', marginBottom: '4px' }}>
+                    ${isMonthly ? monthlyPrice : oneTimePrice}
+                    {isMonthly && <span style={{ fontSize: '0.75rem', fontWeight: 400, color: 'var(--text-light, #64748b)' }}>/mo</span>}
+                  </div>
+                  <p style={{ margin: 0, fontSize: '0.7rem', color: 'var(--text-light, #94a3b8)' }}>
+                    {isMonthly ? `$${oneTimePrice} one-time` : `$${monthlyPrice}/mo`}
+                  </p>
+                </button>
+              );
+            })}
           </div>
         </div>
 
@@ -149,15 +212,15 @@ export default function PaymentPlaceholder() {
         <div style={{ marginBottom: '32px' }}>
           <h3 style={{ fontSize: '1rem', fontWeight: 600, marginBottom: '16px', color: 'var(--text-color, #111827)' }}>Choose Billing Cycle</h3>
           <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) minmax(0, 1fr)', gap: '16px' }}>
-            
-            <button 
+
+            <button
               onClick={() => setIsMonthly(false)}
               style={{
                 textAlign: 'left',
-                padding: '20px', 
+                padding: '20px',
                 border: !isMonthly ? '2px solid var(--primary-color, #2563eb)' : '2px solid var(--border-color, #e2e8f0)',
-                borderRadius: '12px', 
-                background: !isMonthly ? 'rgba(37,99,235,0.04)' : '#f8fafc', 
+                borderRadius: '12px',
+                background: !isMonthly ? 'rgba(37,99,235,0.04)' : '#f8fafc',
                 cursor: 'pointer',
                 transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
                 position: 'relative',
@@ -173,18 +236,18 @@ export default function PaymentPlaceholder() {
                 </div>
               )}
               <h4 style={{ margin: '0 0 8px 0', fontSize: '1.05rem', fontWeight: !isMonthly ? 700 : 500, color: !isMonthly ? 'var(--primary-color, #2563eb)' : 'var(--text-light, #64748b)' }}>Pay in Full</h4>
-              <div style={{ fontSize: '1.35rem', fontWeight: 700, color: 'var(--text-color, #0f172a)' }}>${priceOptions.oneTime}</div>
+              <div style={{ fontSize: '1.35rem', fontWeight: 700, color: 'var(--text-color, #0f172a)' }}>${calculatePrice(isoName, activeTier, false)}</div>
               <p style={{ margin: '4px 0 0 0', fontSize: '0.8rem', color: 'var(--text-light, #64748b)' }}>One-time payment</p>
             </button>
-            
-            <button 
+
+            <button
               onClick={() => setIsMonthly(true)}
               style={{
                 textAlign: 'left',
-                padding: '20px', 
+                padding: '20px',
                 border: isMonthly ? '2px solid var(--primary-color, #2563eb)' : '2px solid var(--border-color, #e2e8f0)',
-                borderRadius: '12px', 
-                background: isMonthly ? 'rgba(37,99,235,0.04)' : '#f8fafc', 
+                borderRadius: '12px',
+                background: isMonthly ? 'rgba(37,99,235,0.04)' : '#f8fafc',
                 cursor: 'pointer',
                 transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
                 position: 'relative',
@@ -200,7 +263,7 @@ export default function PaymentPlaceholder() {
                 </div>
               )}
               <h4 style={{ margin: '0 0 8px 0', fontSize: '1.05rem', fontWeight: isMonthly ? 700 : 500, color: isMonthly ? 'var(--primary-color, #2563eb)' : 'var(--text-light, #64748b)' }}>Pay Monthly</h4>
-              <div style={{ fontSize: '1.35rem', fontWeight: 700, color: 'var(--text-color, #0f172a)' }}>${priceOptions.monthly} <span style={{ fontSize: '0.875rem', fontWeight: 400, color: 'var(--text-light, #64748b)' }}>/mo</span></div>
+              <div style={{ fontSize: '1.35rem', fontWeight: 700, color: 'var(--text-color, #0f172a)' }}>${calculatePrice(isoName, activeTier, true)} <span style={{ fontSize: '0.875rem', fontWeight: 400, color: 'var(--text-light, #64748b)' }}>/mo</span></div>
               <p style={{ margin: '4px 0 0 0', fontSize: '0.8rem', color: 'var(--text-light, #64748b)' }}>12 installments</p>
             </button>
 
@@ -225,11 +288,11 @@ export default function PaymentPlaceholder() {
             {checkoutError}
           </div>
         )}
-        
-        <Button 
-          onClick={handleCheckout} 
-          disabled={processing} 
-          className="w-full" 
+
+        <Button
+          onClick={handleCheckout}
+          disabled={processing}
+          className="w-full"
           size="lg"
           style={{ width: '100%', marginBottom: '16px', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '8px', padding: '16px', fontSize: '1.05rem', fontWeight: 600, background: 'var(--primary-color, #2563eb)' }}
         >
@@ -241,8 +304,8 @@ export default function PaymentPlaceholder() {
         </Button>
 
         <div style={{ textAlign: 'center' }}>
-          <button 
-            onClick={() => navigate('/client/dashboard')} 
+          <button
+            onClick={() => navigate('/client/dashboard')}
             style={{ background: 'none', border: 'none', color: 'var(--text-light, #6b7280)', cursor: 'pointer', fontSize: '0.875rem', fontWeight: 500, textDecoration: 'underline' }}
           >
             Cancel and return to dashboard
