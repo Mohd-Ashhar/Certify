@@ -11,17 +11,19 @@ export default async function handler(req, res) {
   }
 
   try {
-    const { userId, full_name, role, company_name, region } = req.body;
+    const { userId, full_name, role, company_name, region, email } = req.body;
 
     if (!userId) {
       return res.status(400).json({ error: 'Missing userId' });
     }
 
+    // Update profile
     const updates = {};
     if (full_name !== undefined) updates.full_name = full_name;
     if (role !== undefined) updates.role = role;
     if (company_name !== undefined) updates.company_name = company_name;
     if (region !== undefined) updates.region = region;
+    if (email !== undefined) updates.email = email;
 
     const { error } = await supabaseAdmin
       .from('profiles')
@@ -30,6 +32,23 @@ export default async function handler(req, res) {
 
     if (error) {
       return res.status(500).json({ error: error.message });
+    }
+
+    // If email changed, update auth user too
+    if (email) {
+      await supabaseAdmin.auth.admin.updateUserById(userId, { email });
+    }
+
+    // Sync user_metadata
+    const metaUpdates = {};
+    if (full_name !== undefined) metaUpdates.name = full_name;
+    if (company_name !== undefined) metaUpdates.company_name = company_name;
+    if (region !== undefined) metaUpdates.region = region;
+
+    if (Object.keys(metaUpdates).length > 0) {
+      await supabaseAdmin.auth.admin.updateUserById(userId, {
+        user_metadata: metaUpdates,
+      });
     }
 
     return res.status(200).json({ success: true });

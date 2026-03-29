@@ -11,15 +11,15 @@ export default async function handler(req, res) {
   }
 
   try {
-    const { email, password, full_name, role, region } = req.body;
+    const { email, password, full_name, role, region, company_name } = req.body;
 
     if (!email || !password || !full_name || !role) {
       return res.status(400).json({ error: 'Missing required fields: email, password, full_name, role' });
     }
 
-    const allowedRoles = ['regional_admin', 'auditor', 'certification_body'];
+    const allowedRoles = ['regional_admin', 'auditor', 'certification_body', 'client'];
     if (!allowedRoles.includes(role)) {
-      return res.status(400).json({ error: 'Invalid role. Allowed: regional_admin, auditor, certification_body' });
+      return res.status(400).json({ error: 'Invalid role. Allowed: regional_admin, auditor, certification_body, client' });
     }
 
     // Create the auth user
@@ -30,6 +30,8 @@ export default async function handler(req, res) {
       user_metadata: {
         name: full_name,
         role,
+        company_name: company_name || null,
+        region: region || null,
       },
     });
 
@@ -46,6 +48,7 @@ export default async function handler(req, res) {
         full_name,
         role,
         region: region || null,
+        company_name: company_name || null,
       }, { onConflict: 'id' });
 
     if (profileError) {
@@ -61,6 +64,7 @@ export default async function handler(req, res) {
         full_name,
         role,
         region,
+        company_name,
       },
     });
   } catch (error) {
