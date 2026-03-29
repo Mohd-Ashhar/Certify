@@ -45,6 +45,93 @@ export function getRegionLabel(regionId) {
   return REGIONS.find(r => r.id === regionId)?.label || regionId;
 }
 
+/**
+ * Map a country name (from Geoapify or user input) to a region ID.
+ * Returns null if no match is found.
+ */
+const COUNTRY_REGION_MAP = {
+  // Middle East
+  'united arab emirates': 'middle_east',
+  'uae': 'middle_east',
+  'saudi arabia': 'middle_east',
+  'qatar': 'middle_east',
+  'kuwait': 'middle_east',
+  'bahrain': 'middle_east',
+  'oman': 'middle_east',
+  'jordan': 'middle_east',
+  'lebanon': 'middle_east',
+  'iraq': 'middle_east',
+  'iran': 'middle_east',
+  'yemen': 'middle_east',
+  'syria': 'middle_east',
+  'palestine': 'middle_east',
+  'israel': 'middle_east',
+  'egypt': 'middle_east',
+  'turkey': 'middle_east',
+
+  // India
+  'india': 'india',
+
+  // Asia (excluding India & Middle East)
+  'china': 'asia',
+  'japan': 'asia',
+  'south korea': 'asia',
+  'singapore': 'asia',
+  'malaysia': 'asia',
+  'indonesia': 'asia',
+  'thailand': 'asia',
+  'vietnam': 'asia',
+  'philippines': 'asia',
+  'pakistan': 'asia',
+  'bangladesh': 'asia',
+  'sri lanka': 'asia',
+  'nepal': 'asia',
+  'myanmar': 'asia',
+  'cambodia': 'asia',
+  'australia': 'asia',
+  'new zealand': 'asia',
+  'hong kong': 'asia',
+  'taiwan': 'asia',
+
+  // Europe
+  'united kingdom': 'europe',
+  'uk': 'europe',
+  'france': 'europe',
+  'germany': 'europe',
+  'italy': 'europe',
+  'spain': 'europe',
+  'netherlands': 'europe',
+  'belgium': 'europe',
+  'switzerland': 'europe',
+  'austria': 'europe',
+  'sweden': 'europe',
+  'norway': 'europe',
+  'denmark': 'europe',
+  'finland': 'europe',
+  'ireland': 'europe',
+  'portugal': 'europe',
+  'poland': 'europe',
+  'czech republic': 'europe',
+  'czechia': 'europe',
+  'greece': 'europe',
+  'romania': 'europe',
+  'hungary': 'europe',
+  'russia': 'europe',
+  'ukraine': 'europe',
+
+  // North America
+  'united states': 'north_america',
+  'united states of america': 'north_america',
+  'usa': 'north_america',
+  'canada': 'north_america',
+  'mexico': 'north_america',
+};
+
+export function getRegionFromCountry(country) {
+  if (!country) return null;
+  return COUNTRY_REGION_MAP[country.toLowerCase().trim()] || null;
+}
+
 // ---------------------------------------------------
 // Certification Lifecycle Statuses
 // ---------------------------------------------------
@@ -78,6 +165,7 @@ export const PERMISSIONS = {
 
   // Certification Requests
   VIEW_CERTIFICATIONS: 'view_certifications',
+  VIEW_ALL_CERTIFICATIONS: 'view_all_certifications',
   CREATE_CERTIFICATION: 'create_certification',
   MANAGE_CERTIFICATIONS: 'manage_certifications',
   APPROVE_CERTIFICATIONS: 'approve_certifications',
@@ -98,7 +186,8 @@ export const PERMISSIONS = {
   VIEW_REPORTS: 'view_reports',
   EXPORT_REPORTS: 'export_reports',
 
-  // Settings & Admin
+  // Users & Settings
+  MANAGE_USERS: 'manage_users',
   MANAGE_SETTINGS: 'manage_settings',
   MANAGE_REGIONS: 'manage_regions',
   MANAGE_ROLES: 'manage_roles',
@@ -109,8 +198,32 @@ export const PERMISSIONS = {
 // Role → Permission Mapping
 // ---------------------------------------------------
 const ROLE_PERMISSIONS = {
-  // ---- Super Admin: full system access ----
-  [ROLES.SUPER_ADMIN]: Object.values(PERMISSIONS),
+  // ---- Super Admin: explicit full access (no CREATE_CERTIFICATION) ----
+  [ROLES.SUPER_ADMIN]: [
+    PERMISSIONS.VIEW_DASHBOARD,
+    PERMISSIONS.VIEW_COMPANIES,
+    PERMISSIONS.MANAGE_COMPANIES,
+    PERMISSIONS.REGISTER_COMPANY,
+    PERMISSIONS.VIEW_CERTIFICATIONS,
+    PERMISSIONS.VIEW_ALL_CERTIFICATIONS,
+    PERMISSIONS.MANAGE_CERTIFICATIONS,
+    PERMISSIONS.APPROVE_CERTIFICATIONS,
+    PERMISSIONS.VIEW_CERTIFICATION_STATUS,
+    PERMISSIONS.VIEW_AUDITORS,
+    PERMISSIONS.MANAGE_AUDITORS,
+    PERMISSIONS.ASSIGN_AUDITORS,
+    PERMISSIONS.SUBMIT_AUDIT_REPORT,
+    PERMISSIONS.VIEW_BODIES,
+    PERMISSIONS.MANAGE_BODIES,
+    PERMISSIONS.REVIEW_AUDIT_REPORTS,
+    PERMISSIONS.VIEW_REPORTS,
+    PERMISSIONS.EXPORT_REPORTS,
+    PERMISSIONS.MANAGE_USERS,
+    PERMISSIONS.MANAGE_SETTINGS,
+    PERMISSIONS.MANAGE_REGIONS,
+    PERMISSIONS.MANAGE_ROLES,
+    PERMISSIONS.CREATE_ADMINS,
+  ],
 
   // ---- Regional Admin ----
   [ROLES.REGIONAL_ADMIN]: [
@@ -118,8 +231,9 @@ const ROLE_PERMISSIONS = {
     // Companies — manage in own region
     PERMISSIONS.VIEW_COMPANIES,
     PERMISSIONS.MANAGE_COMPANIES,
-    // Certifications — manage requests, view
+    // Certifications — manage requests, view (no CREATE_CERTIFICATION)
     PERMISSIONS.VIEW_CERTIFICATIONS,
+    PERMISSIONS.VIEW_ALL_CERTIFICATIONS,
     PERMISSIONS.MANAGE_CERTIFICATIONS,
     PERMISSIONS.VIEW_CERTIFICATION_STATUS,
     // Auditors — create & assign auditors in region
@@ -131,7 +245,8 @@ const ROLE_PERMISSIONS = {
     PERMISSIONS.MANAGE_BODIES,
     // Reports
     PERMISSIONS.VIEW_REPORTS,
-    // Settings (own profile)
+    // Users & Settings
+    PERMISSIONS.MANAGE_USERS,
     PERMISSIONS.MANAGE_SETTINGS,
   ],
 

@@ -3,18 +3,23 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { supabase } from '../../lib/supabase';
 import StatusBadge from '../../components/ui/StatusBadge';
 import { Button, Select } from '../../components/ui/FormElements';
-import { ArrowLeft, CheckCircle, FileText, Download, Building, Users, Target, Activity } from 'lucide-react';
+import { ArrowLeft, CheckCircle, FileText, Download, Building, Users, Target, Activity, Globe } from 'lucide-react';
+import { useAuth } from '../../contexts/AuthContext';
+import { ROLES, REGIONS } from '../../utils/roles';
 import './ApplicationDetails.css';
 
 export default function ApplicationDetails() {
   const { id } = useParams();
   const navigate = useNavigate();
-  
+  const { user } = useAuth();
+  const canAssign = user?.role === ROLES.SUPER_ADMIN || user?.role === ROLES.REGIONAL_ADMIN;
+  const isRegionalAdmin = user?.role === ROLES.REGIONAL_ADMIN;
+
   const [application, setApplication] = useState(null);
   const [auditors, setAuditors] = useState([]);
   const [cbs, setCbs] = useState([]);
   const [documents, setDocuments] = useState([]);
-  
+
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [toast, setToast] = useState(null);
@@ -30,29 +35,32 @@ export default function ApplicationDetails() {
       try {
         setLoading(true);
 
-        // 1. Fetch App + Client
+        // 1. Fetch App + Client profile (including region)
         const { data: appData, error: appError } = await supabase
           .from('applications')
-          .select('*, profiles!client_id(full_name, email, phone)')
+          .select('*, client:profiles!client_id(full_name, email, region)')
           .eq('id', id)
           .single();
-          
+
         if (appError) throw appError;
 
-        // 2. Fetch Auditors
-        const { data: audData, error: audError } = await supabase
-          .from('profiles')
-          .select('id, full_name')
-          .eq('role', 'auditor');
+        // Determine region filter:
+        // - Regional Admin: only their own region
+        // - Super Admin: all (no filter)
+        const regionFilter = isRegionalAdmin ? user.region : null;
 
-        // 3. Fetch CBs
-        const { data: cbData, error: cbError } = await supabase
-          .from('certification_bodies')
-          .select('id, name')
-          .eq('status', 'active');
+        // 2. Fetch Auditors (from profiles, optionally filtered by region)
+        let audQuery = supabase.from('profiles').select('id, full_name, region').eq('role', ROLES.AUDITOR);
+        if (regionFilter) audQuery = audQuery.eq('region', regionFilter);
+        const { data: audData } = await audQuery;
+
+        // 3. Fetch CBs (from profiles, optionally filtered by region)
+        let cbQuery = supabase.from('profiles').select('id, full_name, region').eq('role', ROLES.CERTIFICATION_BODY);
+        if (regionFilter) cbQuery = cbQuery.eq('region', regionFilter);
+        const { data: cbData } = await cbQuery;
 
         // 4. Fetch Documents
-        const { data: docData, error: docError } = await supabase
+        const { data: docData } = await supabase
           .from('documents')
           .select('*')
           .eq('application_id', id);
@@ -64,7 +72,7 @@ export default function ApplicationDetails() {
           setAssignedCb(appData.assigned_cb_id || '');
           setInternalNotes(appData.internal_notes || '');
         }
-        
+
         if (audData) setAuditors(audData);
         if (cbData) setCbs(cbData);
         if (docData) setDocuments(docData);
@@ -76,10 +84,8 @@ export default function ApplicationDetails() {
       }
     };
 
-    if (id) {
-      fetchData();
-    }
-  }, [id]);
+    if (id) fetchData();
+  }, [id, user, isRegionalAdmin]);
 
   const handleSave = async () => {
     setSaving(true);
@@ -93,7 +99,7 @@ export default function ApplicationDetails() {
           internal_notes: internalNotes
         })
         .eq('id', id);
-        
+
       if (error) throw error;
 
       setApplication(prev => ({
@@ -119,9 +125,9 @@ export default function ApplicationDetails() {
       const { data, error } = await supabase.storage
         .from('application-documents')
         .download(doc.file_path);
-        
+
       if (error) throw error;
-      
+
       const url = URL.createObjectURL(data);
       const a = document.createElement('a');
       a.href = url;
@@ -132,6 +138,12 @@ export default function ApplicationDetails() {
       console.error('Error downloading document', err);
       alert('Failed to download document');
     }
+  };
+
+  const getRegionLabel = (regionId) => {
+    if (!regionId) return '—';
+    const r = REGIONS.find(reg => reg.id === regionId);
+    return r ? r.label : regionId;
   };
 
   if (loading) {
@@ -146,7 +158,7 @@ export default function ApplicationDetails() {
     return (
       <div className="page-container">
         <p>Application not found.</p>
-        <Button variant="outline" onClick={() => navigate('/certification-requests')}>Go Back</Button>
+        <Button variant="outline" onClick={() => navigate(-1)}>Go Back</Button>
       </div>
     );
   }
@@ -161,11 +173,11 @@ export default function ApplicationDetails() {
       )}
 
       <div className="page-header" style={{ marginBottom: '1.5rem', display: 'flex' }}>
-        <button className="back-btn" onClick={() => navigate('/certification-requests')}>
-          <ArrowLeft size={16} /> Back to Requests
+        <button className="back-btn" onClick={() => navigate('/admin/applications')}>
+          <ArrowLeft size={16} /> Back to Applications
         </button>
       </div>
-      
+
       <div className="app-details-header">
         <div>
           <h1 className="page-title" style={{ marginBottom: '0.25rem' }}>{application.company_name}</h1>
@@ -199,14 +211,21 @@ export default function ApplicationDetails() {
               <Users size={16} className="detail-icon" />
               <div>
                 <label>Employees</label>
-                <p>{application.employees || '—'}</p>
+                <p>{application.employee_count || '—'}</p>
+              </div>
+            </div>
+            <div className="detail-item">
+              <Globe size={16} className="detail-icon" />
+              <div>
+                <label>Region</label>
+                <p>{getRegionLabel(application.client?.region)}</p>
               </div>
             </div>
             <div className="detail-item">
               <Activity size={16} className="detail-icon" />
               <div>
-                <label>Gap Score</label>
-                <p>{application.gap_score !== null ? `${application.gap_score}%` : '—'}</p>
+                <label>Recommended ISO</label>
+                <p>{application.recommended_iso || '—'}</p>
               </div>
             </div>
             <div className="detail-item">
@@ -217,12 +236,11 @@ export default function ApplicationDetails() {
               </div>
             </div>
           </div>
-          
+
           <div className="contact-info">
             <h4>Contact Information</h4>
-            <p><strong>Name:</strong> {application.profiles?.full_name || '—'}</p>
-            <p><strong>Email:</strong> {application.profiles?.email || '—'}</p>
-            <p><strong>Phone:</strong> {application.profiles?.phone || '—'}</p>
+            <p><strong>Name:</strong> {application.client?.full_name || '—'}</p>
+            <p><strong>Email:</strong> {application.client?.email || '—'}</p>
           </div>
         </div>
 
@@ -230,7 +248,7 @@ export default function ApplicationDetails() {
         <div className="app-card">
           <h3 className="app-card-title">Workflow Controls</h3>
           <div className="form-group" style={{ marginBottom: '1.25rem' }}>
-            <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.875rem', fontWeight: 500 }}>Application Status</label>
+            <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.875rem', fontWeight: 500, color: 'var(--color-text-secondary)' }}>Application Status</label>
             <Select value={status} onChange={(e) => setStatus(e.target.value)}>
               <option value="pending">Pending</option>
               <option value="awaiting_payment">Awaiting Payment</option>
@@ -241,28 +259,40 @@ export default function ApplicationDetails() {
             </Select>
           </div>
 
-          <div className="form-group" style={{ marginBottom: '1.25rem' }}>
-            <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.875rem', fontWeight: 500 }}>Assign Auditor</label>
-            <Select value={assignedAuditor} onChange={(e) => setAssignedAuditor(e.target.value)}>
-              <option value="">-- Select Auditor --</option>
-              {auditors.map(aud => (
-                <option key={aud.id} value={aud.id}>{aud.full_name}</option>
-              ))}
-            </Select>
-          </div>
+          {canAssign && (
+            <div className="form-group" style={{ marginBottom: '1.25rem' }}>
+              <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.875rem', fontWeight: 500, color: 'var(--color-text-secondary)' }}>
+                Assign Auditor {isRegionalAdmin && <span style={{ fontSize: '0.75rem', color: 'var(--color-text-tertiary)' }}>({getRegionLabel(user.region)} only)</span>}
+              </label>
+              <Select value={assignedAuditor} onChange={(e) => setAssignedAuditor(e.target.value)}>
+                <option value="">-- Select Auditor --</option>
+                {auditors.map(aud => (
+                  <option key={aud.id} value={aud.id}>
+                    {aud.full_name || aud.id.slice(0, 8)}{aud.region ? ` (${getRegionLabel(aud.region)})` : ''}
+                  </option>
+                ))}
+              </Select>
+            </div>
+          )}
 
-          <div className="form-group" style={{ marginBottom: '1.25rem' }}>
-            <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.875rem', fontWeight: 500 }}>Assign Certification Body</label>
-            <Select value={assignedCb} onChange={(e) => setAssignedCb(e.target.value)}>
-              <option value="">-- Select Certification Body --</option>
-              {cbs.map(cb => (
-                <option key={cb.id} value={cb.id}>{cb.name}</option>
-              ))}
-            </Select>
-          </div>
+          {canAssign && (
+            <div className="form-group" style={{ marginBottom: '1.25rem' }}>
+              <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.875rem', fontWeight: 500, color: 'var(--color-text-secondary)' }}>
+                Assign Certification Body {isRegionalAdmin && <span style={{ fontSize: '0.75rem', color: 'var(--color-text-tertiary)' }}>({getRegionLabel(user.region)} only)</span>}
+              </label>
+              <Select value={assignedCb} onChange={(e) => setAssignedCb(e.target.value)}>
+                <option value="">-- Select Certification Body --</option>
+                {cbs.map(cb => (
+                  <option key={cb.id} value={cb.id}>
+                    {cb.full_name || cb.id.slice(0, 8)}{cb.region ? ` (${getRegionLabel(cb.region)})` : ''}
+                  </option>
+                ))}
+              </Select>
+            </div>
+          )}
 
           <div className="form-group" style={{ marginBottom: '1.5rem' }}>
-            <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.875rem', fontWeight: 500 }}>Internal Notes</label>
+            <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.875rem', fontWeight: 500, color: 'var(--color-text-secondary)' }}>Internal Notes</label>
             <textarea
               className="form-textarea"
               rows={4}
@@ -272,7 +302,7 @@ export default function ApplicationDetails() {
             />
           </div>
 
-          <Button onClick={handleSave} disabled={saving} className="w-full" style={{ width: '100%', justifyContent: 'center' }}>
+          <Button variant="primary" onClick={handleSave} disabled={saving} className="w-full" style={{ width: '100%', justifyContent: 'center' }}>
             {saving ? 'Saving...' : 'Save Changes'}
           </Button>
         </div>

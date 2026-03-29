@@ -24,12 +24,14 @@ export default function CertificationRequests() {
       setFetching(true);
       const { data } = await supabase
         .from('applications')
-        .select('*, profiles(email)')
+        .select('*, profiles(email), auditor:profiles!assigned_auditor_id(full_name), cb:certification_bodies!assigned_cb_id(name)')
         .order('created_at', { ascending: false });
       if (data) {
         const flattened = data.map(app => ({
           ...app,
-          client_email: app.profiles?.email || '—'
+          client_email: app.profiles?.email || '—',
+          auditor_name: app.auditor?.full_name || 'Unassigned',
+          cb_name: app.cb?.name || 'Unassigned'
         }));
         setRequests(flattened);
       }
@@ -52,10 +54,10 @@ export default function CertificationRequests() {
 
   const columns = [
     { key: 'company_name', label: 'Company' },
-    { key: 'client_email', label: 'Client Email' },
-    { key: 'recommended_iso', label: 'ISO Standard', render: (val) => val || 'Analyzing...' },
+    { key: 'recommended_iso', label: 'Certificate' },
+    { key: 'auditor_name', label: 'Assigned Auditor' },
+    { key: 'cb_name', label: 'Assigned CB' },
     { key: 'status', label: 'Status', render: (val) => <StatusBadge status={val} /> },
-    { key: 'created_at', label: 'Date', render: (val) => new Date(val).toLocaleDateString() },
     { 
       key: 'actions', 
       label: 'Action', 

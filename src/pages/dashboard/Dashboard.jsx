@@ -29,6 +29,8 @@ export default function Dashboard() {
   
   const [clientApplications, setClientApplications] = useState([]);
   const [adminApplications, setAdminApplications] = useState([]);
+  const [auditorApplications, setAuditorApplications] = useState([]);
+  const [cbApplications, setCbApplications] = useState([]);
   const [fetchingApps, setFetchingApps] = useState(false);
   const [documents, setDocuments] = useState([]);
   const [fetchingDocs, setFetchingDocs] = useState(false);
@@ -47,12 +49,47 @@ export default function Dashboard() {
           .order('created_at', { ascending: false });
         if (data) setClientApplications(data);
       } else if (user.role === ROLES.SUPER_ADMIN || user.role === ROLES.REGIONAL_ADMIN) {
-        // Fetch all applications for admins
+        const { data } = await supabase
+          .from('applications')
+          .select('*, auditor:profiles!assigned_auditor_id(full_name), client:profiles!client_id(region)')
+          .order('created_at', { ascending: false });
+        if (data) {
+          // Fetch CB names separately (assigned_cb_id FK points to certification_bodies, not profiles)
+          const cbIds = [...new Set(data.map(a => a.assigned_cb_id).filter(Boolean))];
+          let cbMap = {};
+          if (cbIds.length > 0) {
+            const { data: cbProfiles } = await supabase
+              .from('profiles')
+              .select('id, full_name')
+              .in('id', cbIds);
+            if (cbProfiles) cbMap = Object.fromEntries(cbProfiles.map(p => [p.id, p.full_name]));
+          }
+          let flattened = data.map(app => ({
+            ...app,
+            auditor_name: app.auditor?.full_name || 'Unassigned',
+            cb_name: cbMap[app.assigned_cb_id] || 'Unassigned',
+            client_region: app.client?.region || null,
+          }));
+          // Regional Admin: only show applications from their region
+          if (user.role === ROLES.REGIONAL_ADMIN && user.region) {
+            flattened = flattened.filter(app => app.client_region === user.region);
+          }
+          setAdminApplications(flattened);
+        }
+      } else if (user.role === ROLES.AUDITOR) {
         const { data } = await supabase
           .from('applications')
           .select('*')
+          .eq('assigned_auditor_id', user.id)
           .order('created_at', { ascending: false });
-        if (data) setAdminApplications(data);
+        if (data) setAuditorApplications(data);
+      } else if (user.role === ROLES.CERTIFICATION_BODY) {
+        const { data } = await supabase
+          .from('applications')
+          .select('*')
+          .eq('assigned_cb_id', user.cb_id)
+          .order('created_at', { ascending: false });
+        if (data) setCbApplications(data);
       }
       setFetchingApps(false);
     };
@@ -98,6 +135,8 @@ export default function Dashboard() {
 
   const isClient = user?.role === ROLES.CLIENT;
   const isAdmin = user?.role === ROLES.SUPER_ADMIN || user?.role === ROLES.REGIONAL_ADMIN;
+  const isAuditor = user?.role === ROLES.AUDITOR;
+  const isCB = user?.role === ROLES.CERTIFICATION_BODY;
 
   // Compute Metrics for Admins
   const totalApplications = adminApplications.length;
@@ -328,21 +367,93 @@ export default function Dashboard() {
           <div className="dashboard__grid" style={{ display: 'block' }}>
             <div className="dashboard__section">
               <div className="dashboard__section-header">
-                <h2 className="dashboard__section-title">All Applications</h2>
+                <h2 className="dashboard__section-title">Recent Applications</h2>
+                {adminApplications.length > 5 && (
+                  <Button size="sm" variant="outline" onClick={() => navigate('/admin/applications')}>
+                    View All <ChevronRight size={14} />
+                  </Button>
+                )}
               </div>
               {fetchingApps ? (
                 <p>Loading applications...</p>
               ) : (
-                <DataTable 
+                <DataTable
                   columns={[
-                    { key: 'company_name', label: 'Company Name' },
-                    { key: 'industry', label: 'Industry' },
-                    { key: 'recommended_iso', label: 'Recommended ISO', render: (val) => val ? val : "Analyzing..." },
+                    { key: 'company_name', label: 'Company' },
+                    { key: 'recommended_iso', label: 'Certificate' },
+                    { key: 'auditor_name', label: 'Assigned Auditor' },
+                    { key: 'cb_name', label: 'Assigned CB' },
                     { key: 'status', label: 'Status', render: (val) => <StatusBadge status={val} /> },
-                    { key: 'created_at', label: 'Date', render: (val) => new Date(val).toLocaleDateString() }
-                  ]} 
-                  data={adminApplications} 
+                    { key: 'action', label: 'Action', render: (_, row) => (
+                      <Button size="sm" variant="outline" onClick={() => navigate(`/admin/applications/${row.id}`)}>Manage</Button>
+                    )}
+                  ]}
+                  data={adminApplications.slice(0, 5)}
                   emptyMessage="No applications found in the database."
+                />
+              )}
+            </div>
+          </div>
+        </>
+      ) : isAuditor ? (
+        <>
+          <div className="dashboard__stats">
+            <StatCard title="Assigned Audits" value={auditorApplications.length} icon={UserCheck} iconColor="#A78BFA" />
+            <StatCard title="In Review" value={auditorApplications.filter(a => a.status === 'in_review').length} icon={Clock} iconColor="#FBBF24" />
+            <StatCard title="Audit Scheduled" value={auditorApplications.filter(a => a.status === 'audit_scheduled').length} icon={FileCheck2} iconColor="#60A5FA" />
+          </div>
+          <div className="dashboard__grid" style={{ display: 'block' }}>
+            <div className="dashboard__section">
+              <div className="dashboard__section-header">
+                <h2 className="dashboard__section-title">My Assigned Applications</h2>
+              </div>
+              {fetchingApps ? (
+                <p>Loading applications...</p>
+              ) : (
+                <DataTable
+                  columns={[
+                    { key: 'company_name', label: 'Company' },
+                    { key: 'recommended_iso', label: 'Standard' },
+                    { key: 'selected_package', label: 'Package' },
+                    { key: 'status', label: 'Status', render: (val) => <StatusBadge status={val} /> },
+                    { key: 'action', label: 'Action', render: (_, row) => (
+                      <Button size="sm" variant="outline" onClick={() => navigate(`/admin/applications/${row.id}`)}>Manage</Button>
+                    )}
+                  ]}
+                  data={auditorApplications}
+                  emptyMessage="No applications assigned to you yet."
+                />
+              )}
+            </div>
+          </div>
+        </>
+      ) : isCB ? (
+        <>
+          <div className="dashboard__stats">
+            <StatCard title="Assigned Applications" value={cbApplications.length} icon={Building2} iconColor="#3ECF8E" />
+            <StatCard title="Approved" value={cbApplications.filter(a => a.status === 'approved').length} icon={CheckCircle2} iconColor="#60A5FA" />
+            <StatCard title="In Review" value={cbApplications.filter(a => a.status === 'in_review').length} icon={Clock} iconColor="#FBBF24" />
+          </div>
+          <div className="dashboard__grid" style={{ display: 'block' }}>
+            <div className="dashboard__section">
+              <div className="dashboard__section-header">
+                <h2 className="dashboard__section-title">My Assigned Applications</h2>
+              </div>
+              {fetchingApps ? (
+                <p>Loading applications...</p>
+              ) : (
+                <DataTable
+                  columns={[
+                    { key: 'company_name', label: 'Company' },
+                    { key: 'recommended_iso', label: 'Standard' },
+                    { key: 'selected_package', label: 'Package' },
+                    { key: 'status', label: 'Status', render: (val) => <StatusBadge status={val} /> },
+                    { key: 'action', label: 'Action', render: (_, row) => (
+                      <Button size="sm" variant="outline" onClick={() => navigate(`/admin/applications/${row.id}`)}>Manage</Button>
+                    )}
+                  ]}
+                  data={cbApplications}
+                  emptyMessage="No applications assigned to your certification body yet."
                 />
               )}
             </div>

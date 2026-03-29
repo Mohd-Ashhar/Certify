@@ -1,6 +1,6 @@
 import { createContext, useContext, useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
-import { ROLES } from '../utils/roles';
+import { ROLES, getRegionFromCountry } from '../utils/roles';
 
 const AuthContext = createContext(null);
 
@@ -92,6 +92,8 @@ export function AuthProvider({ children }) {
     number_of_locations, website, city, country,
     contact_number, certification_types,
   }) => {
+    const region = getRegionFromCountry(country);
+
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
@@ -106,6 +108,7 @@ export function AuthProvider({ children }) {
           website: website || null,
           city,
           country,
+          region,
           contact_number,
           certification_types: certification_types || [],
         },
@@ -114,6 +117,21 @@ export function AuthProvider({ children }) {
 
     if (error) {
       return { success: false, error: error.message };
+    }
+
+    // Update profile with full details via API (bypasses RLS timing issues)
+    if (data?.user) {
+      await fetch('/api/update-profile', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userId: data.user.id,
+          full_name: name,
+          role: ROLES.CLIENT,
+          company_name: company_name || null,
+          region,
+        }),
+      });
     }
 
     return { success: true, data };

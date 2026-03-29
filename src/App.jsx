@@ -17,15 +17,15 @@ import Unauthorized from './pages/auth/Unauthorized';
 
 // Admin Pages
 import AdminUsers from './pages/admin/AdminUsers';
+import AdminApplications from './pages/admin/AdminApplications';
+import AdminRegionalAdmins from './pages/admin/AdminRegionalAdmins';
+import AdminAuditors from './pages/admin/AdminAuditors';
+import AdminCertBodies from './pages/admin/AdminCertBodies';
+import AdminCompanies from './pages/admin/AdminCompanies';
 import ApplicationDetails from './pages/admin/ApplicationDetails';
 
 // Dashboard Pages
 import Dashboard from './pages/dashboard/Dashboard';
-import Companies from './pages/companies/Companies';
-import CertificationRequests from './pages/certifications/CertificationRequests';
-import Auditors from './pages/auditors/Auditors';
-import CertificationBodies from './pages/bodies/CertificationBodies';
-import Reports from './pages/reports/Reports';
 import Settings from './pages/settings/Settings';
 import ApplicationForm from './pages/client/ApplicationForm';
 import PaymentPlaceholder from './pages/client/PaymentPlaceholder';
@@ -86,7 +86,7 @@ function AppRoutes() {
               </ProtectedRoute>
             } />
             <Route path="/client/apply" element={
-              <ProtectedRoute allowedRoles={[ROLES.CLIENT, ROLES.SUPER_ADMIN, ROLES.REGIONAL_ADMIN]}>
+              <ProtectedRoute allowedRoles={[ROLES.CLIENT]}>
                 <ApplicationForm />
               </ProtectedRoute>
             } />
@@ -101,52 +101,52 @@ function AppRoutes() {
               </ProtectedRoute>
             } />
 
-            {/* Admin User Management — create_admins */}
+            {/* Admin User Management — manage_users permission */}
             <Route path="/admin/users" element={
-              <ProtectedRoute allowedRoles={[ROLES.SUPER_ADMIN, ROLES.REGIONAL_ADMIN]}>
+              <ProtectedRoute requiredPermission={PERMISSIONS.MANAGE_USERS}>
                 <AdminUsers />
               </ProtectedRoute>
             } />
 
-            {/* Admin Application Details */}
+            {/* Admin — All Applications */}
+            <Route path="/admin/applications" element={
+              <ProtectedRoute requiredPermission={PERMISSIONS.VIEW_ALL_CERTIFICATIONS}>
+                <AdminApplications />
+              </ProtectedRoute>
+            } />
+
+            {/* Admin — Companies */}
+            <Route path="/admin/companies" element={
+              <ProtectedRoute requiredPermission={PERMISSIONS.VIEW_COMPANIES}>
+                <AdminCompanies />
+              </ProtectedRoute>
+            } />
+
+            {/* Admin — Regional Admins */}
+            <Route path="/admin/regional-admins" element={
+              <ProtectedRoute requiredPermission={PERMISSIONS.CREATE_ADMINS}>
+                <AdminRegionalAdmins />
+              </ProtectedRoute>
+            } />
+
+            {/* Admin — Auditors */}
+            <Route path="/admin/auditors" element={
+              <ProtectedRoute requiredPermission={PERMISSIONS.MANAGE_AUDITORS}>
+                <AdminAuditors />
+              </ProtectedRoute>
+            } />
+
+            {/* Admin — Certification Bodies */}
+            <Route path="/admin/cert-bodies" element={
+              <ProtectedRoute requiredPermission={PERMISSIONS.MANAGE_BODIES}>
+                <AdminCertBodies />
+              </ProtectedRoute>
+            } />
+
+            {/* Application Details — admins, auditors, and CBs can all view */}
             <Route path="/admin/applications/:id" element={
-              <ProtectedRoute allowedRoles={[ROLES.SUPER_ADMIN, ROLES.REGIONAL_ADMIN]}>
+              <ProtectedRoute allowedRoles={[ROLES.SUPER_ADMIN, ROLES.REGIONAL_ADMIN, ROLES.AUDITOR, ROLES.CERTIFICATION_BODY]}>
                 <ApplicationDetails />
-              </ProtectedRoute>
-            } />
-
-            {/* Companies — view_companies OR register_company */}
-            <Route path="/companies" element={
-              <ProtectedRoute requiredPermissions={[PERMISSIONS.VIEW_COMPANIES, PERMISSIONS.REGISTER_COMPANY]} requireAll={false}>
-                <Companies />
-              </ProtectedRoute>
-            } />
-
-            {/* Certification Requests — view_certifications */}
-            <Route path="/certification-requests" element={
-              <ProtectedRoute requiredPermission={PERMISSIONS.VIEW_CERTIFICATIONS}>
-                <CertificationRequests />
-              </ProtectedRoute>
-            } />
-
-            {/* Auditors — view_auditors (not accessible to clients) */}
-            <Route path="/auditors" element={
-              <ProtectedRoute requiredPermission={PERMISSIONS.VIEW_AUDITORS}>
-                <Auditors />
-              </ProtectedRoute>
-            } />
-
-            {/* Certification Bodies — view_bodies */}
-            <Route path="/certification-bodies" element={
-              <ProtectedRoute requiredPermission={PERMISSIONS.VIEW_BODIES}>
-                <CertificationBodies />
-              </ProtectedRoute>
-            } />
-
-            {/* Reports — view_reports (admin, regional admin, cert body) */}
-            <Route path="/reports" element={
-              <ProtectedRoute requiredPermission={PERMISSIONS.VIEW_REPORTS}>
-                <Reports />
               </ProtectedRoute>
             } />
 

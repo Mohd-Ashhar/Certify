@@ -23,13 +23,13 @@ export default function Auditors() {
     setFetching(true);
     const { data } = await supabase
       .from('profiles')
-      .select('*, certification_bodies(name)')
+      .select('*, cb:certification_bodies!cb_id(name)')
       .eq('role', 'auditor')
       .order('created_at', { ascending: false });
     if (data) {
       const flattened = data.map(item => ({
         ...item,
-        cb_name: item.certification_bodies?.name || 'Unassigned'
+        cb_name: item.cb?.name || 'Independent/Unassigned'
       }));
       setAuditors(flattened);
     }
@@ -78,7 +78,7 @@ export default function Auditors() {
   const columns = [
     { key: 'full_name', label: 'Name' },
     { key: 'email', label: 'Email' },
-    { key: 'cb_name', label: 'Certification Body' },
+    { key: 'cb_name', label: 'Assigned CB' },
     { key: 'status', label: 'Status', render: (val) => <StatusBadge status={val} /> },
     {
       key: 'actions', label: 'Action', render: (_, row) => (
