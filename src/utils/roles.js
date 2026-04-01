@@ -253,14 +253,10 @@ const ROLE_PERMISSIONS = {
   // ---- Auditor ----
   [ROLES.AUDITOR]: [
     PERMISSIONS.VIEW_DASHBOARD,
-    // Companies — view assigned only
-    PERMISSIONS.VIEW_COMPANIES,
     // Certifications — view + submit audit reports
     PERMISSIONS.VIEW_CERTIFICATIONS,
     PERMISSIONS.VIEW_CERTIFICATION_STATUS,
     PERMISSIONS.SUBMIT_AUDIT_REPORT,
-    // Auditors — view own profile
-    PERMISSIONS.VIEW_AUDITORS,
     // Settings (own profile)
     PERMISSIONS.MANAGE_SETTINGS,
   ],
@@ -268,19 +264,11 @@ const ROLE_PERMISSIONS = {
   // ---- Certification Body ----
   [ROLES.CERTIFICATION_BODY]: [
     PERMISSIONS.VIEW_DASHBOARD,
-    // Companies — view
-    PERMISSIONS.VIEW_COMPANIES,
     // Certifications — review + approve
     PERMISSIONS.VIEW_CERTIFICATIONS,
     PERMISSIONS.VIEW_CERTIFICATION_STATUS,
     PERMISSIONS.REVIEW_AUDIT_REPORTS,
     PERMISSIONS.APPROVE_CERTIFICATIONS,
-    // Auditors — view
-    PERMISSIONS.VIEW_AUDITORS,
-    // Bodies — view own
-    PERMISSIONS.VIEW_BODIES,
-    // Reports
-    PERMISSIONS.VIEW_REPORTS,
     // Settings (own profile)
     PERMISSIONS.MANAGE_SETTINGS,
   ],

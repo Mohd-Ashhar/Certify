@@ -87,7 +87,7 @@ export default function Dashboard() {
         const { data } = await supabase
           .from('applications')
           .select('*')
-          .eq('assigned_cb_id', user.cb_id)
+          .eq('assigned_cb_id', user.id)
           .order('created_at', { ascending: false });
         if (data) setCbApplications(data);
       }
@@ -398,9 +398,9 @@ export default function Dashboard() {
       ) : isAuditor ? (
         <>
           <div className="dashboard__stats">
-            <StatCard title="Assigned Audits" value={auditorApplications.length} icon={UserCheck} iconColor="#A78BFA" />
+            <StatCard title="Total Assigned" value={auditorApplications.length} icon={UserCheck} iconColor="#A78BFA" />
             <StatCard title="In Review" value={auditorApplications.filter(a => a.status === 'in_review').length} icon={Clock} iconColor="#FBBF24" />
-            <StatCard title="Audit Scheduled" value={auditorApplications.filter(a => a.status === 'audit_scheduled').length} icon={FileCheck2} iconColor="#60A5FA" />
+            <StatCard title="Completed" value={auditorApplications.filter(a => a.status === 'audited').length} icon={CheckCircle2} iconColor="#3ECF8E" />
           </div>
           <div className="dashboard__grid" style={{ display: 'block' }}>
             <div className="dashboard__section">
@@ -413,9 +413,10 @@ export default function Dashboard() {
                 <DataTable
                   columns={[
                     { key: 'company_name', label: 'Company' },
+                    { key: 'scope', label: 'Scope', render: (val) => val || '—' },
                     { key: 'recommended_iso', label: 'Standard' },
-                    { key: 'selected_package', label: 'Package' },
                     { key: 'status', label: 'Status', render: (val) => <StatusBadge status={val} /> },
+                    { key: 'created_at', label: 'Date', render: (val) => val ? new Date(val).toLocaleDateString() : '—' },
                     { key: 'action', label: 'Action', render: (_, row) => (
                       <Button size="sm" variant="outline" onClick={() => navigate(`/admin/applications/${row.id}`)}>Manage</Button>
                     )}
@@ -431,8 +432,8 @@ export default function Dashboard() {
         <>
           <div className="dashboard__stats">
             <StatCard title="Assigned Applications" value={cbApplications.length} icon={Building2} iconColor="#3ECF8E" />
-            <StatCard title="Approved" value={cbApplications.filter(a => a.status === 'approved').length} icon={CheckCircle2} iconColor="#60A5FA" />
-            <StatCard title="In Review" value={cbApplications.filter(a => a.status === 'in_review').length} icon={Clock} iconColor="#FBBF24" />
+            <StatCard title="Awaiting Decision" value={cbApplications.filter(a => a.status === 'audited' || a.status === 'in_review').length} icon={Clock} iconColor="#FBBF24" />
+            <StatCard title="Certified" value={cbApplications.filter(a => a.status === 'approved').length} icon={CheckCircle2} iconColor="#60A5FA" />
           </div>
           <div className="dashboard__grid" style={{ display: 'block' }}>
             <div className="dashboard__section">
@@ -445,11 +446,12 @@ export default function Dashboard() {
                 <DataTable
                   columns={[
                     { key: 'company_name', label: 'Company' },
+                    { key: 'scope', label: 'Scope', render: (val) => val || '—' },
                     { key: 'recommended_iso', label: 'Standard' },
-                    { key: 'selected_package', label: 'Package' },
                     { key: 'status', label: 'Status', render: (val) => <StatusBadge status={val} /> },
+                    { key: 'created_at', label: 'Date', render: (val) => val ? new Date(val).toLocaleDateString() : '—' },
                     { key: 'action', label: 'Action', render: (_, row) => (
-                      <Button size="sm" variant="outline" onClick={() => navigate(`/admin/applications/${row.id}`)}>Manage</Button>
+                      <Button size="sm" variant="outline" onClick={() => navigate(`/admin/applications/${row.id}`)}>Review</Button>
                     )}
                   ]}
                   data={cbApplications}
