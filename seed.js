@@ -39,7 +39,7 @@ const SEED_ACCOUNTS = [
     user_metadata: {
       name: 'Regional Admin',
       role: 'regional_admin',
-      region: 'middle_east',
+      region: 'asia',
     },
   },
   {
@@ -48,7 +48,7 @@ const SEED_ACCOUNTS = [
     user_metadata: {
       name: 'Auditor User',
       role: 'auditor',
-      region: 'india',
+      region: 'asia',
     },
   },
   {

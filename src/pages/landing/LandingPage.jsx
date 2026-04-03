@@ -64,7 +64,7 @@ const BENEFITS = [
   { icon: Lock, title: 'Secure & Compliant', desc: 'Enterprise-grade security with full audit trails and compliance tracking.' },
   { icon: BarChart3, title: 'Real-time Tracking', desc: 'Monitor your certification status and progress from a single dashboard.' },
   { icon: Users, title: 'Expert Auditors', desc: 'Access a network of certified auditors across all major regions.' },
-  { icon: Globe2, title: 'Multi-Region Support', desc: 'Operations in Middle East, Asia, India, Europe, and North America.' },
+  { icon: Globe2, title: 'Multi-Region Support', desc: 'Operations in Asia, Africa, Europe, North America, and South America.' },
 ];
 
 export default function LandingPage() {

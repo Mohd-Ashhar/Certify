@@ -18,7 +18,7 @@
 --   role TEXT NOT NULL DEFAULT 'client'
 --     CHECK (role IN ('super_admin','regional_admin','auditor','certification_body','client')),
 --   region TEXT
---     CHECK (region IS NULL OR region IN ('middle_east','asia','india','europe','north_america')),
+--     CHECK (region IS NULL OR region IN ('asia','africa','europe','north_america','south_america')),
 --   company TEXT,
 --   avatar_url TEXT,
 --   created_at TIMESTAMPTZ DEFAULT now(),
@@ -32,7 +32,7 @@
 --   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
 --   name TEXT NOT NULL,
 --   region TEXT NOT NULL
---     CHECK (region IN ('middle_east','asia','india','europe','north_america')),
+--     CHECK (region IN ('asia','africa','europe','north_america','south_america')),
 --   contact_email TEXT,
 --   employees INTEGER,
 --   status TEXT DEFAULT 'active' CHECK (status IN ('active','inactive','pending')),

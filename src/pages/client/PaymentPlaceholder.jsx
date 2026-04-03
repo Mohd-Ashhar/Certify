@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
-import { calculatePrice } from '../../utils/pricing';
+import { calculatePrice, getCountryTier } from '../../utils/pricing';
 import { Button } from '../../components/ui/FormElements';
 import { Lock } from 'lucide-react';
 
@@ -56,7 +56,7 @@ export default function PaymentPlaceholder() {
 
     try {
       const isoName = application.recommended_iso || 'ISO 9001:2015 (Quality Management)';
-      const price = calculatePrice(isoName, activeTier, isMonthly);
+      const price = calculatePrice(isoName, activeTier, isMonthly, getCountryTier(user?.country));
 
       const response = await fetch('/api/checkout', {
         method: 'POST',
@@ -114,7 +114,8 @@ export default function PaymentPlaceholder() {
   }
 
   const isoName = application.recommended_iso || 'ISO 9001:2015 (Quality Management)';
-  const currentPrice = calculatePrice(isoName, activeTier, isMonthly);
+  const countryTier = getCountryTier(user?.country);
+  const currentPrice = calculatePrice(isoName, activeTier, isMonthly, countryTier);
 
   return (
     <div className="page-container" style={{ display: 'flex', justifyContent: 'center', alignItems: 'flex-start', paddingTop: '4vh', minHeight: '80vh' }}>
@@ -148,8 +149,8 @@ export default function PaymentPlaceholder() {
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '12px' }}>
             {TIERS.map((tier) => {
               const isActive = activeTier === tier;
-              const oneTimePrice = calculatePrice(isoName, tier, false);
-              const monthlyPrice = calculatePrice(isoName, tier, true);
+              const oneTimePrice = calculatePrice(isoName, tier, false, countryTier);
+              const monthlyPrice = calculatePrice(isoName, tier, true, countryTier);
               return (
                 <button
                   key={tier}
@@ -235,8 +236,8 @@ export default function PaymentPlaceholder() {
                   ✓
                 </div>
               )}
-              <h4 style={{ margin: '0 0 8px 0', fontSize: '1.05rem', fontWeight: !isMonthly ? 700 : 500, color: !isMonthly ? 'var(--primary-color, #2563eb)' : 'var(--text-light, #64748b)' }}>Pay in Full</h4>
-              <div style={{ fontSize: '1.35rem', fontWeight: 700, color: 'var(--text-color, #0f172a)' }}>${calculatePrice(isoName, activeTier, false)}</div>
+              <h4 style={{ margin: '0 0 8px 0', fontSize: '1.05rem', fontWeight: !isMonthly ? 700 : 500, color: !isMonthly ? 'var(--primary-color, #2563eb)' : 'var(--text-light, #64748b)' }}>Full Payment</h4>
+              <div style={{ fontSize: '1.35rem', fontWeight: 700, color: 'var(--text-color, #0f172a)' }}>${calculatePrice(isoName, activeTier, false, countryTier)}</div>
               <p style={{ margin: '4px 0 0 0', fontSize: '0.8rem', color: 'var(--text-light, #64748b)' }}>One-time payment</p>
             </button>
 
@@ -262,9 +263,9 @@ export default function PaymentPlaceholder() {
                   ✓
                 </div>
               )}
-              <h4 style={{ margin: '0 0 8px 0', fontSize: '1.05rem', fontWeight: isMonthly ? 700 : 500, color: isMonthly ? 'var(--primary-color, #2563eb)' : 'var(--text-light, #64748b)' }}>Pay Monthly</h4>
-              <div style={{ fontSize: '1.35rem', fontWeight: 700, color: 'var(--text-color, #0f172a)' }}>${calculatePrice(isoName, activeTier, true)} <span style={{ fontSize: '0.875rem', fontWeight: 400, color: 'var(--text-light, #64748b)' }}>/mo</span></div>
-              <p style={{ margin: '4px 0 0 0', fontSize: '0.8rem', color: 'var(--text-light, #64748b)' }}>12 installments</p>
+              <h4 style={{ margin: '0 0 8px 0', fontSize: '1.05rem', fontWeight: isMonthly ? 700 : 500, color: isMonthly ? 'var(--primary-color, #2563eb)' : 'var(--text-light, #64748b)' }}>12-Month Commitment</h4>
+              <div style={{ fontSize: '1.35rem', fontWeight: 700, color: 'var(--text-color, #0f172a)' }}>${calculatePrice(isoName, activeTier, true, countryTier)} <span style={{ fontSize: '0.875rem', fontWeight: 400, color: 'var(--text-light, #64748b)' }}>/mo</span></div>
+              <p style={{ margin: '4px 0 0 0', fontSize: '0.8rem', color: 'var(--text-light, #64748b)' }}>12-month recurring payment</p>
             </button>
 
           </div>

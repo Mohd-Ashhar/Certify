@@ -9,7 +9,7 @@
 //   import { fetchAll, fetchById, insertRow, updateRow, deleteRow } from '../lib/api';
 //
 //   const { data, error } = await fetchAll('companies', {
-//     filters: { region: 'middle_east' },
+//     filters: { region: 'asia' },
 //     orderBy: { column: 'created_at', ascending: false },
 //     limit: 20,
 //   });
