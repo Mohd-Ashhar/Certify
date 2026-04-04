@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Building2, FileCheck2, Clock, UserCheck, Percent, PlusCircle, CheckCircle2, ChevronRight, Upload, FileText, AlertCircle, MessageSquare } from 'lucide-react';
+import { Building2, FileCheck2, Clock, UserCheck, Percent, PlusCircle, CheckCircle2, ChevronRight, Upload, FileText, AlertCircle, MessageSquare, Download, Trash2, Eye, XCircle } from 'lucide-react';
 import StatCard from '../../components/ui/StatCard';
 import DataTable from '../../components/ui/DataTable';
 import StatusBadge from '../../components/ui/StatusBadge';
@@ -122,21 +122,28 @@ export default function Dashboard() {
     if (!activeApp) return;
     const fetchDocs = async () => {
       setFetchingDocs(true);
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from('documents')
         .select('*')
         .eq('application_id', activeApp.id)
-        .order('created_at', { ascending: false });
+        .order('uploaded_at', { ascending: false });
+      if (error) {
+        console.error('Error fetching documents:', error);
+      }
       if (data) setDocuments(data);
       setFetchingDocs(false);
     };
     fetchDocs();
   }, [activeApp]);
 
+  const [docError, setDocError] = useState('');
+  const [deletingDocId, setDeletingDocId] = useState(null);
+
   const handleFileUpload = async (e) => {
     const file = e.target.files[0];
     if (!file || !activeApp) return;
     setUploadingDoc(true);
+    setDocError('');
 
     try {
       // 1. Create the document record first to get the ID
@@ -158,16 +165,70 @@ export default function Dashboard() {
           .upload(storagePath, file, { upsert: true });
 
         if (uploadError) {
-          console.error('Storage upload error:', uploadError);
+          // Rollback the DB record if storage upload fails
+          await supabase.from('documents').delete().eq('id', docRecord.id);
+          throw uploadError;
         }
 
         setDocuments([docRecord, ...documents]);
       }
     } catch (err) {
       console.error('Document upload error:', err);
+      setDocError('Failed to upload document: ' + (err.message || 'Unknown error'));
     }
     setUploadingDoc(false);
     e.target.value = '';
+  };
+
+  const handleDocDownload = async (doc) => {
+    try {
+      const storagePath = `${activeApp.id}/${doc.id}`;
+      const { data, error } = await supabase.storage.from('application-documents').download(storagePath);
+      if (error) throw error;
+      const url = URL.createObjectURL(data);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = doc.file_name || 'document';
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error('Error downloading document:', err);
+      setDocError('Failed to download document.');
+    }
+  };
+
+  const handleDocView = async (doc) => {
+    try {
+      const storagePath = `${activeApp.id}/${doc.id}`;
+      const { data, error } = await supabase.storage.from('application-documents').download(storagePath);
+      if (error) throw error;
+      const url = URL.createObjectURL(data);
+      window.open(url, '_blank');
+    } catch (err) {
+      console.error('Error viewing document:', err);
+      setDocError('Failed to open document.');
+    }
+  };
+
+  const handleDocDelete = async (doc) => {
+    if (!window.confirm(`Are you sure you want to delete "${doc.file_name}"?`)) return;
+    setDeletingDocId(doc.id);
+    setDocError('');
+    try {
+      // Delete from storage first
+      const storagePath = `${activeApp.id}/${doc.id}`;
+      await supabase.storage.from('application-documents').remove([storagePath]);
+
+      // Delete the DB record
+      const { error } = await supabase.from('documents').delete().eq('id', doc.id);
+      if (error) throw error;
+
+      setDocuments(prev => prev.filter(d => d.id !== doc.id));
+    } catch (err) {
+      console.error('Error deleting document:', err);
+      setDocError('Failed to delete document.');
+    }
+    setDeletingDocId(null);
   };
 
   if (!user || loading) return <div className="page-container"><p>Loading dashboard...</p></div>;
@@ -354,7 +415,14 @@ export default function Dashboard() {
                         <input type="file" style={{ display: 'none' }} disabled={uploadingDoc} onChange={handleFileUpload} />
                       </label>
                     </div>
-                    
+
+                    {docError && (
+                      <div className="doc-error-banner">
+                        <AlertCircle size={16} /> <span>{docError}</span>
+                        <button onClick={() => setDocError('')} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'inherit', padding: '2px' }}><XCircle size={14} /></button>
+                      </div>
+                    )}
+
                     {fetchingDocs ? (
                       <p className="text-muted">Loading documents...</p>
                     ) : documents.length > 0 ? (
@@ -365,8 +433,25 @@ export default function Dashboard() {
                               <FileText size={20} color="var(--color-accent)" />
                               <div>
                                 <h4>{doc.file_name}</h4>
-                                <span>{new Date(doc.created_at).toLocaleDateString()} • {doc.file_size}</span>
+                                <span>{new Date(doc.uploaded_at).toLocaleDateString()} • {doc.file_size}</span>
                               </div>
+                            </div>
+                            <div className="document-actions">
+                              {doc.status && doc.status !== 'pending' && (
+                                <span className={`doc-status-pill ${doc.status}`}>
+                                  {doc.status === 'approved' ? <CheckCircle2 size={12} /> : <XCircle size={12} />}
+                                  {doc.status}
+                                </span>
+                              )}
+                              <button className="doc-action-btn" title="View" onClick={() => handleDocView(doc)}>
+                                <Eye size={16} />
+                              </button>
+                              <button className="doc-action-btn" title="Download" onClick={() => handleDocDownload(doc)}>
+                                <Download size={16} />
+                              </button>
+                              <button className="doc-action-btn delete" title="Delete" disabled={deletingDocId === doc.id} onClick={() => handleDocDelete(doc)}>
+                                <Trash2 size={16} />
+                              </button>
                             </div>
                           </div>
                         ))}
