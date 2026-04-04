@@ -27,6 +27,7 @@ import ApplicationDetails from './pages/admin/ApplicationDetails';
 // Dashboard Pages
 import Dashboard from './pages/dashboard/Dashboard';
 import Settings from './pages/settings/Settings';
+import Notifications from './pages/notifications/Notifications';
 import ApplicationForm from './pages/client/ApplicationForm';
 import PaymentPlaceholder from './pages/client/PaymentPlaceholder';
 import GapAnalysis from './pages/client/GapAnalysis';
@@ -150,7 +151,21 @@ function AppRoutes() {
               </ProtectedRoute>
             } />
 
-            {/* Settings — manage_settings */}
+            {/* Profile — accessible to all authenticated users */}
+            <Route path="/profile" element={
+              <ProtectedRoute requiredPermission={PERMISSIONS.MANAGE_SETTINGS}>
+                <Settings />
+              </ProtectedRoute>
+            } />
+
+            {/* Notifications */}
+            <Route path="/notifications" element={
+              <ProtectedRoute>
+                <Notifications />
+              </ProtectedRoute>
+            } />
+
+            {/* Settings — admin only */}
             <Route path="/settings" element={
               <ProtectedRoute requiredPermission={PERMISSIONS.MANAGE_SETTINGS}>
                 <Settings />

@@ -8,6 +8,65 @@ import { useAuth } from '../../contexts/AuthContext';
 import { ROLES, REGIONS } from '../../utils/roles';
 import './ApplicationDetails.css';
 
+const ISO_REQUIRED_DOCUMENTS = {
+  'ISO 9001:2015 (Quality Management)': [
+    'Quality Management System Manual',
+    'Quality Policy Statement',
+    'Documented Procedures (Control of Documents, Internal Audit, Corrective Actions)',
+    'Process Flow Charts',
+    'Internal Audit Reports',
+    'Management Review Meeting Minutes',
+  ],
+  'ISO/IEC 27001:2022 (Information Security)': [
+    'Information Security Policy',
+    'Risk Assessment Report',
+    'Statement of Applicability (SoA)',
+    'Information Security Procedures Manual',
+    'Asset Inventory',
+    'Business Continuity Plan',
+  ],
+  'ISO 14001:2015 (Environmental Management)': [
+    'Environmental Policy',
+    'Environmental Aspects & Impacts Register',
+    'Legal Compliance Register',
+    'Environmental Management Program',
+    'Waste Management Procedures',
+    'Emergency Preparedness Plan',
+  ],
+  'ISO 45001:2018 (Occupational Health & Safety)': [
+    'OH&S Policy',
+    'Hazard Identification & Risk Assessment',
+    'Legal Compliance Register',
+    'Emergency Response Procedures',
+    'Incident Investigation Reports',
+    'Worker Consultation Records',
+  ],
+  'ISO 22000:2018 (Food Safety)': [
+    'Food Safety Policy',
+    'HACCP Plan',
+    'Prerequisite Programs (PRPs)',
+    'Flow Diagrams of Food Processes',
+    'Hazard Analysis Records',
+    'Traceability Procedures',
+  ],
+  'ISO 13485:2016 (Medical Devices)': [
+    'Quality Manual for Medical Devices',
+    'Design & Development Files',
+    'Risk Management File (ISO 14971)',
+    'Regulatory Requirements Register',
+    'Complaint Handling Procedures',
+    'Post-Market Surveillance Records',
+  ],
+};
+
+function getRequiredDocs(isoName) {
+  if (!isoName) return [];
+  for (const [key, docs] of Object.entries(ISO_REQUIRED_DOCUMENTS)) {
+    if (isoName.includes(key.split(' (')[0])) return docs;
+  }
+  return ISO_REQUIRED_DOCUMENTS[isoName] || [];
+}
+
 export default function ApplicationDetails() {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -50,7 +109,7 @@ export default function ApplicationDetails() {
 
         const { data: appData, error: appError } = await supabase
           .from('applications')
-          .select('*, client:profiles!client_id(full_name, email, region)')
+          .select('*, client:profiles!client_id(full_name, email, region, company_name)')
           .eq('id', id)
           .single();
 
@@ -82,6 +141,15 @@ export default function ApplicationDetails() {
           .maybeSingle();
 
         if (appData) {
+          // Fetch client's auth metadata for phone and contact role
+          try {
+            const metaRes = await fetch(`/api/get-user-meta?userId=${appData.client_id}`);
+            if (metaRes.ok) {
+              const metaData = await metaRes.json();
+              appData.client_metadata = metaData.user_metadata || {};
+            }
+          } catch {} // non-critical, proceed without metadata
+
           setApplication(appData);
           setStatus(appData.status || 'pending');
           setAssignedAuditor(appData.assigned_auditor_id || '');
@@ -189,7 +257,9 @@ export default function ApplicationDetails() {
 
   const handleDownload = async (doc) => {
     try {
-      const { data, error } = await supabase.storage.from('application-documents').download(doc.file_path);
+      // Derive storage path from convention: {application_id}/{document_id}
+      const storagePath = `${id}/${doc.id}`;
+      const { data, error } = await supabase.storage.from('application-documents').download(storagePath);
       if (error) throw error;
       const url = URL.createObjectURL(data);
       const a = document.createElement('a');
@@ -199,7 +269,7 @@ export default function ApplicationDetails() {
       URL.revokeObjectURL(url);
     } catch (err) {
       console.error('Error downloading document', err);
-      alert('Failed to download document');
+      alert('This document was uploaded before file storage was enabled. The file content is not available.');
     }
   };
 
@@ -275,6 +345,15 @@ export default function ApplicationDetails() {
             <h4>Contact Information</h4>
             <p><strong>Name:</strong> {application.client?.full_name || '—'}</p>
             <p><strong>Email:</strong> {application.client?.email || '—'}</p>
+            {application.client_metadata?.contact_number && (
+              <p><strong>Phone:</strong> {application.client_metadata.contact_number}</p>
+            )}
+            {application.client_metadata?.activity && (
+              <p><strong>Role/Activity:</strong> {application.client_metadata.activity}</p>
+            )}
+            {application.client?.company_name && (
+              <p><strong>Company:</strong> {application.client.company_name}</p>
+            )}
           </div>
         </div>
 
@@ -463,6 +542,27 @@ export default function ApplicationDetails() {
         </div>
       </div>
 
+      {/* REQUIRED DOCUMENTS CHECKLIST */}
+      {getRequiredDocs(application.recommended_iso).length > 0 && (
+        <div className="app-card" style={{ marginTop: '1.5rem' }}>
+          <h3 className="app-card-title">Required Documents for {application.recommended_iso}</h3>
+          <p style={{ fontSize: '0.85rem', color: 'var(--color-text-secondary)', marginBottom: '1rem' }}>
+            The following documents are typically required for this certification:
+          </p>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+            {getRequiredDocs(application.recommended_iso).map((docName, i) => {
+              const uploaded = documents.some(d => d.file_name?.toLowerCase().includes(docName.split(' ')[0].toLowerCase()));
+              return (
+                <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '8px 12px', background: uploaded ? 'rgba(62,207,142,0.08)' : 'var(--color-bg-primary, #f9fafb)', borderRadius: '8px', border: `1px solid ${uploaded ? 'rgba(62,207,142,0.25)' : 'var(--color-border)'}` }}>
+                  {uploaded ? <CheckCircle2 size={16} style={{ color: 'var(--color-accent, #3ECF8E)', flexShrink: 0 }} /> : <AlertCircle size={16} style={{ color: 'var(--color-text-tertiary)', flexShrink: 0 }} />}
+                  <span style={{ fontSize: '0.85rem', color: uploaded ? 'var(--color-text-primary)' : 'var(--color-text-secondary)' }}>{docName}</span>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
       {/* DOCUMENTS SECTION */}
       <div className="app-card" style={{ marginTop: '1.5rem' }}>
         <h3 className="app-card-title">{isAuditor ? 'Document Review' : 'Uploaded Documents'}</h3>
@@ -489,9 +589,7 @@ export default function ApplicationDetails() {
                         {doc.status || 'pending'}
                       </span>
                     )}
-                    {doc.file_path && (
-                      <Button variant="outline" size="sm" onClick={() => handleDownload(doc)}><Download size={14} /> Download</Button>
-                    )}
+                    <Button variant="outline" size="sm" onClick={() => handleDownload(doc)}><Download size={14} /> Download</Button>
                   </div>
                 </div>
 

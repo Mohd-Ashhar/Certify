@@ -1,0 +1,19 @@
+.notifications__empty {
+  text-align: center;
+  padding: 60px 20px;
+  background: var(--surface-color, #fff);
+  border-radius: var(--radius-lg, 12px);
+  border: 1px solid var(--border-color, #e5e7eb);
+}
+
+.notifications__empty h3 {
+  margin: 16px 0 8px;
+  font-size: 1.1rem;
+}
+
+.notifications__empty p {
+  color: var(--text-muted, #6b7280);
+  max-width: 400px;
+  margin: 0 auto;
+  line-height: 1.5;
+}

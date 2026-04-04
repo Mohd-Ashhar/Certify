@@ -1,12 +1,12 @@
 import { TrendingUp, TrendingDown } from 'lucide-react';
 import './StatCard.css';
 
-export default function StatCard({ title, value, change, icon: Icon, iconColor }) {
+export default function StatCard({ title, value, change, icon: Icon, iconColor, onClick }) {
   const isPositive = change && change.startsWith('+');
   const isNegative = change && change.startsWith('-');
 
   return (
-    <div className="stat-card">
+    <div className={`stat-card ${onClick ? 'stat-card--clickable' : ''}`} onClick={onClick} style={onClick ? { cursor: 'pointer' } : {}}>
       <div className="stat-card__header">
         <span className="stat-card__title">{title}</span>
         {Icon && (

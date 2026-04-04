@@ -126,6 +126,10 @@
 .settings__region-emoji { font-size: var(--font-size-xl); }
 .settings__region-name { font-weight: 500; }
 
+.settings__region-row--disabled {
+  opacity: 0.55;
+}
+
 /* Toggle Switch */
 .settings__switch {
   position: relative;

@@ -15,18 +15,31 @@ const INDUSTRIES = [
   'Logistics'
 ];
 
+/** Parse employee range string (e.g. "51-200") into a representative number */
+function parseEmployeeRange(range) {
+  if (!range) return '';
+  if (range.includes('+')) return range.replace('+', '');
+  const parts = range.split('-');
+  if (parts.length === 2) {
+    return String(Math.round((parseInt(parts[0], 10) + parseInt(parts[1], 10)) / 2));
+  }
+  return range;
+}
+
 export default function ApplicationForm() {
   const { user, getRoleDashboard } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const selectedPackage = location.state?.package || null;
-  
+
+  const meta = user?.user_metadata || {};
+
   const [formData, setFormData] = useState({
     companyName: '',
     industry: '',
     scope: '',
-    employeeCount: '',
-    locationsCount: ''
+    employeeCount: parseEmployeeRange(meta.number_of_employees) || '',
+    locationsCount: meta.number_of_locations || ''
   });
   
   const [loading, setLoading] = useState(false);

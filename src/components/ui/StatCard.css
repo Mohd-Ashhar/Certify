@@ -14,6 +14,11 @@
   box-shadow: var(--shadow-sm);
 }
 
+.stat-card--clickable:hover {
+  border-color: var(--color-accent);
+  transform: translateY(-1px);
+}
+
 .stat-card__header {
   display: flex;
   align-items: center;

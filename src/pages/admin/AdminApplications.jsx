@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Select, Button } from '../../components/ui/FormElements';
 import DataTable from '../../components/ui/DataTable';
 import StatusBadge from '../../components/ui/StatusBadge';
@@ -10,11 +10,13 @@ import { supabase } from '../../lib/supabase';
 export default function AdminApplications() {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const isRegionalAdmin = user?.role === ROLES.REGIONAL_ADMIN;
 
   const [applications, setApplications] = useState([]);
   const [loading, setLoading] = useState(true);
   const [regionFilter, setRegionFilter] = useState(isRegionalAdmin ? (user.region || '') : '');
+  const [statusFilter, setStatusFilter] = useState(searchParams.get('status') || '');
 
   useEffect(() => {
     const fetch = async () => {
@@ -47,9 +49,9 @@ export default function AdminApplications() {
     fetch();
   }, []);
 
-  const filtered = regionFilter
-    ? applications.filter(a => a.region === regionFilter)
-    : applications;
+  let filtered = applications;
+  if (regionFilter) filtered = filtered.filter(a => a.region === regionFilter);
+  if (statusFilter) filtered = filtered.filter(a => a.status === statusFilter);
 
   const columns = [
     { key: 'company_name', label: 'Company' },
@@ -74,20 +76,38 @@ export default function AdminApplications() {
           <h1 className="page-title">All Applications</h1>
           <p className="page-subtitle">{filtered.length} application{filtered.length !== 1 ? 's' : ''} found</p>
         </div>
-        {!isRegionalAdmin && (
+        <div style={{ display: 'flex', gap: '12px' }}>
           <Select
-            id="filter-region"
-            name="region"
-            value={regionFilter}
-            onChange={(e) => setRegionFilter(e.target.value)}
+            id="filter-status"
+            name="status"
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value)}
             style={{ width: '200px' }}
           >
-            <option value="">All Regions</option>
-            {REGIONS.map(r => (
-              <option key={r.id} value={r.id}>{r.label}</option>
-            ))}
+            <option value="">All Statuses</option>
+            <option value="pending">Pending</option>
+            <option value="awaiting_payment">Awaiting Payment</option>
+            <option value="in_review">In Review</option>
+            <option value="audit_scheduled">Audit Scheduled</option>
+            <option value="audited">Audited</option>
+            <option value="approved">Approved</option>
+            <option value="rejected">Rejected</option>
           </Select>
-        )}
+          {!isRegionalAdmin && (
+            <Select
+              id="filter-region"
+              name="region"
+              value={regionFilter}
+              onChange={(e) => setRegionFilter(e.target.value)}
+              style={{ width: '200px' }}
+            >
+              <option value="">All Regions</option>
+              {REGIONS.map(r => (
+                <option key={r.id} value={r.id}>{r.label}</option>
+              ))}
+            </Select>
+          )}
+        </div>
       </div>
 
       {loading ? (

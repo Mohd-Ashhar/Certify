@@ -66,7 +66,8 @@ export default function AdminUsers() {
     setError('');
     setSuccess('');
 
-    const { full_name, email, password, role, region } = createForm;
+    const { full_name, email, password, role } = createForm;
+    const region = isRegionalAdmin ? (user?.region || createForm.region) : createForm.region;
 
     if (!full_name || !email || !password || !role) {
       setError('Please fill in all required fields');
@@ -309,13 +310,14 @@ export default function AdminUsers() {
           </Select>
 
           <Select
-            label="Region"
+            label={`Region${isRegionalAdmin ? '' : ' (optional)'}`}
             id="create-user-region"
             name="region"
-            value={createForm.region}
+            value={isRegionalAdmin ? (user?.region || createForm.region) : createForm.region}
             onChange={handleCreateChange}
+            disabled={isRegionalAdmin}
           >
-            <option value="">Select a region (optional)</option>
+            <option value="">Select a region</option>
             {REGIONS.map(r => (
               <option key={r.id} value={r.id}>{r.label}</option>
             ))}

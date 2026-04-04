@@ -1,27 +1,30 @@
 import { useState } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { Input, Button, Select } from '../../components/ui/FormElements';
-import { REGIONS, ROLES, ROLE_LABELS, PERMISSIONS, getRolePermissions } from '../../utils/roles';
+import { REGIONS, ROLES, ROLE_LABELS, PERMISSIONS, getRolePermissions, hasPermission } from '../../utils/roles';
 import { User, Globe, Shield, Settings as SettingsIcon, Check } from 'lucide-react';
 import './Settings.css';
 
-const tabs = [
-  { id: 'profile', label: 'Profile', icon: User },
-  { id: 'regions', label: 'Regions', icon: Globe },
-  { id: 'roles', label: 'Roles & Permissions', icon: Shield },
-  { id: 'general', label: 'General', icon: SettingsIcon },
+const allTabs = [
+  { id: 'profile', label: 'Profile', icon: User, adminOnly: false },
+  { id: 'regions', label: 'Regions', icon: Globe, adminOnly: true },
+  { id: 'roles', label: 'Roles & Permissions', icon: Shield, adminOnly: true },
+  { id: 'general', label: 'General', icon: SettingsIcon, adminOnly: false },
 ];
 
 export default function Settings() {
   const { user } = useAuth();
   const [activeTab, setActiveTab] = useState('profile');
 
+  const isAdmin = hasPermission(user?.role, PERMISSIONS.MANAGE_USERS);
+  const tabs = allTabs.filter(tab => !tab.adminOnly || isAdmin);
+
   return (
     <div className="page-container">
       <div className="page-header">
         <div>
-          <h1 className="page-title">Settings</h1>
-          <p className="page-subtitle">Manage your account and platform settings</p>
+          <h1 className="page-title">{isAdmin ? 'Settings' : 'My Profile'}</h1>
+          <p className="page-subtitle">{isAdmin ? 'Manage your account and platform settings' : 'Manage your account details'}</p>
         </div>
       </div>
 
@@ -208,25 +211,52 @@ function ProfileTab({ user }) {
 }
 
 function RegionsTab() {
+  const [activeRegions, setActiveRegions] = useState(
+    () => Object.fromEntries(REGIONS.map(r => [r.id, true]))
+  );
+  const [saved, setSaved] = useState(false);
+
+  const handleToggle = (regionId) => {
+    setActiveRegions(prev => ({ ...prev, [regionId]: !prev[regionId] }));
+    setSaved(false);
+  };
+
+  const handleSave = () => {
+    setSaved(true);
+    setTimeout(() => setSaved(false), 2000);
+  };
+
+  const activeCount = Object.values(activeRegions).filter(Boolean).length;
+
   return (
     <div className="settings__section">
       <h2 className="settings__section-title">Region Management</h2>
-      <p className="settings__section-desc">Configure active regions for your platform</p>
+      <p className="settings__section-desc">Configure active regions for your platform ({activeCount} of {REGIONS.length} active)</p>
       <div className="settings__regions-list">
         {REGIONS.map((region) => (
-          <div key={region.id} className="settings__region-row">
+          <div key={region.id} className={`settings__region-row ${!activeRegions[region.id] ? 'settings__region-row--disabled' : ''}`}>
             <div className="settings__region-info">
               <span className="settings__region-emoji">{region.emoji}</span>
               <span className="settings__region-name">{region.label}</span>
+              {!activeRegions[region.id] && <span style={{ fontSize: '0.8rem', color: 'var(--text-muted, #9ca3af)', marginLeft: '8px' }}>Inactive</span>}
             </div>
             <div className="settings__region-toggle">
               <label className="settings__switch">
-                <input type="checkbox" defaultChecked />
+                <input
+                  type="checkbox"
+                  checked={activeRegions[region.id]}
+                  onChange={() => handleToggle(region.id)}
+                />
                 <span className="settings__switch-slider" />
               </label>
             </div>
           </div>
         ))}
+      </div>
+      <div className="settings__form-actions" style={{ marginTop: '20px' }}>
+        <Button variant="primary" size="md" onClick={handleSave}>
+          {saved ? 'Saved!' : 'Save Changes'}
+        </Button>
       </div>
     </div>
   );

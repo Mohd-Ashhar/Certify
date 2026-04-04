@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { supabase } from '../../lib/supabase';
@@ -46,6 +46,13 @@ export default function GapAnalysis() {
   const [currentIdx, setCurrentIdx] = useState(0);
   const [score, setScore] = useState(null);
   const [submitting, setSubmitting] = useState(false);
+
+  // Restore score from profile if quiz was already completed
+  useEffect(() => {
+    if (user?.gap_analysis_score != null) {
+      setScore(user.gap_analysis_score);
+    }
+  }, [user]);
 
   const handleAnswer = (val) => {
     const newAnswers = [...answers];

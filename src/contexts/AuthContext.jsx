@@ -90,7 +90,7 @@ export function AuthProvider({ children }) {
     name, email, password,
     company_name, activity, number_of_employees,
     number_of_locations, website, city, country,
-    contact_number, certification_types,
+    contact_number, contact_role, certification_types,
   }) => {
     const region = getRegionFromCountry(country);
 
@@ -110,6 +110,7 @@ export function AuthProvider({ children }) {
           country,
           region,
           contact_number,
+          contact_role: contact_role || null,
           certification_types: certification_types || [],
         },
       },

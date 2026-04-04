@@ -61,6 +61,7 @@ export default function SignUp() {
     country: '',
     // Step 2 — Contact & Certs
     contact_person_name: '',
+    contact_role: '',
     contact_code: '+971',
     contact_number: '',
     email: '',
@@ -165,6 +166,7 @@ export default function SignUp() {
       city: formData.city,
       country: formData.country,
       contact_number: `${formData.contact_code} ${formData.contact_number}`,
+      contact_role: formData.contact_role,
       certification_types: formData.certification_types,
     });
 
@@ -245,6 +247,11 @@ export default function SignUp() {
             <Input label="Contact Person Name *" id="signup-contact-name" name="contact_person_name"
               placeholder="Full name" value={formData.contact_person_name}
               onChange={handleChange} required />
+
+            <Input label="Designation / Role" id="signup-contact-role" name="contact_role"
+              placeholder="e.g. Quality Manager, Director, CEO"
+              value={formData.contact_role}
+              onChange={handleChange} />
 
             <Input label="Email *" type="email" id="signup-email" name="email"
               placeholder="you@company.com" value={formData.email}

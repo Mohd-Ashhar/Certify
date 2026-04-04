@@ -23,6 +23,23 @@ const getCurrentStepIndex = (status) => {
   return stepIndex >= 0 ? stepIndex : 0;
 };
 
+const ISO_DOCS = {
+  '9001': ['Quality Management System Manual', 'Quality Policy Statement', 'Documented Procedures', 'Process Flow Charts', 'Internal Audit Reports', 'Management Review Minutes'],
+  '27001': ['Information Security Policy', 'Risk Assessment Report', 'Statement of Applicability', 'Security Procedures Manual', 'Asset Inventory', 'Business Continuity Plan'],
+  '14001': ['Environmental Policy', 'Environmental Aspects Register', 'Legal Compliance Register', 'Environmental Management Program', 'Waste Management Procedures', 'Emergency Preparedness Plan'],
+  '45001': ['OH&S Policy', 'Hazard Identification & Risk Assessment', 'Legal Compliance Register', 'Emergency Response Procedures', 'Incident Investigation Reports', 'Worker Consultation Records'],
+  '22000': ['Food Safety Policy', 'HACCP Plan', 'Prerequisite Programs', 'Flow Diagrams', 'Hazard Analysis Records', 'Traceability Procedures'],
+  '13485': ['Quality Manual for Medical Devices', 'Design & Development Files', 'Risk Management File', 'Regulatory Requirements Register', 'Complaint Handling Procedures', 'Post-Market Surveillance Records'],
+};
+
+function getRequiredDocsForISO(isoName) {
+  if (!isoName) return [];
+  for (const [key, docs] of Object.entries(ISO_DOCS)) {
+    if (isoName.includes(key)) return docs;
+  }
+  return [];
+}
+
 export default function Dashboard() {
   const { user, loading } = useAuth();
   const navigate = useNavigate();
@@ -96,7 +113,10 @@ export default function Dashboard() {
     fetchApps();
   }, [user]);
 
-  const activeApp = clientApplications[0];
+  const [selectedAppId, setSelectedAppId] = useState(null);
+  const activeApp = selectedAppId
+    ? clientApplications.find(a => a.id === selectedAppId) || clientApplications[0]
+    : clientApplications[0];
 
   useEffect(() => {
     if (!activeApp) return;
@@ -117,18 +137,37 @@ export default function Dashboard() {
     const file = e.target.files[0];
     if (!file || !activeApp) return;
     setUploadingDoc(true);
-    
-    const { data, error } = await supabase.from('documents').insert([{ 
-      application_id: activeApp.id, 
-      client_id: user.id, 
-      file_name: file.name, 
-      file_size: `${(file.size / 1024 / 1024).toFixed(2)}MB` 
-    }]).select();
-    
-    if (data && data.length > 0) {
-      setDocuments([data[0], ...documents]);
+
+    try {
+      // 1. Create the document record first to get the ID
+      const { data, error: insertError } = await supabase.from('documents').insert([{
+        application_id: activeApp.id,
+        client_id: user.id,
+        file_name: file.name,
+        file_size: `${(file.size / 1024 / 1024).toFixed(2)}MB`
+      }]).select();
+
+      if (insertError) throw insertError;
+
+      if (data && data.length > 0) {
+        const docRecord = data[0];
+        // 2. Upload actual file to Supabase Storage
+        const storagePath = `${activeApp.id}/${docRecord.id}`;
+        const { error: uploadError } = await supabase.storage
+          .from('application-documents')
+          .upload(storagePath, file, { upsert: true });
+
+        if (uploadError) {
+          console.error('Storage upload error:', uploadError);
+        }
+
+        setDocuments([docRecord, ...documents]);
+      }
+    } catch (err) {
+      console.error('Document upload error:', err);
     }
     setUploadingDoc(false);
+    e.target.value = '';
   };
 
   if (!user || loading) return <div className="page-container"><p>Loading dashboard...</p></div>;
@@ -285,6 +324,25 @@ export default function Dashboard() {
                     </div>
                   </div>
 
+                  {/* Required Documents Guidance */}
+                  {activeApp.recommended_iso && (
+                    <div className="dashboard__section" style={{ marginTop: '2rem' }}>
+                      <div className="section-subtitle-container">
+                        <FileCheck2 size={18}/> <h3 className="section-subtitle" style={{ margin: 0 }}>Required Documents for {activeApp.recommended_iso}</h3>
+                      </div>
+                      <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', margin: '12px 0' }}>
+                        Please upload the following documents for your certification:
+                      </p>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                        {getRequiredDocsForISO(activeApp.recommended_iso).map((docName, i) => (
+                          <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '6px 10px', fontSize: '0.85rem', color: 'var(--text-muted)' }}>
+                            <span style={{ color: 'var(--color-accent, #3ECF8E)' }}>&#x2022;</span> {docName}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
                   {/* Document Management */}
                   <div className="dashboard__section document-section" style={{ marginTop: '2rem' }}>
                     <div className="dashboard__section-header">
@@ -335,14 +393,19 @@ export default function Dashboard() {
                   )}
                 </div>
                 {clientApplications.length > 0 ? (
-                  <DataTable 
+                  <DataTable
                     columns={[
                       { key: 'industry', label: 'Industry' },
                       { key: 'recommended_iso', label: 'Recommended ISO', render: (val) => val ? val : "Analyzing..." },
                       { key: 'status', label: 'Status', render: (val) => <StatusBadge status={val} /> },
-                      { key: 'created_at', label: 'Date', render: (val) => new Date(val).toLocaleDateString() }
-                    ]} 
-                    data={clientApplications.length > 1 ? clientApplications.slice(1) : clientApplications} 
+                      { key: 'created_at', label: 'Date', render: (val) => new Date(val).toLocaleDateString() },
+                      { key: 'action', label: '', render: (_, row) => (
+                        <Button size="sm" variant="outline" onClick={() => setSelectedAppId(row.id)}>
+                          {row.id === activeApp?.id ? 'Viewing' : 'View'}
+                        </Button>
+                      )}
+                    ]}
+                    data={clientApplications.length > 1 ? clientApplications.slice(1) : clientApplications}
                     emptyMessage="No past applications found."
                   />
                 ) : (
@@ -356,11 +419,11 @@ export default function Dashboard() {
         <>
           {/* Stat Cards */}
           <div className="dashboard__stats">
-            <StatCard title="Total Applications" value={totalApplications} icon={Building2} iconColor="#3ECF8E" />
-            <StatCard title="Approved" value={approvedCertifications} icon={FileCheck2} iconColor="#60A5FA" />
-            <StatCard title="Pending Processing" value={pendingProcessing} icon={Clock} iconColor="#FBBF24" />
-            <StatCard title="Active Review" value={activeReview} icon={UserCheck} iconColor="#A78BFA" />
-            <StatCard title="Awaiting Payment" value={awaitingPayment} icon={Percent} iconColor="#F87171" />
+            <StatCard title="Total Applications" value={totalApplications} icon={Building2} iconColor="#3ECF8E" onClick={() => navigate('/admin/applications')} />
+            <StatCard title="Approved" value={approvedCertifications} icon={FileCheck2} iconColor="#60A5FA" onClick={() => navigate('/admin/applications?status=approved')} />
+            <StatCard title="Pending Processing" value={pendingProcessing} icon={Clock} iconColor="#FBBF24" onClick={() => navigate('/admin/applications?status=pending')} />
+            <StatCard title="Active Review" value={activeReview} icon={UserCheck} iconColor="#A78BFA" onClick={() => navigate('/admin/applications?status=in_review')} />
+            <StatCard title="Awaiting Payment" value={awaitingPayment} icon={Percent} iconColor="#F87171" onClick={() => navigate('/admin/applications?status=awaiting_payment')} />
           </div>
 
           {/* Main content grid */}

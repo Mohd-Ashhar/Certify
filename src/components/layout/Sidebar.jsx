@@ -16,6 +16,8 @@ import {
   Shield,
   X,
   PlusCircle,
+  User,
+  Bell,
 } from 'lucide-react';
 import './Sidebar.css';
 
@@ -28,7 +30,9 @@ const navItems = [
   { path: '/admin/auditors', label: 'Auditors', icon: UserCheck, permissions: [PERMISSIONS.MANAGE_AUDITORS] },
   { path: '/admin/cert-bodies', label: 'Cert Bodies', icon: Award, permissions: [PERMISSIONS.MANAGE_BODIES] },
   { path: '/admin/users', label: 'Users', icon: Users, permissions: [PERMISSIONS.CREATE_ADMINS, PERMISSIONS.MANAGE_AUDITORS] },
-  { path: '/settings', label: 'Settings', icon: Settings, permissions: [PERMISSIONS.MANAGE_SETTINGS] },
+  { path: '/profile', label: 'My Profile', icon: User, permissions: [PERMISSIONS.MANAGE_SETTINGS] },
+  { path: '/notifications', label: 'Notifications', icon: Bell, permissions: [PERMISSIONS.VIEW_DASHBOARD] },
+  { path: '/settings', label: 'Settings', icon: Settings, permissions: [PERMISSIONS.MANAGE_USERS] },
 ];
 
 export default function Sidebar({ isOpen, onClose, collapsed, onToggleCollapse }) {
