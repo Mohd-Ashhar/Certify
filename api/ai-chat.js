@@ -1,10 +1,6 @@
 import { createClient } from '@supabase/supabase-js';
-import { GoogleGenerativeAI } from '@google/generative-ai';
 
-const supabaseAdmin = createClient(
-  process.env.VITE_SUPABASE_URL,
-  process.env.SUPABASE_SERVICE_ROLE_KEY
-);
+const GEMINI_API_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent';
 
 const SARA_SYSTEM_PROMPT = `You are Sara, the friendly and knowledgeable AI support agent for Certify.cx — a trusted ISO certification management platform. Your role is to help clients understand ISO standards, guide them through the certification process, and encourage them to take the next step toward achieving their certification goals.
 
@@ -77,11 +73,24 @@ const SARA_SYSTEM_PROMPT = `You are Sara, the friendly and knowledgeable AI supp
 export default async function handler(req, res) {
   // CORS headers
   res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
+  res.setHeader('Access-Control-Allow-Methods', 'POST, GET, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
 
   if (req.method === 'OPTIONS') {
     return res.status(200).end();
+  }
+
+  // Health check endpoint — hit GET /api/ai-chat to diagnose env issues
+  if (req.method === 'GET') {
+    const apiKey = process.env.GEMINI_API_KEY;
+    const supaUrl = process.env.VITE_SUPABASE_URL;
+    return res.status(200).json({
+      status: 'ok',
+      hasGeminiKey: !!apiKey && apiKey.length > 10,
+      geminiKeyPrefix: apiKey ? apiKey.substring(0, 8) + '...' : 'MISSING',
+      hasSupabaseUrl: !!supaUrl,
+      nodeVersion: process.version,
+    });
   }
 
   if (req.method !== 'POST') {
@@ -90,7 +99,7 @@ export default async function handler(req, res) {
 
   const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey || apiKey === 'your_gemini_api_key_here') {
-    return res.status(500).json({ error: 'Gemini API key not configured' });
+    return res.status(500).json({ error: 'Gemini API key not configured on server' });
   }
 
   try {
@@ -104,6 +113,10 @@ export default async function handler(req, res) {
     let clientContext = '';
     if (userId) {
       try {
+        const supabaseAdmin = createClient(
+          process.env.VITE_SUPABASE_URL,
+          process.env.SUPABASE_SERVICE_ROLE_KEY
+        );
         const { data: profile } = await supabaseAdmin
           .from('profiles')
           .select('full_name, company_name, role, gap_analysis_score')
@@ -114,43 +127,54 @@ export default async function handler(req, res) {
           clientContext = `\n\n## Current Client Context\n- Name: ${profile.full_name || 'Unknown'}\n- Company: ${profile.company_name || 'Not provided'}\n- Gap Analysis Score: ${profile.gap_analysis_score != null ? profile.gap_analysis_score + '%' : 'Not yet taken'}\n\nUse this context to personalize your responses. For example, if they haven't taken the gap analysis, gently suggest it. If their score is high, congratulate them and encourage next steps.`;
         }
       } catch (err) {
-        console.error('Profile fetch error (non-blocking):', err);
+        console.error('Profile fetch error (non-blocking):', err.message);
       }
     }
 
-    // Initialize Gemini SDK
-    const genAI = new GoogleGenerativeAI(apiKey);
-    const model = genAI.getGenerativeModel({
-      model: 'gemini-2.5-flash',
-      systemInstruction: SARA_SYSTEM_PROMPT + clientContext,
-    });
-
-    // Build chat history (all messages except the last one)
-    const history = messages.slice(0, -1).map((msg) => ({
+    // Build contents array for Gemini REST API
+    const contents = messages.map((msg) => ({
       role: msg.role === 'assistant' ? 'model' : 'user',
       parts: [{ text: msg.content }],
     }));
 
-    const chat = model.startChat({
-      history,
-      generationConfig: {
-        temperature: 0.7,
-        topP: 0.9,
-        topK: 40,
-        maxOutputTokens: 1024,
-      },
+    // Call Gemini REST API directly (no SDK needed)
+    const geminiRes = await fetch(`${GEMINI_API_URL}?key=${apiKey}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        system_instruction: {
+          parts: [{ text: SARA_SYSTEM_PROMPT + clientContext }],
+        },
+        contents,
+        generationConfig: {
+          temperature: 0.7,
+          topP: 0.9,
+          topK: 40,
+          maxOutputTokens: 1024,
+        },
+      }),
     });
 
-    // Send the latest user message
-    const lastMessage = messages[messages.length - 1].content;
-    const result = await chat.sendMessage(lastMessage);
-    const reply = result.response.text();
+    if (!geminiRes.ok) {
+      const errorBody = await geminiRes.text();
+      console.error('Gemini API error:', geminiRes.status, errorBody);
+      return res.status(502).json({
+        error: 'Gemini API request failed',
+        detail: `Status ${geminiRes.status}: ${errorBody.substring(0, 300)}`,
+      });
+    }
+
+    const data = await geminiRes.json();
+    const reply =
+      data?.candidates?.[0]?.content?.parts?.[0]?.text ||
+      'Sorry, I could not generate a response. Please try again.';
 
     return res.status(200).json({ reply });
   } catch (error) {
     console.error('AI chat error:', error);
     return res.status(500).json({
       error: error.message || 'Internal server error',
+      stack: process.env.NODE_ENV !== 'production' ? error.stack : undefined,
     });
   }
 }

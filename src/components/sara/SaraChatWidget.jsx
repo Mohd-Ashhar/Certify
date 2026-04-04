@@ -56,7 +56,9 @@ export default function SaraChatWidget() {
       });
 
       if (!res.ok) {
-        throw new Error('Failed to get response');
+        const errData = await res.json().catch(() => ({}));
+        console.error('Sara API error:', res.status, errData);
+        throw new Error(errData.detail || errData.error || 'Failed to get response');
       }
 
       const data = await res.json();
@@ -115,8 +117,12 @@ export default function SaraChatWidget() {
           userId: user?.id || null,
         }),
       })
-        .then((res) => {
-          if (!res.ok) throw new Error('Failed');
+        .then(async (res) => {
+          if (!res.ok) {
+            const errData = await res.json().catch(() => ({}));
+            console.error('Sara API error:', res.status, errData);
+            throw new Error(errData.detail || errData.error || 'Failed');
+          }
           return res.json();
         })
         .then((data) => {
