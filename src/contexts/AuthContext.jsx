@@ -91,6 +91,7 @@ export function AuthProvider({ children }) {
     company_name, activity, number_of_employees,
     number_of_locations, website, city, country,
     contact_number, contact_role, certification_types,
+    referral_code,
   }) => {
     const region = getRegionFromCountry(country);
 
@@ -133,6 +134,19 @@ export function AuthProvider({ children }) {
           region,
         }),
       });
+
+      // Record referral if user signed up via a referral link
+      if (referral_code) {
+        await fetch('/api/record-referral', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            referralCode: referral_code,
+            referredId: data.user.id,
+            referredEmail: email,
+          }),
+        }).catch(() => {}); // non-blocking
+      }
     }
 
     return { success: true, data };

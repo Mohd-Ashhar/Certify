@@ -31,6 +31,7 @@ import Notifications from './pages/notifications/Notifications';
 import ApplicationForm from './pages/client/ApplicationForm';
 import PaymentPlaceholder from './pages/client/PaymentPlaceholder';
 import GapAnalysis from './pages/client/GapAnalysis';
+import Referrals from './pages/referrals/Referrals';
 
 function AppRoutes() {
   const { loading } = useAuth();
@@ -162,6 +163,13 @@ function AppRoutes() {
             <Route path="/notifications" element={
               <ProtectedRoute>
                 <Notifications />
+              </ProtectedRoute>
+            } />
+
+            {/* Referral Program */}
+            <Route path="/referrals" element={
+              <ProtectedRoute>
+                <Referrals />
               </ProtectedRoute>
             } />
 

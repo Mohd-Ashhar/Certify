@@ -1,8 +1,14 @@
 import Stripe from 'stripe';
+import { createClient } from '@supabase/supabase-js';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
-  apiVersion: '2023-10-16', // Typical recent api version
+  apiVersion: '2023-10-16',
 });
+
+const supabaseAdmin = createClient(
+  process.env.VITE_SUPABASE_URL,
+  process.env.SUPABASE_SERVICE_ROLE_KEY
+);
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
@@ -45,6 +51,42 @@ export default async function handler(req, res) {
     };
 
     const session = await stripe.checkout.sessions.create(sessionConfig);
+
+    // Credit referral commission if this client was referred
+    if (clientId) {
+      try {
+        // Find referral where this client's email matches referred_email
+        const { data: userMeta } = await supabaseAdmin.auth.admin.getUserById(clientId);
+        const clientEmail = userMeta?.user?.email;
+
+        if (clientEmail) {
+          const { data: referral } = await supabaseAdmin
+            .from('referrals')
+            .select('*')
+            .eq('referred_email', clientEmail)
+            .in('status', ['pending', 'signed_up'])
+            .maybeSingle();
+
+          if (referral) {
+            const saleAmount = isMonthly ? price * 12 : price;
+            const commission = saleAmount * 0.10; // 10% commission
+
+            await supabaseAdmin
+              .from('referrals')
+              .update({
+                status: 'converted',
+                payment_amount: saleAmount,
+                commission_amount: commission,
+                referred_id: clientId,
+                converted_at: new Date().toISOString(),
+              })
+              .eq('id', referral.id);
+          }
+        }
+      } catch (refErr) {
+        console.error('Referral commission error (non-blocking):', refErr);
+      }
+    }
 
     return res.status(200).json({ url: session.url });
   } catch (error) {

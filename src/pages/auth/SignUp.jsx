@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { Input, Select, Button, Autocomplete } from '../../components/ui/FormElements';
 import { REGIONS } from '../../utils/roles';
@@ -48,6 +48,8 @@ const fetchGeoapifyOptions = async (text, type) => {
 export default function SignUp() {
   const { signup } = useAuth();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const referralCode = searchParams.get('ref') || '';
   const [step, setStep] = useState(1);
   const [formData, setFormData] = useState({
     // Step 1 — Company
@@ -168,6 +170,7 @@ export default function SignUp() {
       contact_number: `${formData.contact_code} ${formData.contact_number}`,
       contact_role: formData.contact_role,
       certification_types: formData.certification_types,
+      referral_code: referralCode,
     });
 
     if (result.success) {
