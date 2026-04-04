@@ -1,13 +1,10 @@
 import { createClient } from '@supabase/supabase-js';
+import { GoogleGenerativeAI } from '@google/generative-ai';
 
 const supabaseAdmin = createClient(
   process.env.VITE_SUPABASE_URL,
   process.env.SUPABASE_SERVICE_ROLE_KEY
 );
-
-const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
-const GEMINI_MODEL = 'gemini-2.5-flash';
-const GEMINI_URL = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${GEMINI_API_KEY}`;
 
 const SARA_SYSTEM_PROMPT = `You are Sara, the friendly and knowledgeable AI support agent for Certify.cx — a trusted ISO certification management platform. Your role is to help clients understand ISO standards, guide them through the certification process, and encourage them to take the next step toward achieving their certification goals.
 
@@ -91,7 +88,8 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'Method Not Allowed' });
   }
 
-  if (!GEMINI_API_KEY || GEMINI_API_KEY === 'your_gemini_api_key_here') {
+  const apiKey = process.env.GEMINI_API_KEY;
+  if (!apiKey || apiKey === 'your_gemini_api_key_here') {
     return res.status(500).json({ error: 'Gemini API key not configured' });
   }
 
@@ -120,57 +118,39 @@ export default async function handler(req, res) {
       }
     }
 
-    // Build Gemini conversation format
-    const geminiContents = [];
+    // Initialize Gemini SDK
+    const genAI = new GoogleGenerativeAI(apiKey);
+    const model = genAI.getGenerativeModel({
+      model: 'gemini-2.5-flash',
+      systemInstruction: SARA_SYSTEM_PROMPT + clientContext,
+    });
 
-    // Add conversation history
-    for (const msg of messages) {
-      geminiContents.push({
-        role: msg.role === 'assistant' ? 'model' : 'user',
-        parts: [{ text: msg.content }],
-      });
-    }
+    // Build chat history (all messages except the last one)
+    const history = messages.slice(0, -1).map((msg) => ({
+      role: msg.role === 'assistant' ? 'model' : 'user',
+      parts: [{ text: msg.content }],
+    }));
 
-    const geminiPayload = {
-      system_instruction: {
-        parts: [{ text: SARA_SYSTEM_PROMPT + clientContext }],
-      },
-      contents: geminiContents,
+    const chat = model.startChat({
+      history,
       generationConfig: {
         temperature: 0.7,
         topP: 0.9,
         topK: 40,
         maxOutputTokens: 1024,
       },
-      safetySettings: [
-        { category: 'HARM_CATEGORY_HARASSMENT', threshold: 'BLOCK_MEDIUM_AND_ABOVE' },
-        { category: 'HARM_CATEGORY_HATE_SPEECH', threshold: 'BLOCK_MEDIUM_AND_ABOVE' },
-        { category: 'HARM_CATEGORY_SEXUALLY_EXPLICIT', threshold: 'BLOCK_MEDIUM_AND_ABOVE' },
-        { category: 'HARM_CATEGORY_DANGEROUS_CONTENT', threshold: 'BLOCK_MEDIUM_AND_ABOVE' },
-      ],
-    };
-
-    const geminiRes = await fetch(GEMINI_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(geminiPayload),
     });
 
-    if (!geminiRes.ok) {
-      const errBody = await geminiRes.text();
-      console.error('Gemini API error:', geminiRes.status, errBody);
-      return res.status(502).json({ error: 'AI service temporarily unavailable' });
-    }
-
-    const geminiData = await geminiRes.json();
-
-    const reply =
-      geminiData?.candidates?.[0]?.content?.parts?.[0]?.text ||
-      "I'm sorry, I couldn't generate a response right now. Please try again.";
+    // Send the latest user message
+    const lastMessage = messages[messages.length - 1].content;
+    const result = await chat.sendMessage(lastMessage);
+    const reply = result.response.text();
 
     return res.status(200).json({ reply });
   } catch (error) {
     console.error('AI chat error:', error);
-    return res.status(500).json({ error: 'Internal server error' });
+    return res.status(500).json({
+      error: error.message || 'Internal server error',
+    });
   }
 }
