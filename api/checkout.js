@@ -18,6 +18,32 @@ export default async function handler(req, res) {
   try {
     const { isoName, tier, isMonthly, price, applicationId, clientId } = req.body;
 
+    // Check if client was referred — apply 10% discount
+    let hasReferralDiscount = false;
+    let referralRecord = null;
+    if (clientId) {
+      try {
+        const { data: userMeta } = await supabaseAdmin.auth.admin.getUserById(clientId);
+        const clientEmail = userMeta?.user?.email;
+        if (clientEmail) {
+          const { data: ref } = await supabaseAdmin
+            .from('referrals')
+            .select('*')
+            .eq('referred_email', clientEmail)
+            .in('status', ['pending', 'signed_up'])
+            .maybeSingle();
+          if (ref) {
+            hasReferralDiscount = true;
+            referralRecord = ref;
+          }
+        }
+      } catch (e) {
+        console.error('Referral discount check error (non-blocking):', e);
+      }
+    }
+
+    const finalPrice = hasReferralDiscount ? price * 0.9 : price;
+
     const lineItem = {
       price_data: {
         currency: 'usd',
@@ -25,7 +51,7 @@ export default async function handler(req, res) {
           name: `${isoName} - ${tier} Package`,
           description: isMonthly ? 'Monthly Subscription' : 'One-Time Payment',
         },
-        unit_amount: Math.round(price * 100), // Stripe expects exact cents integer
+        unit_amount: Math.round(finalPrice * 100),
       },
       quantity: 1,
     };
@@ -47,48 +73,43 @@ export default async function handler(req, res) {
       metadata: {
         applicationId: applicationId,
         clientId: clientId,
+        referralDiscount: hasReferralDiscount ? 'true' : 'false',
       },
     };
 
     const session = await stripe.checkout.sessions.create(sessionConfig);
 
-    // Credit referral commission if this client was referred
-    if (clientId) {
+    // Credit referral commission + send notification to referrer
+    if (referralRecord) {
       try {
-        // Find referral where this client's email matches referred_email
-        const { data: userMeta } = await supabaseAdmin.auth.admin.getUserById(clientId);
-        const clientEmail = userMeta?.user?.email;
+        const saleAmount = isMonthly ? finalPrice * 12 : finalPrice;
+        const commission = saleAmount * 0.10; // 10% commission to referrer
 
-        if (clientEmail) {
-          const { data: referral } = await supabaseAdmin
-            .from('referrals')
-            .select('*')
-            .eq('referred_email', clientEmail)
-            .in('status', ['pending', 'signed_up'])
-            .maybeSingle();
+        await supabaseAdmin
+          .from('referrals')
+          .update({
+            status: 'converted',
+            payment_amount: saleAmount,
+            commission_amount: commission,
+            referred_id: clientId,
+            converted_at: new Date().toISOString(),
+            payout_status: 'pending',
+          })
+          .eq('id', referralRecord.id);
 
-          if (referral) {
-            const saleAmount = isMonthly ? price * 12 : price;
-            const commission = saleAmount * 0.10; // 10% commission
-
-            await supabaseAdmin
-              .from('referrals')
-              .update({
-                status: 'converted',
-                payment_amount: saleAmount,
-                commission_amount: commission,
-                referred_id: clientId,
-                converted_at: new Date().toISOString(),
-              })
-              .eq('id', referral.id);
-          }
-        }
+        // Notify the referrer
+        await supabaseAdmin.from('notifications').insert({
+          user_id: referralRecord.referrer_id,
+          title: 'Referral Converted!',
+          message: `Your referral (${referralRecord.referred_email}) completed a payment of $${saleAmount.toFixed(2)}. Your 10% commission of $${commission.toFixed(2)} has been credited. Please send your bank/payment details to mvpcertify@gmail.com to receive your payout.`,
+          type: 'referral',
+        });
       } catch (refErr) {
         console.error('Referral commission error (non-blocking):', refErr);
       }
     }
 
-    return res.status(200).json({ url: session.url });
+    return res.status(200).json({ url: session.url, referralDiscount: hasReferralDiscount });
   } catch (error) {
     console.error('Stripe checkout error:', error);
     return res.status(500).json({ error: error.message || 'Internal Server Error' });

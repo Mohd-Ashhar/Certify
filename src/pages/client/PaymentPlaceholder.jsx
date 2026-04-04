@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
 import { calculatePrice, getCountryTier, getFullPrice, getMonthlyPrice } from '../../utils/pricing';
-import { Lock, Shield, CreditCard, CalendarClock, CheckCircle2, Sparkles } from 'lucide-react';
+import { Lock, Shield, CreditCard, CalendarClock, CheckCircle2, Sparkles, Tag } from 'lucide-react';
 
 export default function PaymentPlaceholder() {
   const { applicationId } = useParams();
@@ -15,6 +15,7 @@ export default function PaymentPlaceholder() {
   const [processing, setProcessing] = useState(false);
   const [isMonthly, setIsMonthly] = useState(false);
   const [checkoutError, setCheckoutError] = useState(null);
+  const [hasReferralDiscount, setHasReferralDiscount] = useState(false);
 
   useEffect(() => {
     let isMounted = true;
@@ -39,11 +40,26 @@ export default function PaymentPlaceholder() {
     return () => { isMounted = false; };
   }, [applicationId]);
 
+  // Check if client is eligible for referral discount
+  useEffect(() => {
+    if (!user?.id) return;
+    fetch('/api/check-referral-discount', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ clientId: user.id }),
+    })
+      .then(r => r.json())
+      .then(data => { if (data.hasDiscount) setHasReferralDiscount(true); })
+      .catch(() => {});
+  }, [user?.id]);
+
   const countryTier = getCountryTier(user?.country);
   const isoName = application?.recommended_iso || 'ISO 9001:2015 (Quality Management)';
   const fullPrice = getFullPrice(countryTier);
   const monthlyPrice = getMonthlyPrice(countryTier);
-  const currentPrice = isMonthly ? monthlyPrice : fullPrice;
+  const originalPrice = isMonthly ? monthlyPrice : fullPrice;
+  const discountedPrice = hasReferralDiscount ? Math.round(originalPrice * 0.9 * 100) / 100 : originalPrice;
+  const currentPrice = discountedPrice;
 
   const handleCheckout = async () => {
     if (!application) return;
@@ -58,7 +74,7 @@ export default function PaymentPlaceholder() {
           isoName,
           tier: 'START',
           isMonthly,
-          price: currentPrice,
+          price: originalPrice,
           applicationId,
           clientId: user?.id
         }),
@@ -115,6 +131,17 @@ export default function PaymentPlaceholder() {
           <p style={{ color: '#64748b', fontSize: '1rem', margin: 0 }}>Secure your ISO certification today</p>
         </div>
 
+        {/* REFERRAL DISCOUNT BANNER */}
+        {hasReferralDiscount && (
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '14px 18px', background: 'linear-gradient(135deg, #ecfdf5, #d1fae5)', border: '1px solid #6ee7b7', borderRadius: '14px', marginBottom: '20px' }}>
+            <Tag size={20} color="#059669" />
+            <div>
+              <p style={{ margin: 0, fontWeight: 700, color: '#065f46', fontSize: '0.95rem' }}>10% Referral Discount Applied!</p>
+              <p style={{ margin: 0, color: '#047857', fontSize: '0.82rem' }}>You signed up via a referral link. Enjoy your discount.</p>
+            </div>
+          </div>
+        )}
+
         {/* MAIN CARD */}
         <div style={{ background: 'white', borderRadius: '20px', border: '1px solid #e2e8f0', boxShadow: '0 20px 40px -12px rgba(0,0,0,0.08), 0 0 0 1px rgba(0,0,0,0.02)', overflow: 'hidden' }}>
 
@@ -166,7 +193,14 @@ export default function PaymentPlaceholder() {
                 </div>
                 <h4 style={{ margin: '0 0 4px 0', fontSize: '0.9rem', fontWeight: 700, color: !isMonthly ? '#1e3a5f' : '#64748b' }}>Full Payment</h4>
                 <div style={{ fontSize: '1.75rem', fontWeight: 800, color: !isMonthly ? '#0f172a' : '#94a3b8', lineHeight: 1.2, margin: '8px 0 4px 0' }}>
-                  ${fullPrice}
+                  {hasReferralDiscount ? (
+                    <>
+                      <span style={{ textDecoration: 'line-through', fontSize: '1.1rem', color: '#94a3b8', marginRight: '6px' }}>${fullPrice}</span>
+                      ${Math.round(fullPrice * 0.9 * 100) / 100}
+                    </>
+                  ) : (
+                    `$${fullPrice}`
+                  )}
                 </div>
                 <p style={{ margin: 0, fontSize: '0.78rem', color: '#94a3b8', fontWeight: 500 }}>One-time payment</p>
                 {!isMonthly && (
@@ -202,7 +236,14 @@ export default function PaymentPlaceholder() {
                 </div>
                 <h4 style={{ margin: '0 0 4px 0', fontSize: '0.9rem', fontWeight: 700, color: isMonthly ? '#1e3a5f' : '#64748b' }}>12-Month Plan</h4>
                 <div style={{ fontSize: '1.75rem', fontWeight: 800, color: isMonthly ? '#0f172a' : '#94a3b8', lineHeight: 1.2, margin: '8px 0 4px 0' }}>
-                  ${monthlyPrice}<span style={{ fontSize: '0.9rem', fontWeight: 500, color: '#64748b' }}>/mo</span>
+                  {hasReferralDiscount ? (
+                    <>
+                      <span style={{ textDecoration: 'line-through', fontSize: '1.1rem', color: '#94a3b8', marginRight: '6px' }}>${monthlyPrice}</span>
+                      ${Math.round(monthlyPrice * 0.9 * 100) / 100}<span style={{ fontSize: '0.9rem', fontWeight: 500, color: '#64748b' }}>/mo</span>
+                    </>
+                  ) : (
+                    <>${monthlyPrice}<span style={{ fontSize: '0.9rem', fontWeight: 500, color: '#64748b' }}>/mo</span></>
+                  )}
                 </div>
                 <p style={{ margin: 0, fontSize: '0.78rem', color: '#94a3b8', fontWeight: 500 }}>12-month commitment</p>
                 {isMonthly && (
@@ -223,10 +264,16 @@ export default function PaymentPlaceholder() {
                   {isMonthly ? 'Monthly Payment' : 'Total Amount'}
                 </p>
                 <p style={{ margin: 0, fontSize: '0.82rem', color: '#64748b' }}>
-                  {isMonthly ? `$${monthlyPrice * 12} total over 12 months` : 'Due today'}
+                  {hasReferralDiscount && <span style={{ color: '#059669', fontWeight: 600 }}>10% referral discount applied &bull; </span>}
+                  {isMonthly ? `$${(currentPrice * 12).toFixed(0)} total over 12 months` : 'Due today'}
                 </p>
               </div>
               <div style={{ textAlign: 'right' }}>
+                {hasReferralDiscount && (
+                  <span style={{ fontSize: '1rem', color: '#94a3b8', textDecoration: 'line-through', marginRight: '8px' }}>
+                    ${originalPrice}
+                  </span>
+                )}
                 <span style={{ fontSize: '2rem', fontWeight: 800, color: '#0f172a', lineHeight: 1 }}>
                   ${currentPrice}
                 </span>

@@ -1,12 +1,15 @@
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { Input, Button, Select } from '../../components/ui/FormElements';
 import { REGIONS, ROLES, ROLE_LABELS, PERMISSIONS, getRolePermissions, hasPermission } from '../../utils/roles';
-import { User, Globe, Shield, Settings as SettingsIcon, Check } from 'lucide-react';
+import DataTable from '../../components/ui/DataTable';
+import StatusBadge from '../../components/ui/StatusBadge';
+import { User, Globe, Shield, Settings as SettingsIcon, Check, DollarSign } from 'lucide-react';
 import './Settings.css';
 
 const allTabs = [
   { id: 'profile', label: 'Profile', icon: User, adminOnly: false },
+  { id: 'payouts', label: 'Payouts', icon: DollarSign, superAdminOnly: true },
   { id: 'regions', label: 'Regions', icon: Globe, adminOnly: true },
   { id: 'roles', label: 'Roles & Permissions', icon: Shield, adminOnly: true },
   { id: 'general', label: 'General', icon: SettingsIcon, adminOnly: false },
@@ -17,7 +20,12 @@ export default function Settings() {
   const [activeTab, setActiveTab] = useState('profile');
 
   const isAdmin = hasPermission(user?.role, PERMISSIONS.MANAGE_USERS);
-  const tabs = allTabs.filter(tab => !tab.adminOnly || isAdmin);
+  const isSuperAdmin = user?.role === ROLES.SUPER_ADMIN;
+  const tabs = allTabs.filter(tab => {
+    if (tab.superAdminOnly) return isSuperAdmin;
+    if (tab.adminOnly) return isAdmin;
+    return true;
+  });
 
   return (
     <div className="page-container">
@@ -44,6 +52,7 @@ export default function Settings() {
 
         <div className="settings__content">
           {activeTab === 'profile' && <ProfileTab user={user} />}
+          {activeTab === 'payouts' && <PayoutsTab user={user} />}
           {activeTab === 'regions' && <RegionsTab />}
           {activeTab === 'roles' && <RolesTab />}
           {activeTab === 'general' && <GeneralTab />}
@@ -55,7 +64,7 @@ export default function Settings() {
 
 function ProfileTab({ user }) {
   const { updatePassword, supabase } = useAuth();
-  
+
   const [formData, setFormData] = useState({
     full_name: user?.full_name || user?.name || '',
     company_name: user?.company_name || '',
@@ -68,7 +77,7 @@ function ProfileTab({ user }) {
 
   const [profileLoading, setProfileLoading] = useState(false);
   const [passwordLoading, setPasswordLoading] = useState(false);
-  const [message, setMessage] = useState(null); // { type, text }
+  const [message, setMessage] = useState(null);
 
   const handleProfileUpdate = async () => {
     setProfileLoading(true);
@@ -76,14 +85,14 @@ function ProfileTab({ user }) {
     try {
       const { error } = await supabase
         .from('profiles')
-        .update({ 
-          full_name: formData.full_name, 
-          company_name: formData.company_name 
+        .update({
+          full_name: formData.full_name,
+          company_name: formData.company_name
         })
         .eq('id', user.id);
 
       if (error) throw error;
-      
+
       setMessage({ type: 'success', text: 'Profile updated successfully! Refreshing...' });
       setTimeout(() => window.location.reload(), 1500);
     } catch (err) {
@@ -102,13 +111,13 @@ function ProfileTab({ user }) {
       setMessage({ type: 'error', text: 'Passwords do not match!' });
       return;
     }
-    
+
     setPasswordLoading(true);
     setMessage(null);
     try {
       const { success, error } = await updatePassword(passwordData.newPassword);
       if (!success) throw new Error(error);
-      
+
       setPasswordData({ newPassword: '', confirmPassword: '' });
       setMessage({ type: 'success', text: 'Password updated successfully!' });
     } catch (err) {
@@ -122,7 +131,7 @@ function ProfileTab({ user }) {
     <div className="settings__section">
       <h2 className="settings__section-title">Profile Information</h2>
       <p className="settings__section-desc">Update your account details</p>
-      
+
       {message && (
         <div className="application-form__error" style={{
           backgroundColor: message.type === 'error' ? 'var(--color-bg-error, #fee2e2)' : 'var(--color-bg-success, #dcfce7)',
@@ -147,31 +156,31 @@ function ProfileTab({ user }) {
           </div>
         </div>
         <div className="settings__form-grid">
-          <Input 
-            label="Full Name" 
-            id="settings-name" 
-            value={formData.full_name} 
-            onChange={(e) => setFormData({...formData, full_name: e.target.value})} 
+          <Input
+            label="Full Name"
+            id="settings-name"
+            value={formData.full_name}
+            onChange={(e) => setFormData({...formData, full_name: e.target.value})}
           />
-          <Input 
-            label="Email" 
-            id="settings-email" 
-            type="email" 
-            value={user?.email || ''} 
-            disabled 
+          <Input
+            label="Email"
+            id="settings-email"
+            type="email"
+            value={user?.email || ''}
+            disabled
           />
-          <Input 
-            label="Company" 
-            id="settings-company" 
-            value={formData.company_name} 
-            onChange={(e) => setFormData({...formData, company_name: e.target.value})} 
-            placeholder="Your company" 
+          <Input
+            label="Company"
+            id="settings-company"
+            value={formData.company_name}
+            onChange={(e) => setFormData({...formData, company_name: e.target.value})}
+            placeholder="Your company"
           />
-          <Input 
-            label="Role" 
-            id="settings-role" 
-            value={ROLE_LABELS[user?.role] || 'Role'} 
-            disabled 
+          <Input
+            label="Role"
+            id="settings-role"
+            value={ROLE_LABELS[user?.role] || 'Role'}
+            disabled
           />
         </div>
         <div className="settings__form-actions">
@@ -182,30 +191,164 @@ function ProfileTab({ user }) {
 
       <h2 className="settings__section-title" style={{ marginTop: '40px', paddingTop: '40px', borderTop: '1px solid var(--border-color, #e5e7eb)' }}>Security</h2>
       <p className="settings__section-desc">Update your password</p>
-      
+
       <div className="settings__form">
         <div className="settings__form-grid">
-          <Input 
-            label="New Password" 
-            id="settings-new-password" 
-            type="password" 
+          <Input
+            label="New Password"
+            id="settings-new-password"
+            type="password"
             placeholder="Enter new password"
-            value={passwordData.newPassword} 
-            onChange={(e) => setPasswordData({...passwordData, newPassword: e.target.value})} 
+            value={passwordData.newPassword}
+            onChange={(e) => setPasswordData({...passwordData, newPassword: e.target.value})}
           />
-          <Input 
-            label="Confirm Password" 
-            id="settings-confirm-password" 
-            type="password" 
+          <Input
+            label="Confirm Password"
+            id="settings-confirm-password"
+            type="password"
             placeholder="Confirm new password"
-            value={passwordData.confirmPassword} 
-            onChange={(e) => setPasswordData({...passwordData, confirmPassword: e.target.value})} 
+            value={passwordData.confirmPassword}
+            onChange={(e) => setPasswordData({...passwordData, confirmPassword: e.target.value})}
           />
         </div>
         <div className="settings__form-actions">
           <Button variant="primary" size="md" onClick={handlePasswordUpdate} loading={passwordLoading}>Update Password</Button>
         </div>
       </div>
+    </div>
+  );
+}
+
+function PayoutsTab({ user }) {
+  const [referrals, setReferrals] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [actionLoading, setActionLoading] = useState(null);
+  const [message, setMessage] = useState(null);
+
+  const fetchReferrals = useCallback(async () => {
+    if (!user?.id) return;
+    setLoading(true);
+    try {
+      const res = await fetch('/api/admin-referrals', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ adminId: user.id }),
+      });
+      const data = await res.json();
+      if (data.referrals) setReferrals(data.referrals);
+    } catch (err) {
+      console.error('Failed to fetch referrals:', err);
+    } finally {
+      setLoading(false);
+    }
+  }, [user?.id]);
+
+  useEffect(() => { fetchReferrals(); }, [fetchReferrals]);
+
+  const handleMarkPaid = async (referralId) => {
+    setActionLoading(referralId);
+    setMessage(null);
+    try {
+      const res = await fetch('/api/mark-payout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ adminId: user.id, referralId, payoutStatus: 'paid' }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setMessage({ type: 'success', text: 'Payout marked as paid. Referrer has been notified.' });
+        fetchReferrals();
+      } else {
+        throw new Error(data.error);
+      }
+    } catch (err) {
+      setMessage({ type: 'error', text: err.message || 'Failed to mark payout' });
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
+  const pendingPayouts = referrals.filter(r => r.payout_status !== 'paid');
+  const paidPayouts = referrals.filter(r => r.payout_status === 'paid');
+  const totalPending = pendingPayouts.reduce((sum, r) => sum + (parseFloat(r.commission_amount) || 0), 0);
+  const totalPaid = paidPayouts.reduce((sum, r) => sum + (parseFloat(r.commission_amount) || 0), 0);
+
+  const columns = [
+    { key: 'referrer_name', label: 'Referrer', render: (val, row) => (
+      <div>
+        <div style={{ fontWeight: 600 }}>{val}</div>
+        <div style={{ fontSize: '0.8rem', color: 'var(--color-text-secondary)' }}>{row.referrer_email}</div>
+      </div>
+    )},
+    { key: 'referred_email', label: 'Referred Client' },
+    { key: 'payment_amount', label: 'Sale Amount', render: (val) => val ? `$${parseFloat(val).toFixed(2)}` : '-' },
+    { key: 'commission_amount', label: 'Commission (10%)', render: (val) => val ? `$${parseFloat(val).toFixed(2)}` : '-' },
+    { key: 'payout_status', label: 'Payout Status', render: (val) => (
+      <StatusBadge status={val || 'pending'} label={val === 'paid' ? 'Paid' : 'Pending Payout'} />
+    )},
+    { key: 'converted_at', label: 'Converted', render: (val) => val ? new Date(val).toLocaleDateString() : '-' },
+    { key: 'action', label: 'Action', render: (_, row) => row.payout_status !== 'paid' ? (
+      <Button
+        size="sm"
+        variant="primary"
+        onClick={() => handleMarkPaid(row.id)}
+        loading={actionLoading === row.id}
+      >
+        Mark Paid
+      </Button>
+    ) : (
+      <span style={{ fontSize: '0.8rem', color: 'var(--color-text-secondary)' }}>
+        {row.paid_at ? new Date(row.paid_at).toLocaleDateString() : 'Paid'}
+      </span>
+    )},
+  ];
+
+  return (
+    <div className="settings__section">
+      <h2 className="settings__section-title">Referral Payouts</h2>
+      <p className="settings__section-desc">
+        Manage commission payouts to referrers. When a referral converts, the referrer receives an in-app notification to send their bank details to your email.
+      </p>
+
+      {message && (
+        <div style={{
+          padding: '12px',
+          borderRadius: '8px',
+          marginBottom: '16px',
+          backgroundColor: message.type === 'error' ? '#fee2e2' : '#dcfce7',
+          color: message.type === 'error' ? '#b91c1c' : '#15803d',
+          border: `1px solid ${message.type === 'error' ? '#fca5a5' : '#86efac'}`,
+        }}>
+          {message.text}
+        </div>
+      )}
+
+      {/* Summary Stats */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '16px', marginBottom: '24px' }}>
+        <div className="payout-stat-card">
+          <span className="payout-stat-card__label">Total Conversions</span>
+          <span className="payout-stat-card__value">{referrals.length}</span>
+        </div>
+        <div className="payout-stat-card">
+          <span className="payout-stat-card__label">Pending Payouts</span>
+          <span className="payout-stat-card__value" style={{ color: '#f59e0b' }}>${totalPending.toFixed(2)}</span>
+        </div>
+        <div className="payout-stat-card">
+          <span className="payout-stat-card__label">Total Paid Out</span>
+          <span className="payout-stat-card__value" style={{ color: '#10b981' }}>${totalPaid.toFixed(2)}</span>
+        </div>
+      </div>
+
+      {loading ? (
+        <p style={{ color: 'var(--color-text-secondary)' }}>Loading payouts...</p>
+      ) : referrals.length === 0 ? (
+        <div style={{ textAlign: 'center', padding: '40px', color: 'var(--color-text-secondary)' }}>
+          <DollarSign size={40} style={{ marginBottom: '12px', opacity: 0.4 }} />
+          <p>No converted referrals yet. Payouts will appear here when referrals convert.</p>
+        </div>
+      ) : (
+        <DataTable columns={columns} data={referrals} emptyMessage="No payouts found." />
+      )}
     </div>
   );
 }
@@ -286,7 +429,7 @@ function RolesTab() {
                   const has = getRolePermissions(role).includes(perm);
                   return (
                     <td key={role} className="settings__perm-cell">
-                      {has ? <Check size={16} className="settings__perm-check" /> : <span className="settings__perm-dash">—</span>}
+                      {has ? <Check size={16} className="settings__perm-check" /> : <span className="settings__perm-dash">-</span>}
                     </td>
                   );
                 })}
@@ -310,7 +453,7 @@ function GeneralTab() {
             <h3 className="settings__general-label">Platform Name</h3>
             <p className="settings__general-desc">The name displayed across the platform</p>
           </div>
-          <Input id="platform-name" defaultValue="Certify.cx™" style={{ maxWidth: 250 }} />
+          <Input id="platform-name" defaultValue="Certify.cx" style={{ maxWidth: 250 }} />
         </div>
         <div className="settings__general-item">
           <div>

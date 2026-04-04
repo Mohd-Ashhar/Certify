@@ -73,6 +73,13 @@ export default function Referrals() {
       render: (val) => val && parseFloat(val) > 0 ? `$${parseFloat(val).toFixed(2)}` : '—',
     },
     {
+      key: 'payout_status',
+      label: 'Payout',
+      render: (val, row) => row.status === 'converted' ? (
+        <StatusBadge status={val || 'pending'} label={val === 'paid' ? 'Paid' : 'Processing'} />
+      ) : '—',
+    },
+    {
       key: 'created_at',
       label: 'Date',
       render: (val) => val ? new Date(val).toLocaleDateString() : '—',
@@ -84,7 +91,7 @@ export default function Referrals() {
       <div className="page-header">
         <div>
           <h1 className="page-title">Referral Program</h1>
-          <p className="page-subtitle">Earn 10% commission from every sale through your referral link</p>
+          <p className="page-subtitle">Earn 10% commission from every sale. Referred clients get 10% off their purchase!</p>
         </div>
       </div>
 
@@ -111,7 +118,7 @@ export default function Referrals() {
           </button>
         </div>
         <p className="referral-link-card__hint">
-          Share this link with potential clients. You earn 10% commission when they complete a payment.
+          Share this link with potential clients. They get 10% off their purchase, and you earn 10% commission!
         </p>
       </div>
 
@@ -126,18 +133,18 @@ export default function Referrals() {
           </div>
           <div className="referral-how-step">
             <div className="referral-how-step__num">2</div>
-            <div className="referral-how-step__title">They Sign Up</div>
-            <div className="referral-how-step__desc">When they register using your link, they're tracked as your referral</div>
+            <div className="referral-how-step__title">They Sign Up & Get 10% Off</div>
+            <div className="referral-how-step__desc">When they register using your link, they get a 10% discount at checkout</div>
           </div>
           <div className="referral-how-step">
             <div className="referral-how-step__num">3</div>
             <div className="referral-how-step__title">They Pay</div>
-            <div className="referral-how-step__desc">Once they complete a certification payment, your commission is credited</div>
+            <div className="referral-how-step__desc">Once they complete a certification payment, your 10% commission is credited</div>
           </div>
           <div className="referral-how-step">
             <div className="referral-how-step__num">4</div>
-            <div className="referral-how-step__title">You Earn 10%</div>
-            <div className="referral-how-step__desc">10% of every sale is credited to your referral dashboard</div>
+            <div className="referral-how-step__title">Get Paid to Your Bank</div>
+            <div className="referral-how-step__desc">You'll be notified to send your bank details. Commission is transferred directly to your account.</div>
           </div>
         </div>
       </div>
