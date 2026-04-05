@@ -91,9 +91,10 @@ export function AuthProvider({ children }) {
     company_name, activity, number_of_employees,
     number_of_locations, website, city, country,
     contact_number, contact_role, certification_types,
-    referral_code,
+    referral_code, role, stakeholder_type,
   }) => {
     const region = getRegionFromCountry(country);
+    const assignedRole = role || ROLES.CLIENT;
 
     const { data, error } = await supabase.auth.signUp({
       email,
@@ -101,7 +102,7 @@ export function AuthProvider({ children }) {
       options: {
         data: {
           name,
-          role: ROLES.CLIENT,
+          role: assignedRole,
           company_name,
           activity,
           number_of_employees: number_of_employees || null,
@@ -113,6 +114,7 @@ export function AuthProvider({ children }) {
           contact_number,
           contact_role: contact_role || null,
           certification_types: certification_types || [],
+          stakeholder_type: stakeholder_type || 'client',
         },
       },
     });
@@ -129,9 +131,10 @@ export function AuthProvider({ children }) {
         body: JSON.stringify({
           userId: data.user.id,
           full_name: name,
-          role: ROLES.CLIENT,
+          role: assignedRole,
           company_name: company_name || null,
           region,
+          stakeholder_type: stakeholder_type || 'client',
         }),
       });
 

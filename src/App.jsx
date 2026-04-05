@@ -23,6 +23,10 @@ import AdminAuditors from './pages/admin/AdminAuditors';
 import AdminCertBodies from './pages/admin/AdminCertBodies';
 import AdminCompanies from './pages/admin/AdminCompanies';
 import ApplicationDetails from './pages/admin/ApplicationDetails';
+import ShareableLinks from './pages/admin/ShareableLinks';
+
+// Public Registration Landing
+import RegisterLanding from './pages/register/RegisterLanding';
 
 // Dashboard Pages
 import Dashboard from './pages/dashboard/Dashboard';
@@ -46,6 +50,9 @@ function AppRoutes() {
         <Routes>
           {/* ---- Public Landing Page ---- */}
           <Route path="/" element={<LandingPage />} />
+
+          {/* ---- Public Registration Landing ---- */}
+          <Route path="/register/:type" element={<RegisterLanding />} />
 
           {/* ---- Auth Routes ---- */}
           <Route element={<AuthLayout />}>
@@ -142,6 +149,13 @@ function AppRoutes() {
             <Route path="/admin/cert-bodies" element={
               <ProtectedRoute requiredPermission={PERMISSIONS.MANAGE_BODIES}>
                 <AdminCertBodies />
+              </ProtectedRoute>
+            } />
+
+            {/* Admin — Shareable Links */}
+            <Route path="/admin/shareable-links" element={
+              <ProtectedRoute requiredPermission={PERMISSIONS.MANAGE_USERS}>
+                <ShareableLinks />
               </ProtectedRoute>
             } />
 

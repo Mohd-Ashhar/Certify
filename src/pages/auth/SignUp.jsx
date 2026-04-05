@@ -3,6 +3,7 @@ import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { Input, Select, Button, Autocomplete } from '../../components/ui/FormElements';
 import { REGIONS } from '../../utils/roles';
+import { getStakeholderType } from '../../utils/stakeholderTypes';
 import { AlertCircle, CheckCircle, Eye, EyeOff } from 'lucide-react';
 import './Auth.css';
 
@@ -50,6 +51,9 @@ export default function SignUp() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const referralCode = searchParams.get('ref') || '';
+  const registrationType = searchParams.get('type') || '';
+  const stakeholderConfig = getStakeholderType(registrationType);
+  const targetRole = stakeholderConfig?.role || 'client';
   const [step, setStep] = useState(1);
   const [formData, setFormData] = useState({
     // Step 1 — Company
@@ -171,10 +175,16 @@ export default function SignUp() {
       contact_role: formData.contact_role,
       certification_types: formData.certification_types,
       referral_code: referralCode,
+      role: targetRole,
+      stakeholder_type: registrationType || 'client',
     });
 
     if (result.success) {
-      navigate('/client/dashboard');
+      const dashboardMap = {
+        auditor: '/auditor/dashboard',
+        certification_body: '/cert-body/dashboard',
+      };
+      navigate(dashboardMap[targetRole] || '/client/dashboard');
     } else {
       setError(result.error);
     }
@@ -183,8 +193,12 @@ export default function SignUp() {
 
   return (
     <div className="auth-form auth-form--wide">
-      <h2 className="auth-form__title">Apply for Certification</h2>
-      <p className="auth-form__subtitle">Start your ISO certification journey</p>
+      <h2 className="auth-form__title">
+        {stakeholderConfig ? `Register as ${stakeholderConfig.singularTitle}` : 'Apply for Certification'}
+      </h2>
+      <p className="auth-form__subtitle">
+        {stakeholderConfig ? stakeholderConfig.description : 'Start your ISO certification journey'}
+      </p>
 
       {/* Step indicator */}
       <div className="signup-steps">
@@ -363,6 +377,9 @@ export default function SignUp() {
 
       <p className="auth-form__footer-text">
         Already have an account? <Link to="/login" className="auth-form__link">Sign In</Link>
+        {registrationType && (
+          <> | <Link to={`/register/${registrationType}`} className="auth-form__link">Back to Info</Link></>
+        )}
       </p>
     </div>
   );

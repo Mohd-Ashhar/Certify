@@ -1,0 +1,296 @@
+/* ============================================
+   Registration Landing Page
+   ============================================ */
+
+.reg-landing {
+  min-height: 100vh;
+  background: var(--color-bg-primary);
+  color: var(--color-text-primary);
+  padding: var(--spacing-lg) var(--spacing-lg) var(--spacing-2xl);
+}
+
+.reg-landing__container {
+  max-width: 720px;
+  margin: 0 auto;
+}
+
+/* ---- Header ---- */
+.reg-landing__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--spacing-2xl);
+}
+
+.reg-landing__logo {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  text-decoration: none;
+  color: inherit;
+}
+
+.reg-landing__logo-icon {
+  width: 36px;
+  height: 36px;
+  background: linear-gradient(135deg, var(--color-accent), #2EB87A);
+  border-radius: var(--radius-lg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-text-inverse);
+}
+
+.reg-landing__logo-text {
+  font-size: var(--font-size-xl);
+  font-weight: 700;
+}
+
+/* ---- Hero ---- */
+.reg-landing__hero {
+  text-align: center;
+  margin-bottom: var(--spacing-2xl);
+  padding: var(--spacing-2xl) var(--spacing-lg);
+  background: var(--color-bg-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-xl);
+}
+
+.reg-landing__hero-icon {
+  width: 80px;
+  height: 80px;
+  border-radius: var(--radius-xl);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto var(--spacing-lg);
+}
+
+.reg-landing__hero-title {
+  font-size: var(--font-size-3xl);
+  font-weight: 700;
+  margin-bottom: var(--spacing-md);
+}
+
+.reg-landing__hero-desc {
+  font-size: var(--font-size-md);
+  color: var(--color-text-secondary);
+  line-height: 1.6;
+  max-width: 560px;
+  margin: 0 auto var(--spacing-xl);
+}
+
+/* ---- Buttons ---- */
+.reg-landing__btn {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  padding: 10px 20px;
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  cursor: pointer;
+  border: none;
+  text-decoration: none;
+  transition: all var(--transition-fast);
+  font-family: var(--font-family);
+}
+
+.reg-landing__btn--primary {
+  background: var(--color-accent);
+  color: var(--color-text-inverse);
+}
+
+.reg-landing__btn--primary:hover {
+  background: var(--color-accent-hover);
+}
+
+.reg-landing__btn--secondary {
+  background: transparent;
+  color: var(--color-text-secondary);
+  border: 1px solid var(--color-border);
+}
+
+.reg-landing__btn--secondary:hover {
+  border-color: var(--color-text-secondary);
+  color: var(--color-text-primary);
+}
+
+.reg-landing__btn--lg {
+  padding: 12px 28px;
+  font-size: var(--font-size-base);
+}
+
+/* ---- Sections ---- */
+.reg-landing__section {
+  margin-bottom: var(--spacing-2xl);
+}
+
+.reg-landing__section-title {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  font-size: var(--font-size-xl);
+  font-weight: 700;
+  margin-bottom: var(--spacing-lg);
+}
+
+.reg-landing__section-icon--green {
+  color: var(--color-accent);
+}
+
+.reg-landing__section-icon--blue {
+  color: var(--color-info);
+}
+
+/* ---- Benefit Cards ---- */
+.reg-landing__cards {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+}
+
+.reg-landing__card {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--spacing-base);
+  padding: var(--spacing-base) var(--spacing-lg);
+  background: var(--color-bg-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  transition: border-color var(--transition-fast);
+}
+
+.reg-landing__card:hover {
+  border-color: var(--color-border-light);
+}
+
+.reg-landing__card-num {
+  font-size: var(--font-size-xl);
+  font-weight: 700;
+  opacity: 0.7;
+  flex-shrink: 0;
+  min-width: 28px;
+}
+
+.reg-landing__card-text {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+  line-height: 1.5;
+  padding-top: 3px;
+}
+
+/* ---- Rules ---- */
+.reg-landing__rules {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+  padding: var(--spacing-lg);
+  background: var(--color-bg-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+}
+
+.reg-landing__rule {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--spacing-md);
+}
+
+.reg-landing__rule-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: var(--radius-full);
+  flex-shrink: 0;
+  margin-top: 6px;
+}
+
+.reg-landing__rule-text {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+  line-height: 1.5;
+}
+
+/* ---- CTA Footer ---- */
+.reg-landing__cta {
+  text-align: center;
+  padding: var(--spacing-2xl) var(--spacing-lg);
+  background: var(--color-bg-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-xl);
+  margin-bottom: var(--spacing-2xl);
+}
+
+.reg-landing__cta-title {
+  font-size: var(--font-size-2xl);
+  font-weight: 700;
+  margin-bottom: var(--spacing-sm);
+}
+
+.reg-landing__cta-desc {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+  margin-bottom: var(--spacing-xl);
+}
+
+.reg-landing__cta-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--spacing-base);
+}
+
+/* ---- Footer ---- */
+.reg-landing__footer {
+  text-align: center;
+  font-size: var(--font-size-xs);
+  color: var(--color-text-tertiary);
+}
+
+/* ---- Not Found ---- */
+.reg-landing__not-found {
+  text-align: center;
+  padding: var(--spacing-2xl);
+  background: var(--color-bg-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-xl);
+}
+
+.reg-landing__not-found h2 {
+  font-size: var(--font-size-xl);
+  margin-bottom: var(--spacing-sm);
+}
+
+.reg-landing__not-found p {
+  color: var(--color-text-secondary);
+  margin-bottom: var(--spacing-lg);
+}
+
+/* ---- Responsive ---- */
+@media (max-width: 600px) {
+  .reg-landing {
+    padding: var(--spacing-base);
+  }
+
+  .reg-landing__hero {
+    padding: var(--spacing-lg) var(--spacing-base);
+  }
+
+  .reg-landing__hero-title {
+    font-size: var(--font-size-2xl);
+  }
+
+  .reg-landing__hero-icon {
+    width: 64px;
+    height: 64px;
+  }
+
+  .reg-landing__hero-icon svg {
+    width: 32px;
+    height: 32px;
+  }
+
+  .reg-landing__card {
+    padding: var(--spacing-base);
+  }
+}

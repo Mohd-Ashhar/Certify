@@ -20,6 +20,10 @@
   max-width: 600px;
 }
 
+.auth-layout__container--extra-wide {
+  max-width: 660px;
+}
+
 .auth-layout__logo {
   display: flex;
   align-items: center;
