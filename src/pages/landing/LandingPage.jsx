@@ -2,8 +2,9 @@ import { Link } from 'react-router-dom';
 import {
   Shield, ArrowRight, CheckCircle2, Award, Globe2,
   FileCheck2, Users, Building2, ChevronRight, Star,
-  Zap, Lock, BarChart3
+  Zap, Lock, BarChart3, Briefcase, Gift, UserCheck, TrendingUp,
 } from 'lucide-react';
+import { STAKEHOLDER_TYPES } from '../../utils/stakeholderTypes';
 import './LandingPage.css';
 
 const ISO_STANDARDS = [
@@ -58,6 +59,12 @@ const STEPS = [
   },
 ];
 
+const STAKEHOLDER_ICON_MAP = {
+  Award, Briefcase, Gift, Building2, UserCheck, TrendingUp,
+};
+
+const STAKEHOLDER_LIST = Object.values(STAKEHOLDER_TYPES);
+
 const BENEFITS = [
   { icon: Star, title: 'Global Recognition', desc: 'IAF-accredited certifications recognized in 100+ countries worldwide.' },
   { icon: Zap, title: 'Fast Processing', desc: 'Streamlined digital workflow reduces certification time by up to 60%.' },
@@ -81,6 +88,7 @@ export default function LandingPage() {
             <a href="#how-it-works" className="landing__nav-link">How It Works</a>
             <a href="#standards" className="landing__nav-link">Standards</a>
             <a href="#benefits" className="landing__nav-link">Benefits</a>
+            <a href="#join" className="landing__nav-link">Join Network</a>
             <Link to="/login" className="landing__nav-link landing__nav-link--login">Login</Link>
             <Link to="/signup" className="landing__nav-btn">Start Your Free Gap Analysis</Link>
           </div>
@@ -199,6 +207,36 @@ export default function LandingPage() {
                 <p className="landing__benefit-desc">{b.desc}</p>
               </div>
             ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ---- Join Our Network (Stakeholder Registration) ---- */}
+      <section className="landing__section landing__section--dark" id="join">
+        <div className="landing__section-inner">
+          <div className="landing__section-header">
+            <span className="landing__section-tag">Join Us</span>
+            <h2 className="landing__section-title">Join Our Network</h2>
+            <p className="landing__section-desc">
+              Whether you're a certification body, auditor, consultant, or investor — there's a place for you on CertifyCX
+            </p>
+          </div>
+          <div className="landing__stakeholders">
+            {STAKEHOLDER_LIST.map((type) => {
+              const Icon = STAKEHOLDER_ICON_MAP[type.icon] || Building2;
+              return (
+                <Link to={`/register/${type.id}`} key={type.id} className="landing__stakeholder-card" style={{ '--card-accent': type.color }}>
+                  <div className="landing__stakeholder-icon">
+                    <Icon size={24} />
+                  </div>
+                  <h3 className="landing__stakeholder-title">{type.title}</h3>
+                  <p className="landing__stakeholder-desc">{type.description}</p>
+                  <span className="landing__stakeholder-link">
+                    Register Now <ArrowRight size={14} />
+                  </span>
+                </Link>
+              );
+            })}
           </div>
         </div>
       </section>

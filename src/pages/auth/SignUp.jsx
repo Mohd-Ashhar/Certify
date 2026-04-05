@@ -4,7 +4,8 @@ import { useAuth } from '../../contexts/AuthContext';
 import { Input, Select, Button, Autocomplete } from '../../components/ui/FormElements';
 import { REGIONS } from '../../utils/roles';
 import { getStakeholderType } from '../../utils/stakeholderTypes';
-import { AlertCircle, CheckCircle, Eye, EyeOff } from 'lucide-react';
+import { supabase } from '../../lib/supabase';
+import { AlertCircle, CheckCircle, Eye, EyeOff, Clock } from 'lucide-react';
 import './Auth.css';
 
 const ISO_STANDARDS = [
@@ -80,6 +81,7 @@ export default function SignUp() {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [pendingApproval, setPendingApproval] = useState(false);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -180,6 +182,13 @@ export default function SignUp() {
     });
 
     if (result.success) {
+      if (result.needsApproval) {
+        // Sign out immediately — user can't access dashboard until approved
+        await supabase.auth.signOut();
+        setPendingApproval(true);
+        setLoading(false);
+        return;
+      }
       const dashboardMap = {
         auditor: '/auditor/dashboard',
         certification_body: '/cert-body/dashboard',
@@ -190,6 +199,25 @@ export default function SignUp() {
     }
     setLoading(false);
   };
+
+  if (pendingApproval) {
+    return (
+      <div className="auth-form">
+        <div className="auth-form__pending">
+          <Clock size={48} className="auth-form__pending-icon" />
+          <h2 className="auth-form__title">Registration Submitted</h2>
+          <p className="auth-form__subtitle" style={{ marginBottom: '12px' }}>
+            Thank you for registering as {stakeholderConfig ? `a ${stakeholderConfig.singularTitle}` : 'a stakeholder'}!
+          </p>
+          <p style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-text-secondary)', lineHeight: 1.6, marginBottom: '24px' }}>
+            Your registration is now under review. A CertifyCX administrator will verify your details and approve your account.
+            You will be able to log in once your account has been approved.
+          </p>
+          <Link to="/login" className="auth-form__link" style={{ fontSize: 'var(--font-size-sm)' }}>Go to Login Page</Link>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="auth-form auth-form--wide">

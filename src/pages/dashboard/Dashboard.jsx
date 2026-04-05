@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Building2, FileCheck2, Clock, UserCheck, Percent, PlusCircle, CheckCircle2, ChevronRight, Upload, FileText, AlertCircle, MessageSquare, Download, Trash2, Eye, XCircle } from 'lucide-react';
+import { Building2, FileCheck2, Clock, UserCheck, Percent, PlusCircle, CheckCircle2, ChevronRight, Upload, FileText, AlertCircle, MessageSquare, Download, Trash2, Eye, XCircle, Award } from 'lucide-react';
 import StatCard from '../../components/ui/StatCard';
 import DataTable from '../../components/ui/DataTable';
 import StatusBadge from '../../components/ui/StatusBadge';
@@ -258,23 +258,53 @@ export default function Dashboard() {
         <div className="dashboard__client-layout">
           {!fetchingApps && clientApplications.length === 0 ? (
             <div className="dashboard__empty-state" style={{ textAlign: 'center', padding: '40px', background: 'var(--surface-color)', borderRadius: 'var(--radius-lg)', border: '1px solid var(--border-color)' }}>
-              <FileCheck2 size={48} color="var(--text-muted)" style={{ margin: '0 auto 16px' }} />
               {user?.gap_analysis_score == null ? (
                 <>
+                  <FileCheck2 size={48} color="var(--text-muted)" style={{ margin: '0 auto 16px' }} />
                   <h3 style={{ marginBottom: '8px' }}>Take Your Free Gap Analysis</h3>
                   <p style={{ color: 'var(--text-muted)', marginBottom: '24px' }}>Find out if your organization is ready for ISO certification.</p>
                   <Button onClick={() => navigate('/client/gap-analysis')}>Take Gap Analysis Quiz</Button>
                 </>
               ) : user?.gap_analysis_score < 60 ? (
                 <>
+                  <AlertCircle size={48} color="var(--color-warning)" style={{ margin: '0 auto 16px' }} />
                   <h3 style={{ marginBottom: '8px' }}>Gap Analysis Completed</h3>
-                  <p style={{ color: 'var(--text-muted)', marginBottom: '24px' }}>Please contact support to improve your readiness before applying.</p>
+                  <div style={{ fontSize: '1.75rem', fontWeight: 800, color: 'var(--color-warning)', margin: '12px 0' }}>
+                    Your Score: {user.gap_analysis_score}%
+                  </div>
+                  <p style={{ color: 'var(--text-muted)', marginBottom: '24px' }}>
+                    Your organization needs some foundational work before starting the certification process. Please contact our support team for guidance.
+                  </p>
                 </>
               ) : (
                 <>
-                  <h3 style={{ marginBottom: '8px' }}>No Applications Yet</h3>
-                  <p style={{ color: 'var(--text-muted)', marginBottom: '24px' }}>Start your ISO certification journey today.</p>
-                  <Button onClick={() => navigate('/client/apply')}>Create Application</Button>
+                  <CheckCircle2 size={48} color="var(--color-success)" style={{ margin: '0 auto 16px' }} />
+                  <h3 style={{ marginBottom: '8px' }}>You are ready for Certification!</h3>
+                  <div style={{ fontSize: '1.75rem', fontWeight: 800, color: 'var(--color-success)', margin: '12px 0' }}>
+                    Your Score: {user.gap_analysis_score}%
+                  </div>
+                  <p style={{ color: 'var(--text-muted)', marginBottom: '24px' }}>
+                    Your organization demonstrates strong foundational practices. Choose a certification below to begin your journey.
+                  </p>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '12px', marginBottom: '24px', textAlign: 'left' }}>
+                    {[
+                      { name: 'ISO 9001', desc: 'Quality Management' },
+                      { name: 'ISO 14001', desc: 'Environmental Management' },
+                      { name: 'ISO 27001', desc: 'Information Security' },
+                      { name: 'ISO 45001', desc: 'Occupational Health & Safety' },
+                      { name: 'ISO 22000', desc: 'Food Safety Management' },
+                      { name: 'ISO 13485', desc: 'Medical Devices Quality' },
+                    ].map(iso => (
+                      <div key={iso.name} style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '12px 14px', background: 'var(--color-bg-primary)', borderRadius: 'var(--radius-md)', border: '1px solid var(--color-border)' }}>
+                        <Award size={18} color="var(--color-success)" style={{ flexShrink: 0 }} />
+                        <div>
+                          <div style={{ fontWeight: 600, fontSize: '0.9rem' }}>{iso.name}</div>
+                          <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{iso.desc}</div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                  <Button onClick={() => navigate('/client/apply')}>Start Your Certification Application</Button>
                 </>
               )}
             </div>

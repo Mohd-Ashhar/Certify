@@ -83,6 +83,31 @@ export function AuthProvider({ children }) {
       return { success: false, error: error.message };
     }
 
+    // Check approval_status from profile before allowing login
+    if (data?.user) {
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('approval_status')
+        .eq('id', data.user.id)
+        .maybeSingle();
+
+      if (profile?.approval_status === 'pending') {
+        await supabase.auth.signOut();
+        return {
+          success: false,
+          error: 'Your registration is pending approval. A CertifyCX administrator will review and verify your account shortly.',
+        };
+      }
+
+      if (profile?.approval_status === 'rejected') {
+        await supabase.auth.signOut();
+        return {
+          success: false,
+          error: 'Your registration has been declined. Please contact support at mvpcertify@gmail.com for more information.',
+        };
+      }
+    }
+
     return { success: true, data };
   };
 
@@ -95,6 +120,9 @@ export function AuthProvider({ children }) {
   }) => {
     const region = getRegionFromCountry(country);
     const assignedRole = role || ROLES.CLIENT;
+    // Stakeholder registrations (via shareable links / landing page) require admin approval
+    const needsApproval = !!stakeholder_type && stakeholder_type !== 'client';
+    const approvalStatus = needsApproval ? 'pending' : 'approved';
 
     const { data, error } = await supabase.auth.signUp({
       email,
@@ -115,6 +143,7 @@ export function AuthProvider({ children }) {
           contact_role: contact_role || null,
           certification_types: certification_types || [],
           stakeholder_type: stakeholder_type || 'client',
+          approval_status: approvalStatus,
         },
       },
     });
@@ -135,6 +164,7 @@ export function AuthProvider({ children }) {
           company_name: company_name || null,
           region,
           stakeholder_type: stakeholder_type || 'client',
+          approval_status: approvalStatus,
         }),
       });
 
@@ -152,7 +182,7 @@ export function AuthProvider({ children }) {
       }
     }
 
-    return { success: true, data };
+    return { success: true, data, needsApproval };
   };
 
   const logout = async () => {

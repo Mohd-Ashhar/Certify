@@ -20,6 +20,7 @@ import {
   Bell,
   Gift,
   Link2,
+  UserPlus,
 } from 'lucide-react';
 import './Sidebar.css';
 
@@ -33,6 +34,7 @@ const navItems = [
   { path: '/admin/cert-bodies', label: 'Cert Bodies', icon: Award, permissions: [PERMISSIONS.MANAGE_BODIES] },
   { path: '/admin/users', label: 'Users', icon: Users, permissions: [PERMISSIONS.CREATE_ADMINS, PERMISSIONS.MANAGE_AUDITORS] },
   { path: '/admin/shareable-links', label: 'Shareable Links', icon: Link2, permissions: [PERMISSIONS.MANAGE_USERS] },
+  { path: '/admin/registrations', label: 'Registrations', icon: UserPlus, permissions: [PERMISSIONS.MANAGE_USERS] },
   { path: '/referrals', label: 'Referrals', icon: Gift, permissions: [PERMISSIONS.VIEW_DASHBOARD], excludeRoles: [ROLES.SUPER_ADMIN, ROLES.REGIONAL_ADMIN] },
   { path: '/profile', label: 'My Profile', icon: User, permissions: [PERMISSIONS.MANAGE_SETTINGS] },
   { path: '/notifications', label: 'Notifications', icon: Bell, permissions: [PERMISSIONS.VIEW_DASHBOARD] },

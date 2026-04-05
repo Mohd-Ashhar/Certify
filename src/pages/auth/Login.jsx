@@ -31,6 +31,8 @@ export default function Login() {
       setError(result.error);
       setLoading(false);
     }
+    // If login succeeds, the auth state listener will redirect via useEffect.
+    // But we also need to check approval_status — handled in AuthContext.
   };
 
   return (

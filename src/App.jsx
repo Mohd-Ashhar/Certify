@@ -24,6 +24,7 @@ import AdminCertBodies from './pages/admin/AdminCertBodies';
 import AdminCompanies from './pages/admin/AdminCompanies';
 import ApplicationDetails from './pages/admin/ApplicationDetails';
 import ShareableLinks from './pages/admin/ShareableLinks';
+import RegistrationRequests from './pages/admin/RegistrationRequests';
 
 // Public Registration Landing
 import RegisterLanding from './pages/register/RegisterLanding';
@@ -156,6 +157,13 @@ function AppRoutes() {
             <Route path="/admin/shareable-links" element={
               <ProtectedRoute requiredPermission={PERMISSIONS.MANAGE_USERS}>
                 <ShareableLinks />
+              </ProtectedRoute>
+            } />
+
+            {/* Admin — Registration Requests */}
+            <Route path="/admin/registrations" element={
+              <ProtectedRoute requiredPermission={PERMISSIONS.MANAGE_USERS}>
+                <RegistrationRequests />
               </ProtectedRoute>
             } />
 

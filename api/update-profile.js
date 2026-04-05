@@ -11,7 +11,7 @@ export default async function handler(req, res) {
   }
 
   try {
-    const { userId, full_name, role, company_name, region, email, stakeholder_type } = req.body;
+    const { userId, full_name, role, company_name, region, email, stakeholder_type, approval_status } = req.body;
 
     if (!userId) {
       return res.status(400).json({ error: 'Missing userId' });
@@ -25,6 +25,7 @@ export default async function handler(req, res) {
     if (region !== undefined) updates.region = region;
     if (email !== undefined) updates.email = email;
     if (stakeholder_type !== undefined) updates.stakeholder_type = stakeholder_type;
+    if (approval_status !== undefined) updates.approval_status = approval_status;
 
     const { error } = await supabaseAdmin
       .from('profiles')

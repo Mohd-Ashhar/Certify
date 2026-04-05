@@ -435,6 +435,84 @@
   line-height: 1.6;
 }
 
+/* ---- Stakeholder Registration Cards ---- */
+.landing__stakeholders {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--spacing-lg);
+}
+
+.landing__stakeholder-card {
+  background: var(--color-bg-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: var(--spacing-xl);
+  text-decoration: none;
+  color: inherit;
+  transition: all var(--transition-base);
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.landing__stakeholder-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: var(--card-accent);
+}
+
+.landing__stakeholder-card:hover {
+  border-color: var(--card-accent);
+  transform: translateY(-4px);
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.3);
+  color: inherit;
+}
+
+.landing__stakeholder-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: var(--radius-md);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--card-accent);
+  background: color-mix(in srgb, var(--card-accent) 12%, transparent);
+  margin-bottom: var(--spacing-base);
+}
+
+.landing__stakeholder-title {
+  font-size: var(--font-size-lg);
+  font-weight: 700;
+  margin-bottom: var(--spacing-sm);
+}
+
+.landing__stakeholder-desc {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+  line-height: 1.6;
+  flex: 1;
+  margin-bottom: var(--spacing-base);
+}
+
+.landing__stakeholder-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  color: var(--card-accent);
+  transition: gap var(--transition-fast);
+}
+
+.landing__stakeholder-card:hover .landing__stakeholder-link {
+  gap: 10px;
+}
+
 /* ---- CTA ---- */
 .landing__cta {
   padding: 80px var(--spacing-lg);
@@ -494,6 +572,9 @@
   .landing__standards {
     grid-template-columns: repeat(2, 1fr);
   }
+  .landing__stakeholders {
+    grid-template-columns: repeat(2, 1fr);
+  }
 }
 
 @media (max-width: 768px) {
@@ -518,7 +599,8 @@
     width: 40px; height: 1px;
   }
   .landing__standards,
-  .landing__benefits {
+  .landing__benefits,
+  .landing__stakeholders {
     grid-template-columns: 1fr;
   }
   .landing__section {
