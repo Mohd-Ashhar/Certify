@@ -435,84 +435,6 @@
   line-height: 1.6;
 }
 
-/* ---- Stakeholder Registration Cards ---- */
-.landing__stakeholders {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: var(--spacing-lg);
-}
-
-.landing__stakeholder-card {
-  background: var(--color-bg-surface);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-lg);
-  padding: var(--spacing-xl);
-  text-decoration: none;
-  color: inherit;
-  transition: all var(--transition-base);
-  position: relative;
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
-}
-
-.landing__stakeholder-card::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 3px;
-  background: var(--card-accent);
-}
-
-.landing__stakeholder-card:hover {
-  border-color: var(--card-accent);
-  transform: translateY(-4px);
-  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.3);
-  color: inherit;
-}
-
-.landing__stakeholder-icon {
-  width: 48px;
-  height: 48px;
-  border-radius: var(--radius-md);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--card-accent);
-  background: color-mix(in srgb, var(--card-accent) 12%, transparent);
-  margin-bottom: var(--spacing-base);
-}
-
-.landing__stakeholder-title {
-  font-size: var(--font-size-lg);
-  font-weight: 700;
-  margin-bottom: var(--spacing-sm);
-}
-
-.landing__stakeholder-desc {
-  font-size: var(--font-size-sm);
-  color: var(--color-text-secondary);
-  line-height: 1.6;
-  flex: 1;
-  margin-bottom: var(--spacing-base);
-}
-
-.landing__stakeholder-link {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  font-size: var(--font-size-sm);
-  font-weight: 600;
-  color: var(--card-accent);
-  transition: gap var(--transition-fast);
-}
-
-.landing__stakeholder-card:hover .landing__stakeholder-link {
-  gap: 10px;
-}
-
 /* ---- CTA ---- */
 .landing__cta {
   padding: 80px var(--spacing-lg);
@@ -542,16 +464,31 @@
 
 /* ---- Footer ---- */
 .landing__footer {
+  background: var(--color-bg-secondary);
   border-top: 1px solid var(--color-border);
-  padding: var(--spacing-lg);
+  padding: 60px var(--spacing-lg) 0;
 }
 
 .landing__footer-inner {
   max-width: 1200px;
   margin: 0 auto;
+}
+
+.landing__footer-cols {
+  display: grid;
+  grid-template-columns: 1.5fr 1fr 1fr 1fr;
+  gap: var(--spacing-xl);
+  padding-bottom: 48px;
+}
+
+.landing__footer-col {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+}
+
+.landing__footer-col--brand {
+  padding-right: var(--spacing-xl);
 }
 
 .landing__footer-logo {
@@ -559,7 +496,48 @@
   align-items: center;
   gap: var(--spacing-sm);
   font-weight: 700;
+  font-size: var(--font-size-base);
   color: var(--color-text-primary);
+  margin-bottom: var(--spacing-xs);
+}
+
+.landing__logo-icon--sm {
+  width: 28px;
+  height: 28px;
+  border-radius: var(--radius-sm);
+}
+
+.landing__footer-tagline {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+  line-height: 1.6;
+}
+
+.landing__footer-heading {
+  font-size: var(--font-size-xs);
+  font-weight: 700;
+  color: var(--color-text-primary);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-bottom: var(--spacing-xs);
+}
+
+.landing__footer-link {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+  text-decoration: none;
+  transition: color var(--transition-fast);
+  padding: 2px 0;
+}
+
+.landing__footer-link:hover {
+  color: var(--color-accent);
+}
+
+.landing__footer-bottom {
+  border-top: 1px solid var(--color-border);
+  padding: var(--spacing-lg) 0;
+  text-align: center;
 }
 
 .landing__footer-text {
@@ -572,8 +550,13 @@
   .landing__standards {
     grid-template-columns: repeat(2, 1fr);
   }
-  .landing__stakeholders {
-    grid-template-columns: repeat(2, 1fr);
+  .landing__footer-cols {
+    grid-template-columns: 1fr 1fr;
+    gap: var(--spacing-xl) var(--spacing-lg);
+  }
+  .landing__footer-col--brand {
+    grid-column: 1 / -1;
+    padding-right: 0;
   }
 }
 
@@ -599,8 +582,10 @@
     width: 40px; height: 1px;
   }
   .landing__standards,
-  .landing__benefits,
-  .landing__stakeholders {
+  .landing__benefits {
+    grid-template-columns: 1fr;
+  }
+  .landing__footer-cols {
     grid-template-columns: 1fr;
   }
   .landing__section {

@@ -2,7 +2,7 @@ import { Link } from 'react-router-dom';
 import {
   Shield, ArrowRight, CheckCircle2, Award, Globe2,
   FileCheck2, Users, Building2, ChevronRight, Star,
-  Zap, Lock, BarChart3, Briefcase, Gift, UserCheck, TrendingUp,
+  Zap, Lock, BarChart3,
 } from 'lucide-react';
 import { STAKEHOLDER_TYPES } from '../../utils/stakeholderTypes';
 import './LandingPage.css';
@@ -59,10 +59,6 @@ const STEPS = [
   },
 ];
 
-const STAKEHOLDER_ICON_MAP = {
-  Award, Briefcase, Gift, Building2, UserCheck, TrendingUp,
-};
-
 const STAKEHOLDER_LIST = Object.values(STAKEHOLDER_TYPES);
 
 const BENEFITS = [
@@ -88,7 +84,6 @@ export default function LandingPage() {
             <a href="#how-it-works" className="landing__nav-link">How It Works</a>
             <a href="#standards" className="landing__nav-link">Standards</a>
             <a href="#benefits" className="landing__nav-link">Benefits</a>
-            <a href="#join" className="landing__nav-link">Join Network</a>
             <Link to="/login" className="landing__nav-link landing__nav-link--login">Login</Link>
             <Link to="/signup" className="landing__nav-btn">Start Your Free Gap Analysis</Link>
           </div>
@@ -211,36 +206,6 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* ---- Join Our Network (Stakeholder Registration) ---- */}
-      <section className="landing__section landing__section--dark" id="join">
-        <div className="landing__section-inner">
-          <div className="landing__section-header">
-            <span className="landing__section-tag">Join Us</span>
-            <h2 className="landing__section-title">Join Our Network</h2>
-            <p className="landing__section-desc">
-              Whether you're a certification body, auditor, consultant, or investor — there's a place for you on CertifyCX
-            </p>
-          </div>
-          <div className="landing__stakeholders">
-            {STAKEHOLDER_LIST.map((type) => {
-              const Icon = STAKEHOLDER_ICON_MAP[type.icon] || Building2;
-              return (
-                <Link to={`/register/${type.id}`} key={type.id} className="landing__stakeholder-card" style={{ '--card-accent': type.color }}>
-                  <div className="landing__stakeholder-icon">
-                    <Icon size={24} />
-                  </div>
-                  <h3 className="landing__stakeholder-title">{type.title}</h3>
-                  <p className="landing__stakeholder-desc">{type.description}</p>
-                  <span className="landing__stakeholder-link">
-                    Register Now <ArrowRight size={14} />
-                  </span>
-                </Link>
-              );
-            })}
-          </div>
-        </div>
-      </section>
-
       {/* ---- CTA Banner ---- */}
       <section className="landing__cta">
         <div className="landing__cta-inner">
@@ -257,13 +222,51 @@ export default function LandingPage() {
       {/* ---- Footer ---- */}
       <footer className="landing__footer">
         <div className="landing__footer-inner">
-          <div className="landing__footer-logo">
-            <Shield size={18} />
-            <span>Certify.cx<sup className="brand-tm">™</sup></span>
+          <div className="landing__footer-cols">
+            {/* Brand */}
+            <div className="landing__footer-col landing__footer-col--brand">
+              <div className="landing__footer-logo">
+                <div className="landing__logo-icon landing__logo-icon--sm"><Shield size={16} /></div>
+                <span>Certify.cx<sup className="brand-tm">™</sup></span>
+              </div>
+              <p className="landing__footer-tagline">
+                The fastest way to achieve internationally recognized ISO certifications.
+              </p>
+            </div>
+
+            {/* Product */}
+            <div className="landing__footer-col">
+              <h4 className="landing__footer-heading">Product</h4>
+              <a href="#how-it-works" className="landing__footer-link">How It Works</a>
+              <a href="#standards" className="landing__footer-link">ISO Standards</a>
+              <a href="#benefits" className="landing__footer-link">Benefits</a>
+              <Link to="/signup" className="landing__footer-link">Get Certified</Link>
+            </div>
+
+            {/* Account */}
+            <div className="landing__footer-col">
+              <h4 className="landing__footer-heading">Account</h4>
+              <Link to="/login" className="landing__footer-link">Login</Link>
+              <Link to="/signup" className="landing__footer-link">Sign Up</Link>
+              <Link to="/forgot-password" className="landing__footer-link">Reset Password</Link>
+            </div>
+
+            {/* Join Our Network */}
+            <div className="landing__footer-col">
+              <h4 className="landing__footer-heading">Join Our Network</h4>
+              {STAKEHOLDER_LIST.map((type) => (
+                <Link key={type.id} to={`/register/${type.id}`} className="landing__footer-link">
+                  {type.singularTitle}
+                </Link>
+              ))}
+            </div>
           </div>
-          <p className="landing__footer-text">
-            © 2026 Certify.cx<sup className="brand-tm">™</sup>. All rights reserved.
-          </p>
+
+          <div className="landing__footer-bottom">
+            <p className="landing__footer-text">
+              © 2026 Certify.cx<sup className="brand-tm">™</sup>. All rights reserved.
+            </p>
+          </div>
         </div>
       </footer>
     </div>
