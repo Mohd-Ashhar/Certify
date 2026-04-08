@@ -146,3 +146,27 @@
 -- CREATE TRIGGER on_auth_user_created
 --   AFTER INSERT ON auth.users
 --   FOR EACH ROW EXECUTE FUNCTION public.handle_new_user();
+
+-- ============================================
+-- 6. SARA LEADS (AI agent lead capture)
+-- ============================================
+-- Stores email + interest from visitors who interact with Sara
+-- Used for follow-up email reminders and marketing.
+--
+-- CREATE TABLE public.sara_leads (
+--   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+--   email TEXT NOT NULL,
+--   interest TEXT,
+--   source TEXT DEFAULT 'landing_page'
+--     CHECK (source IN ('landing_page', 'dashboard')),
+--   user_id UUID REFERENCES auth.users(id) ON DELETE SET NULL,
+--   created_at TIMESTAMPTZ DEFAULT now()
+-- );
+--
+-- CREATE INDEX idx_sara_leads_email ON public.sara_leads(email);
+--
+-- ALTER TABLE public.sara_leads ENABLE ROW LEVEL SECURITY;
+--
+-- -- Allow service role full access (used from serverless API)
+-- CREATE POLICY "service_role_all" ON public.sara_leads
+--   FOR ALL USING (true) WITH CHECK (true);

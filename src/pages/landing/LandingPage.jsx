@@ -5,6 +5,7 @@ import {
   Zap, Lock, BarChart3,
 } from 'lucide-react';
 import { STAKEHOLDER_TYPES } from '../../utils/stakeholderTypes';
+import SaraChatWidget from '../../components/sara/SaraChatWidget';
 import './LandingPage.css';
 
 const ISO_STANDARDS = [
@@ -269,6 +270,9 @@ export default function LandingPage() {
           </div>
         </div>
       </footer>
+
+      {/* Sara AI Chat — available for all visitors */}
+      <SaraChatWidget />
     </div>
   );
 }

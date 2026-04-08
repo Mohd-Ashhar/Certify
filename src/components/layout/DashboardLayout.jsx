@@ -44,7 +44,7 @@ export default function DashboardLayout() {
       <main className="dashboard-layout__content">
         <Outlet />
       </main>
-      {isClient && <SaraChatWidget />}
+      {isClient && <SaraChatWidget user={user} />}
     </div>
   );
 }

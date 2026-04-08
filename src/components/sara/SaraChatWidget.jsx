@@ -1,6 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { useAuth } from '../../contexts/AuthContext';
-import { MessageCircle, X, Send, Bot, User, Sparkles } from 'lucide-react';
+import { X, Send, Bot, User, Sparkles, Mail, Tag, CheckCircle } from 'lucide-react';
 import './SaraChatWidget.css';
 
 const INITIAL_MESSAGE = {
@@ -9,19 +8,40 @@ const INITIAL_MESSAGE = {
     "Hi! I'm Sara, your ISO certification advisor. I can help you understand quality standards, guide you through the certification process, and answer any questions about your journey. How can I help you today?",
 };
 
-export default function SaraChatWidget() {
-  const { user } = useAuth();
+const INTEREST_OPTIONS = [
+  'ISO 9001 — Quality Management',
+  'ISO 14001 — Environmental',
+  'ISO 27001 — Information Security',
+  'ISO 45001 — Health & Safety',
+  'ISO 22000 — Food Safety',
+  'ISO 13485 — Medical Devices',
+  'Not sure yet',
+];
+
+// Number of user messages before showing lead capture (for anonymous users)
+const LEAD_CAPTURE_AFTER = 2;
+
+export default function SaraChatWidget({ user }) {
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState([INITIAL_MESSAGE]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
+  const [leadCaptured, setLeadCaptured] = useState(false);
+  const [showLeadForm, setShowLeadForm] = useState(false);
+  const [leadEmail, setLeadEmail] = useState('');
+  const [leadInterest, setLeadInterest] = useState('');
+  const [leadSubmitting, setLeadSubmitting] = useState(false);
+  const [leadSuccess, setLeadSuccess] = useState(false);
   const messagesEndRef = useRef(null);
   const inputRef = useRef(null);
+
+  const isLoggedIn = !!user;
+  const userMessageCount = messages.filter((m) => m.role === 'user').length;
 
   // Auto-scroll to bottom on new messages
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages]);
+  }, [messages, showLeadForm]);
 
   // Focus input when chat opens
   useEffect(() => {
@@ -30,27 +50,85 @@ export default function SaraChatWidget() {
     }
   }, [isOpen]);
 
-  const handleSend = async () => {
-    const trimmed = input.trim();
-    if (!trimmed || loading) return;
+  // Show lead form after N user messages (anonymous users only)
+  useEffect(() => {
+    if (!isLoggedIn && !leadCaptured && userMessageCount === LEAD_CAPTURE_AFTER && !loading) {
+      // Slight delay so the AI response appears first
+      const timer = setTimeout(() => {
+        setShowLeadForm(true);
+        setMessages((prev) => [
+          ...prev,
+          {
+            role: 'assistant',
+            content:
+              "I'm enjoying helping you! If you'd like, share your email and interest below so our team can send you personalized updates and offers.",
+          },
+        ]);
+      }, 1000);
+      return () => clearTimeout(timer);
+    }
+  }, [userMessageCount, isLoggedIn, leadCaptured, loading]);
 
-    const userMessage = { role: 'user', content: trimmed };
+  const submitLead = async () => {
+    if (!leadEmail || !leadEmail.includes('@')) return;
+    setLeadSubmitting(true);
+
+    try {
+      const res = await fetch('/api/sara-lead', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: leadEmail,
+          interest: leadInterest || null,
+          source: isLoggedIn ? 'dashboard' : 'landing_page',
+          userId: user?.id || null,
+        }),
+      });
+
+      if (!res.ok) throw new Error('Failed');
+
+      setLeadSuccess(true);
+      setLeadCaptured(true);
+      setTimeout(() => {
+        setShowLeadForm(false);
+        setLeadSuccess(false);
+      }, 2500);
+    } catch (err) {
+      console.error('Lead capture error:', err);
+    } finally {
+      setLeadSubmitting(false);
+    }
+  };
+
+  const dismissLeadForm = () => {
+    setShowLeadForm(false);
+    setLeadCaptured(true); // Don't show again
+  };
+
+  const sendMessage = async (text) => {
+    const userMessage = { role: 'user', content: text };
     const updatedMessages = [...messages, userMessage];
     setMessages(updatedMessages);
     setInput('');
     setLoading(true);
 
     try {
-      // Send only the conversation (skip the initial greeting for cleaner context)
       const conversationForAPI = updatedMessages
-        .slice(1) // skip initial Sara greeting
+        .filter((m) => m.role === 'user' || (m.role === 'assistant' && m !== INITIAL_MESSAGE))
+        .slice(messages[0] === INITIAL_MESSAGE ? 0 : undefined)
+        .map((m) => ({ role: m.role, content: m.content }));
+
+      // Skip the initial greeting and any lead-capture messages
+      const cleanConversation = updatedMessages
+        .slice(1)
+        .filter((m) => !m.isLeadPrompt)
         .map((m) => ({ role: m.role, content: m.content }));
 
       const res = await fetch('/api/ai-chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          messages: conversationForAPI,
+          messages: cleanConversation,
           userId: user?.id || null,
         }),
       });
@@ -81,6 +159,12 @@ export default function SaraChatWidget() {
     }
   };
 
+  const handleSend = () => {
+    const trimmed = input.trim();
+    if (!trimmed || loading) return;
+    sendMessage(trimmed);
+  };
+
   const handleKeyDown = (e) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
@@ -96,59 +180,12 @@ export default function SaraChatWidget() {
   ];
 
   const handleQuickQuestion = (q) => {
-    setInput(q);
-    // Trigger send on next tick so input state is updated
-    setTimeout(() => {
-      const userMessage = { role: 'user', content: q };
-      const updatedMessages = [...messages, userMessage];
-      setMessages(updatedMessages);
-      setInput('');
-      setLoading(true);
-
-      const conversationForAPI = updatedMessages
-        .slice(1)
-        .map((m) => ({ role: m.role, content: m.content }));
-
-      fetch('/api/ai-chat', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          messages: conversationForAPI,
-          userId: user?.id || null,
-        }),
-      })
-        .then(async (res) => {
-          if (!res.ok) {
-            const errData = await res.json().catch(() => ({}));
-            console.error('Sara API error:', res.status, errData);
-            throw new Error(errData.detail || errData.error || 'Failed');
-          }
-          return res.json();
-        })
-        .then((data) => {
-          setMessages((prev) => [
-            ...prev,
-            { role: 'assistant', content: data.reply },
-          ]);
-        })
-        .catch(() => {
-          setMessages((prev) => [
-            ...prev,
-            {
-              role: 'assistant',
-              content:
-                "I'm having trouble connecting right now. Please try again in a moment.",
-            },
-          ]);
-        })
-        .finally(() => setLoading(false));
-    }, 0);
+    sendMessage(q);
   };
 
   // Format message text — handle markdown-like bold and line breaks
   const formatMessage = (text) => {
     return text.split('\n').map((line, i) => {
-      // Handle bold **text**
       const parts = line.split(/(\*\*[^*]+\*\*)/g);
       const formatted = parts.map((part, j) => {
         if (part.startsWith('**') && part.endsWith('**')) {
@@ -236,6 +273,61 @@ export default function SaraChatWidget() {
                 <span className="sara-chat__typing-dot" />
                 <span className="sara-chat__typing-dot" />
               </div>
+            </div>
+          )}
+
+          {/* Lead Capture Form (inline in chat) */}
+          {showLeadForm && !leadSuccess && (
+            <div className="sara-chat__lead-form">
+              <div className="sara-chat__lead-form-inner">
+                <div className="sara-chat__lead-field">
+                  <Mail size={16} />
+                  <input
+                    type="email"
+                    placeholder="Your email address"
+                    value={leadEmail}
+                    onChange={(e) => setLeadEmail(e.target.value)}
+                    className="sara-chat__lead-input"
+                    onKeyDown={(e) => e.key === 'Enter' && submitLead()}
+                  />
+                </div>
+                <div className="sara-chat__lead-field">
+                  <Tag size={16} />
+                  <select
+                    value={leadInterest}
+                    onChange={(e) => setLeadInterest(e.target.value)}
+                    className="sara-chat__lead-select"
+                  >
+                    <option value="">Select your interest</option>
+                    {INTEREST_OPTIONS.map((opt) => (
+                      <option key={opt} value={opt}>{opt}</option>
+                    ))}
+                  </select>
+                </div>
+                <div className="sara-chat__lead-actions">
+                  <button
+                    className="sara-chat__lead-submit"
+                    onClick={submitLead}
+                    disabled={!leadEmail.includes('@') || leadSubmitting}
+                  >
+                    {leadSubmitting ? 'Sending...' : 'Keep Me Updated'}
+                  </button>
+                  <button
+                    className="sara-chat__lead-dismiss"
+                    onClick={dismissLeadForm}
+                  >
+                    No thanks
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Lead success confirmation */}
+          {showLeadForm && leadSuccess && (
+            <div className="sara-chat__lead-success">
+              <CheckCircle size={18} />
+              <span>Thanks! We'll be in touch.</span>
             </div>
           )}
 

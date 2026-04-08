@@ -409,6 +409,119 @@
   cursor: not-allowed;
 }
 
+/* ---- Lead Capture Form ---- */
+.sara-chat__lead-form {
+  animation: sara-msg-in 0.3s ease-out;
+}
+
+.sara-chat__lead-form-inner {
+  background: var(--color-bg-surface);
+  border: 1px solid var(--color-accent);
+  border-radius: var(--radius-lg);
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.sara-chat__lead-field {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--color-text-secondary);
+}
+
+.sara-chat__lead-input,
+.sara-chat__lead-select {
+  flex: 1;
+  padding: 9px 12px;
+  background: var(--color-bg-secondary);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  color: var(--color-text-primary);
+  font-family: var(--font-family);
+  font-size: var(--font-size-sm);
+  outline: none;
+  transition: border-color var(--transition-fast);
+}
+
+.sara-chat__lead-input:focus,
+.sara-chat__lead-select:focus {
+  border-color: var(--color-border-focus);
+}
+
+.sara-chat__lead-select {
+  cursor: pointer;
+  appearance: auto;
+}
+
+.sara-chat__lead-select option {
+  background: var(--color-bg-secondary);
+  color: var(--color-text-primary);
+}
+
+.sara-chat__lead-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.sara-chat__lead-submit {
+  flex: 1;
+  padding: 10px 16px;
+  background: linear-gradient(135deg, #3ECF8E 0%, #2EB87A 100%);
+  border: none;
+  border-radius: var(--radius-md);
+  color: #171717;
+  font-family: var(--font-family);
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.sara-chat__lead-submit:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(62, 207, 142, 0.3);
+}
+
+.sara-chat__lead-submit:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.sara-chat__lead-dismiss {
+  padding: 10px 14px;
+  background: transparent;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  color: var(--color-text-secondary);
+  font-family: var(--font-family);
+  font-size: var(--font-size-xs);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  white-space: nowrap;
+}
+
+.sara-chat__lead-dismiss:hover {
+  background: var(--color-bg-elevated);
+  color: var(--color-text-primary);
+}
+
+.sara-chat__lead-success {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 16px;
+  background: rgba(62, 207, 142, 0.1);
+  border: 1px solid rgba(62, 207, 142, 0.3);
+  border-radius: var(--radius-lg);
+  color: var(--color-accent);
+  font-size: var(--font-size-sm);
+  font-weight: 500;
+  animation: sara-msg-in 0.3s ease-out;
+}
+
 /* ---- Responsive ---- */
 @media (max-width: 480px) {
   .sara-chat {
