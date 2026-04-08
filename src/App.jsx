@@ -14,6 +14,7 @@ import Login from './pages/auth/Login';
 import SignUp from './pages/auth/SignUp';
 import ForgotPassword from './pages/auth/ForgotPassword';
 import Unauthorized from './pages/auth/Unauthorized';
+import AuthCallback from './pages/auth/AuthCallback';
 
 // Admin Pages
 import AdminUsers from './pages/admin/AdminUsers';
@@ -61,6 +62,9 @@ function AppRoutes() {
             <Route path="/signup" element={<SignUp />} />
             <Route path="/forgot-password" element={<ForgotPassword />} />
           </Route>
+
+          {/* ---- OAuth Callback ---- */}
+          <Route path="/auth/callback" element={<AuthCallback />} />
 
           {/* ---- Unauthorized ---- */}
           <Route path="/unauthorized" element={<Unauthorized />} />

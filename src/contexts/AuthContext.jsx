@@ -24,7 +24,34 @@ export function AuthProvider({ children }) {
           .eq("id", sessionUser.id)
           .maybeSingle();
 
-        if (profile && mounted) {
+        // For OAuth users (e.g. Google), ensure profile has role and approval_status
+        if (profile && !profile.role && sessionUser.app_metadata?.provider === 'google') {
+          const meta = sessionUser.user_metadata || {};
+          await fetch('/api/update-profile', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              userId: sessionUser.id,
+              full_name: meta.full_name || meta.name || '',
+              role: 'client',
+              company_name: null,
+              region: null,
+              stakeholder_type: 'client',
+              approval_status: 'approved',
+            }),
+          });
+          // Re-fetch profile after update
+          const { data: updatedProfile } = await supabase
+            .from("profiles")
+            .select("*")
+            .eq("id", sessionUser.id)
+            .maybeSingle();
+          if (updatedProfile && mounted) {
+            setUser({ ...sessionUser, ...updatedProfile });
+          } else if (mounted) {
+            setUser(sessionUser);
+          }
+        } else if (profile && mounted) {
           setUser({ ...sessionUser, ...profile });
         } else if (mounted) {
           setUser(sessionUser); // Fallback if no profile yet
@@ -72,6 +99,21 @@ export function AuthProvider({ children }) {
   // ---------------------------------------------------
   // Auth actions
   // ---------------------------------------------------
+
+  const signInWithGoogle = async (redirectPath = '/auth/callback') => {
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: {
+        redirectTo: `${window.location.origin}${redirectPath}`,
+      },
+    });
+
+    if (error) {
+      return { success: false, error: error.message };
+    }
+
+    return { success: true };
+  };
 
   const login = async (email, password) => {
     const { data, error } = await supabase.auth.signInWithPassword({
@@ -234,6 +276,7 @@ export function AuthProvider({ children }) {
     isAuthenticated: !!session,
     login,
     signup,
+    signInWithGoogle,
     logout,
     resetPassword,
     updatePassword,
