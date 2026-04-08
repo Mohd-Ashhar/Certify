@@ -74,10 +74,11 @@ export default function SaraChatWidget({ user }) {
     setLeadSubmitting(true);
 
     try {
-      const res = await fetch('/api/sara-lead', {
+      const res = await fetch('/api/ai-chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
+          action: 'save_lead',
           email: leadEmail,
           interest: leadInterest || null,
           source: isLoggedIn ? 'dashboard' : 'landing_page',

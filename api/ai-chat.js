@@ -97,6 +97,54 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'Method Not Allowed' });
   }
 
+  const { action } = req.body || {};
+
+  // ---- Lead Capture (action: "save_lead") ----
+  if (action === 'save_lead') {
+    try {
+      const { email, interest, source, userId } = req.body;
+
+      if (!email || !email.includes('@')) {
+        return res.status(400).json({ error: 'Valid email is required' });
+      }
+
+      const supabaseAdmin = createClient(
+        process.env.VITE_SUPABASE_URL,
+        process.env.SUPABASE_SERVICE_ROLE_KEY
+      );
+
+      const { data: existing } = await supabaseAdmin
+        .from('sara_leads')
+        .select('id')
+        .eq('email', email)
+        .maybeSingle();
+
+      if (existing) {
+        await supabaseAdmin
+          .from('sara_leads')
+          .update({ interest, source: source || 'landing_page' })
+          .eq('id', existing.id);
+        return res.status(200).json({ success: true, message: 'Lead updated' });
+      }
+
+      const { error: insertError } = await supabaseAdmin
+        .from('sara_leads')
+        .insert({
+          email,
+          interest: interest || null,
+          source: source || 'landing_page',
+          user_id: userId || null,
+        });
+
+      if (insertError) throw insertError;
+      return res.status(200).json({ success: true });
+    } catch (error) {
+      console.error('Sara lead capture error:', error);
+      return res.status(500).json({ error: error.message || 'Internal Server Error' });
+    }
+  }
+
+  // ---- Chat (default action) ----
   const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey || apiKey === 'your_gemini_api_key_here') {
     return res.status(500).json({ error: 'Gemini API key not configured on server' });
