@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../contexts/AuthContext';
 import { supabase } from '../../lib/supabase';
 import StatCard from '../../components/ui/StatCard';
@@ -9,6 +10,7 @@ import './Referrals.css';
 
 export default function Referrals() {
   const { user } = useAuth();
+  const { t } = useTranslation();
   const [referrals, setReferrals] = useState([]);
   const [loading, setLoading] = useState(true);
   const [copied, setCopied] = useState(false);
@@ -49,39 +51,39 @@ export default function Referrals() {
   const columns = [
     {
       key: 'referred_email',
-      label: 'Referred Email',
+      label: t('referrals.referredEmail'),
       render: (val) => val || '—',
     },
     {
       key: 'status',
-      label: 'Status',
+      label: t('dashboard.status'),
       render: (val) => (
         <StatusBadge
           status={val}
-          label={val === 'converted' ? 'Converted' : val === 'signed_up' ? 'Signed Up' : 'Pending'}
+          label={val === 'converted' ? t('settings.converted') : val === 'signed_up' ? t('referrals.signedUp') : t('admin.pending')}
         />
       ),
     },
     {
       key: 'payment_amount',
-      label: 'Sale Amount',
+      label: t('settings.saleAmount'),
       render: (val) => val ? `$${parseFloat(val).toFixed(2)}` : '—',
     },
     {
       key: 'commission_amount',
-      label: 'Your Commission (10%)',
+      label: t('referrals.yourCommission'),
       render: (val) => val && parseFloat(val) > 0 ? `$${parseFloat(val).toFixed(2)}` : '—',
     },
     {
       key: 'payout_status',
-      label: 'Payout',
+      label: t('referrals.payout'),
       render: (val, row) => row.status === 'converted' ? (
-        <StatusBadge status={val || 'pending'} label={val === 'paid' ? 'Paid' : 'Processing'} />
+        <StatusBadge status={val || 'pending'} label={val === 'paid' ? t('settings.paid') : t('common.processing')} />
       ) : '—',
     },
     {
       key: 'created_at',
-      label: 'Date',
+      label: t('dashboard.date'),
       render: (val) => val ? new Date(val).toLocaleDateString() : '—',
     },
   ];
@@ -90,22 +92,22 @@ export default function Referrals() {
     <div className="page-container">
       <div className="page-header">
         <div>
-          <h1 className="page-title">Referral Program</h1>
-          <p className="page-subtitle">Earn 10% commission from every sale. Referred clients get 10% off their purchase!</p>
+          <h1 className="page-title">{t('referrals.title')}</h1>
+          <p className="page-subtitle">{t('referrals.subtitle')}</p>
         </div>
       </div>
 
       {/* Stats */}
       <div className="referral-stats">
-        <StatCard title="Total Referrals" value={totalReferred} icon={Users} iconColor="#6366f1" />
-        <StatCard title="Signed Up" value={signedUp} icon={UserPlus} iconColor="#2563eb" />
-        <StatCard title="Converted (Paid)" value={converted} icon={Gift} iconColor="#10b981" />
-        <StatCard title="Total Earnings" value={`$${totalEarnings.toFixed(2)}`} icon={DollarSign} iconColor="#f59e0b" />
+        <StatCard title={t('referrals.totalReferrals')} value={totalReferred} icon={Users} iconColor="#6366f1" />
+        <StatCard title={t('referrals.signedUp')} value={signedUp} icon={UserPlus} iconColor="#2563eb" />
+        <StatCard title={t('referrals.convertedPaid')} value={converted} icon={Gift} iconColor="#10b981" />
+        <StatCard title={t('referrals.totalEarnings')} value={`$${totalEarnings.toFixed(2)}`} icon={DollarSign} iconColor="#f59e0b" />
       </div>
 
       {/* Referral Link */}
       <div className="referral-link-card">
-        <div className="referral-link-card__title">Your Referral Link</div>
+        <div className="referral-link-card__title">{t('referrals.yourReferralLink')}</div>
         <div className="referral-link-card__row">
           <input
             className="referral-link-card__input"
@@ -114,53 +116,53 @@ export default function Referrals() {
             onClick={(e) => e.target.select()}
           />
           <button className="referral-link-card__btn" onClick={handleCopy}>
-            {copied ? <><Check size={16} /> Copied!</> : <><Copy size={16} /> Copy Link</>}
+            {copied ? <><Check size={16} /> {t('common.copied')}</> : <><Copy size={16} /> {t('referrals.copyLink')}</>}
           </button>
         </div>
         <p className="referral-link-card__hint">
-          Share this link with potential clients. They get 10% off their purchase, and you earn 10% commission!
+          {t('referrals.shareLinkHint')}
         </p>
       </div>
 
       {/* How It Works */}
       <div className="referral-section">
-        <h3 className="referral-section__title">How It Works</h3>
+        <h3 className="referral-section__title">{t('referrals.howItWorks')}</h3>
         <div className="referral-how-it-works">
           <div className="referral-how-step">
             <div className="referral-how-step__num">1</div>
-            <div className="referral-how-step__title">Share Your Link</div>
-            <div className="referral-how-step__desc">Send your unique referral link to potential clients</div>
+            <div className="referral-how-step__title">{t('referrals.step1Title')}</div>
+            <div className="referral-how-step__desc">{t('referrals.step1Desc')}</div>
           </div>
           <div className="referral-how-step">
             <div className="referral-how-step__num">2</div>
-            <div className="referral-how-step__title">They Sign Up & Get 10% Off</div>
-            <div className="referral-how-step__desc">When they register using your link, they get a 10% discount at checkout</div>
+            <div className="referral-how-step__title">{t('referrals.step2Title')}</div>
+            <div className="referral-how-step__desc">{t('referrals.step2Desc')}</div>
           </div>
           <div className="referral-how-step">
             <div className="referral-how-step__num">3</div>
-            <div className="referral-how-step__title">They Pay</div>
-            <div className="referral-how-step__desc">Once they complete a certification payment, your 10% commission is credited</div>
+            <div className="referral-how-step__title">{t('referrals.step3Title')}</div>
+            <div className="referral-how-step__desc">{t('referrals.step3Desc')}</div>
           </div>
           <div className="referral-how-step">
             <div className="referral-how-step__num">4</div>
-            <div className="referral-how-step__title">Get Paid to Your Bank</div>
-            <div className="referral-how-step__desc">You'll be notified to send your bank details. Commission is transferred directly to your account.</div>
+            <div className="referral-how-step__title">{t('referrals.step4Title')}</div>
+            <div className="referral-how-step__desc">{t('referrals.step4Desc')}</div>
           </div>
         </div>
       </div>
 
       {/* Referrals Table */}
       <div className="referral-section">
-        <h3 className="referral-section__title">Your Referrals</h3>
+        <h3 className="referral-section__title">{t('referrals.yourReferrals')}</h3>
         {loading ? (
-          <p style={{ color: 'var(--color-text-secondary)' }}>Loading referrals...</p>
+          <p style={{ color: 'var(--color-text-secondary)' }}>{t('referrals.loadingReferrals')}</p>
         ) : referrals.length === 0 ? (
           <div className="referral-empty">
             <div className="referral-empty__icon"><Link2 size={40} /></div>
-            <p>No referrals yet. Share your link to get started!</p>
+            <p>{t('referrals.noReferrals')}</p>
           </div>
         ) : (
-          <DataTable columns={columns} data={referrals} emptyMessage="No referrals yet." />
+          <DataTable columns={columns} data={referrals} emptyMessage={t('referrals.noReferralsShort')} />
         )}
       </div>
     </div>

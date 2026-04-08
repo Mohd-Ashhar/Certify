@@ -1,9 +1,11 @@
 import { Outlet, useLocation } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { Shield } from 'lucide-react';
 import './AuthLayout.css';
 
 export default function AuthLayout() {
   const location = useLocation();
+  const { t } = useTranslation();
   const isWide = location.pathname === '/signup' || location.pathname === '/client/apply';
   const hasType = new URLSearchParams(location.search).get('type');
   const isExtraWide = isWide && hasType;
@@ -21,7 +23,7 @@ export default function AuthLayout() {
           <Outlet />
         </div>
         <p className="auth-layout__footer">
-          © 2026 Certify.cx<sup className="brand-tm">™</sup>. All rights reserved.
+          {t('common.allRightsReserved')}
         </p>
       </div>
     </div>

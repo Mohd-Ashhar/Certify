@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import DataTable from '../../components/ui/DataTable';
 import StatusBadge from '../../components/ui/StatusBadge';
 import Modal from '../../components/ui/Modal';
@@ -9,6 +10,7 @@ import { hasPermission, PERMISSIONS } from '../../utils/roles';
 import { Plus, Search } from 'lucide-react';
 
 export default function Auditors() {
+  const { t } = useTranslation();
   const { user, loading } = useAuth();
   const [search, setSearch] = useState('');
   const [auditors, setAuditors] = useState([]);
@@ -47,7 +49,7 @@ export default function Auditors() {
     fetchCBs();
   }, [user]);
 
-  if (!user || loading) return <div className="page-container"><p>Loading dashboard...</p></div>;
+  if (!user || loading) return <div className="page-container"><p>{t('common.loadingDashboard')}</p></div>;
 
   const canManage = hasPermission(user?.role, PERMISSIONS.MANAGE_AUDITORS);
 
@@ -76,18 +78,18 @@ export default function Auditors() {
   });
 
   const columns = [
-    { key: 'full_name', label: 'Name' },
-    { key: 'email', label: 'Email' },
-    { key: 'cb_name', label: 'Assigned CB' },
-    { key: 'status', label: 'Status', render: (val) => <StatusBadge status={val} /> },
+    { key: 'full_name', label: t('admin.name') },
+    { key: 'email', label: t('auth.email') },
+    { key: 'cb_name', label: t('dashboard.assignedCB') },
+    { key: 'status', label: t('dashboard.status'), render: (val) => <StatusBadge status={val} /> },
     {
-      key: 'actions', label: 'Action', render: (_, row) => (
+      key: 'actions', label: t('dashboard.action'), render: (_, row) => (
         <Button size="sm" variant="ghost" onClick={() => {
           setEditingAuditor(row);
           setSelectedCbId(row.cb_id || '');
           setShowCBModal(true);
         }}>
-          Assign CB
+          {t('admin.assignCB')}
         </Button>
       )
     }
@@ -97,8 +99,8 @@ export default function Auditors() {
     <div className="page-container">
       <div className="page-header">
         <div>
-          <h1 className="page-title">Auditors</h1>
-          <p className="page-subtitle">{filtered.length} auditors registered</p>
+          <h1 className="page-title">{t('admin.auditorsTitle')}</h1>
+          <p className="page-subtitle">{t('admin.auditorsFound', { count: filtered.length })}</p>
         </div>
         {canManage && (
           <Button variant="primary" size="md" onClick={() => alert('To add auditors, have them register via the Sign Up page first, then update their role to Auditor in User Management.')}>
@@ -112,7 +114,7 @@ export default function Auditors() {
           <Search size={16} className="companies__search-icon" />
           <input
             type="text"
-            placeholder="Search auditors..."
+            placeholder={t('common.search')}
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="companies__search-input"
@@ -121,12 +123,12 @@ export default function Auditors() {
       </div>
 
       {fetching ? (
-        <p>Loading auditors...</p>
+        <p>{t('admin.loadingAuditors')}</p>
       ) : (
         <DataTable
           columns={columns}
           data={filtered}
-          emptyMessage="No auditors found"
+          emptyMessage={t('admin.noAuditorsFound')}
         />
       )}
 
@@ -148,8 +150,8 @@ export default function Auditors() {
             ))}
           </Select>
           <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end', marginTop: '8px' }}>
-            <Button type="button" variant="ghost" onClick={() => setShowCBModal(false)}>Cancel</Button>
-            <Button type="submit" variant="primary" loading={assigning}>Assign CB</Button>
+            <Button type="button" variant="ghost" onClick={() => setShowCBModal(false)}>{t('common.cancel')}</Button>
+            <Button type="submit" variant="primary" loading={assigning}>{t('admin.assignCB')}</Button>
           </div>
         </form>
       </Modal>

@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { STAKEHOLDER_TYPES } from '../../utils/stakeholderTypes';
 import {
   Link2, Copy, Check, MessageCircle, Mail,
@@ -11,6 +12,7 @@ const ICON_MAP = {
 };
 
 export default function ShareableLinks() {
+  const { t } = useTranslation();
   const [copiedId, setCopiedId] = useState(null);
   const baseUrl = window.location.origin;
 
@@ -39,14 +41,16 @@ export default function ShareableLinks() {
 
   const handleWhatsApp = (type) => {
     const link = getLink(type);
-    const text = `Join CertifyCX as ${type.singularTitle === 'Investor' ? 'an' : 'a'} ${type.singularTitle}!\n\n${type.description}\n\nRegister here: ${link}`;
+    const article = type.singularTitle === 'Investor' ? 'an' : 'a';
+    const text = `${t('admin.joinCertifyCXMsg', { article, type: type.singularTitle })}\n\n${type.description}\n\n${t('admin.registerHere')} ${link}`;
     window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank');
   };
 
   const handleEmail = (type) => {
     const link = getLink(type);
-    const subject = `Invitation to join CertifyCX — ${type.title}`;
-    const body = `Hello,\n\nYou are invited to join CertifyCX as ${type.singularTitle === 'Investor' ? 'an' : 'a'} ${type.singularTitle}.\n\n${type.description}\n\nYou can register and learn more about the benefits, rules & regulations here:\n${link}\n\nBest regards,\nCertifyCX Team`;
+    const article = type.singularTitle === 'Investor' ? 'an' : 'a';
+    const subject = `${t('admin.invitationSubject')} ${type.title}`;
+    const body = `${t('admin.hello')}\n\n${t('admin.invitationBody', { article, type: type.singularTitle })}\n\n${type.description}\n\n${t('admin.learnMore')}\n${link}\n\n${t('admin.bestRegards')}\n${t('admin.certifyCXTeam')}`;
     window.open(`mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`);
   };
 
@@ -58,9 +62,9 @@ export default function ShareableLinks() {
     <div className="share-links">
       <div className="share-links__header">
         <div>
-          <h1 className="share-links__title">Shareable Links</h1>
+          <h1 className="share-links__title">{t('admin.shareableLinks')}</h1>
           <p className="share-links__subtitle">
-            Share registration links with stakeholders. Each link includes benefits, rules &amp; regulations for self-registration.
+            {t('admin.shareableLinksDesc')}
           </p>
         </div>
       </div>
@@ -97,31 +101,31 @@ export default function ShareableLinks() {
                   title="Copy link"
                 >
                   {isCopied ? <Check size={16} /> : <Copy size={16} />}
-                  {isCopied ? 'Copied!' : 'Copy'}
+                  {isCopied ? t('common.copied') : t('common.copy')}
                 </button>
                 <button
                   className="share-links__action-btn share-links__action-btn--whatsapp"
                   onClick={() => handleWhatsApp(type)}
-                  title="Share via WhatsApp"
+                  title={t('admin.whatsApp')}
                 >
                   <MessageCircle size={16} />
-                  WhatsApp
+                  {t('admin.whatsApp')}
                 </button>
                 <button
                   className="share-links__action-btn share-links__action-btn--email"
                   onClick={() => handleEmail(type)}
-                  title="Share via Email"
+                  title={t('auth.email')}
                 >
                   <Mail size={16} />
-                  Email
+                  {t('auth.email')}
                 </button>
                 <button
                   className="share-links__action-btn share-links__action-btn--preview"
                   onClick={() => handlePreview(type)}
-                  title="Preview link"
+                  title={t('admin.preview')}
                 >
                   <ExternalLink size={16} />
-                  Preview
+                  {t('admin.preview')}
                 </button>
               </div>
             </div>

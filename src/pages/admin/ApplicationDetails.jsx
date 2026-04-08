@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { supabase } from '../../lib/supabase';
 import StatusBadge from '../../components/ui/StatusBadge';
 import { Button, Select } from '../../components/ui/FormElements';
@@ -70,6 +71,7 @@ function getRequiredDocs(isoName) {
 export default function ApplicationDetails() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const { user } = useAuth();
   const canAssign = user?.role === ROLES.SUPER_ADMIN || user?.role === ROLES.REGIONAL_ADMIN;
   const isRegionalAdmin = user?.role === ROLES.REGIONAL_ADMIN;
@@ -187,10 +189,10 @@ export default function ApplicationDetails() {
         .eq('id', id);
       if (error) throw error;
       setApplication(prev => ({ ...prev, status, assigned_auditor_id: assignedAuditor || null, assigned_cb_id: assignedCb || null, internal_notes: internalNotes }));
-      showToast('Application updated successfully');
+      showToast(t('admin.appUpdated'));
     } catch (err) {
       console.error('Error updating application', err);
-      alert('Failed to update application');
+      alert(t('admin.failedUpdateApp'));
     } finally { setSaving(false); }
   };
 
@@ -200,16 +202,16 @@ export default function ApplicationDetails() {
       const { error } = await supabase.from('documents').update({ status: newStatus, reviewer_comment: reviewComments[docId] || null }).eq('id', docId);
       if (error) throw error;
       setDocuments(prev => prev.map(d => d.id === docId ? { ...d, status: newStatus, reviewer_comment: reviewComments[docId] || null } : d));
-      showToast(`Document ${newStatus}`);
+      showToast(t(`admin.doc${newStatus.charAt(0).toUpperCase() + newStatus.slice(1)}`));
     } catch (err) {
       console.error('Error reviewing document:', err);
-      alert('Failed to update document status');
+      alert(t('admin.failedDocUpdate'));
     }
   };
 
   // --- Auditor: Submit Audit ---
   const handleSubmitAudit = async () => {
-    if (!auditDecision) { alert('Please select an audit decision'); return; }
+    if (!auditDecision) { alert(t('admin.selectAuditDecision')); return; }
     setSubmittingAudit(true);
     try {
       const { error: reportError } = await supabase.from('reports').upsert({
@@ -228,10 +230,10 @@ export default function ApplicationDetails() {
 
       setApplication(prev => ({ ...prev, status: 'audited' }));
       setStatus('audited');
-      showToast('Audit submitted successfully');
+      showToast(t('admin.auditSubmittedSuccess'));
     } catch (err) {
       console.error('Error submitting audit:', err);
-      alert('Failed to submit audit: ' + err.message);
+      alert(t('admin.failedAuditSubmit') + ' ' + err.message);
     } finally { setSubmittingAudit(false); }
   };
 
@@ -248,10 +250,10 @@ export default function ApplicationDetails() {
 
       setApplication(prev => ({ ...prev, status: decision }));
       setStatus(decision);
-      showToast(`Application ${decision === 'approved' ? 'certified' : 'rejected'} successfully`);
+      showToast(decision === 'approved' ? t('admin.certApprovedSuccess') : t('admin.certRejectedSuccess'));
     } catch (err) {
       console.error('Error submitting CB decision:', err);
-      alert('Failed to submit decision: ' + err.message);
+      alert(t('admin.failedDecisionSubmit') + ' ' + err.message);
     } finally { setSubmittingCbDecision(false); }
   };
 
@@ -269,7 +271,7 @@ export default function ApplicationDetails() {
       URL.revokeObjectURL(url);
     } catch (err) {
       console.error('Error downloading document', err);
-      alert('This document was uploaded before file storage was enabled. The file content is not available.');
+      alert(t('admin.noFileContent'));
     }
   };
 
@@ -294,19 +296,19 @@ export default function ApplicationDetails() {
     return s || '—';
   };
 
-  if (loading) return <div className="page-container"><p>Loading application details...</p></div>;
+  if (loading) return <div className="page-container"><p>{t('admin.loadingAppDetails')}</p></div>;
 
   if (!application) {
     return (
       <div className="page-container">
-        <p>Application not found.</p>
-        <Button variant="outline" onClick={() => navigate(-1)}>Go Back</Button>
+        <p>{t('admin.appNotFound')}</p>
+        <Button variant="outline" onClick={() => navigate(-1)}>{t('admin.goBack')}</Button>
       </div>
     );
   }
 
   const backPath = isAuditor ? '/auditor/dashboard' : isCB ? '/cert-body/dashboard' : '/admin/applications';
-  const backLabel = isAuditor ? 'Back to Dashboard' : isCB ? 'Back to Dashboard' : 'Back to Applications';
+  const backLabel = isAuditor ? t('admin.backToDashboard') : isCB ? t('admin.backToDashboard') : t('admin.backToApplications');
   const alreadyCertified = application.status === 'approved' || application.status === 'rejected';
 
   return (
@@ -324,7 +326,7 @@ export default function ApplicationDetails() {
       <div className="app-details-header">
         <div>
           <h1 className="page-title" style={{ marginBottom: '0.25rem' }}>{application.company_name}</h1>
-          <p className="page-subtitle" style={{ margin: 0 }}>Application ID: #{application.id.slice(0, 8)}</p>
+          <p className="page-subtitle" style={{ margin: 0 }}>{t('admin.applicationId', { id: application.id.slice(0, 8) })}</p>
         </div>
         <StatusBadge status={application.status} />
       </div>
@@ -332,24 +334,24 @@ export default function ApplicationDetails() {
       <div className="app-details-grid">
         {/* LEFT CARD: Client Details */}
         <div className="app-card">
-          <h3 className="app-card-title">Client Details</h3>
+          <h3 className="app-card-title">{t('admin.clientDetails')}</h3>
           <div className="details-list">
-            <div className="detail-item"><Building size={16} className="detail-icon" /><div><label>Industry</label><p>{application.industry || '—'}</p></div></div>
-            <div className="detail-item"><Target size={16} className="detail-icon" /><div><label>Scope</label><p>{application.scope || '—'}</p></div></div>
-            <div className="detail-item"><Users size={16} className="detail-icon" /><div><label>Employees</label><p>{application.employee_count || '—'}</p></div></div>
-            <div className="detail-item"><Globe size={16} className="detail-icon" /><div><label>Region</label><p>{getRegionLabel(application.client?.region)}</p></div></div>
-            <div className="detail-item"><Activity size={16} className="detail-icon" /><div><label>Recommended ISO</label><p>{application.recommended_iso || '—'}</p></div></div>
-            <div className="detail-item"><FileText size={16} className="detail-icon" /><div><label>Selected Package</label><p>{application.selected_package ? application.selected_package.replace(/_/g, ' ') : '—'}</p></div></div>
+            <div className="detail-item"><Building size={16} className="detail-icon" /><div><label>{t('dashboard.industry')}</label><p>{application.industry || '—'}</p></div></div>
+            <div className="detail-item"><Target size={16} className="detail-icon" /><div><label>{t('dashboard.scope')}</label><p>{application.scope || '—'}</p></div></div>
+            <div className="detail-item"><Users size={16} className="detail-icon" /><div><label>{t('admin.employees')}</label><p>{application.employee_count || '—'}</p></div></div>
+            <div className="detail-item"><Globe size={16} className="detail-icon" /><div><label>{t('admin.region')}</label><p>{getRegionLabel(application.client?.region)}</p></div></div>
+            <div className="detail-item"><Activity size={16} className="detail-icon" /><div><label>{t('admin.recommendedISO')}</label><p>{application.recommended_iso || '—'}</p></div></div>
+            <div className="detail-item"><FileText size={16} className="detail-icon" /><div><label>{t('admin.selectedPackage')}</label><p>{application.selected_package ? application.selected_package.replace(/_/g, ' ') : '—'}</p></div></div>
           </div>
           <div className="contact-info">
-            <h4>Contact Information</h4>
+            <h4>{t('admin.contactInfo')}</h4>
             <p><strong>Name:</strong> {application.client?.full_name || '—'}</p>
             <p><strong>Email:</strong> {application.client?.email || '—'}</p>
             {application.client_metadata?.contact_number && (
-              <p><strong>Phone:</strong> {application.client_metadata.contact_number}</p>
+              <p><strong>{t('admin.phone')}</strong> {application.client_metadata.contact_number}</p>
             )}
             {application.client_metadata?.activity && (
-              <p><strong>Role/Activity:</strong> {application.client_metadata.activity}</p>
+              <p><strong>{t('admin.roleActivity')}</strong> {application.client_metadata.activity}</p>
             )}
             {application.client?.company_name && (
               <p><strong>Company:</strong> {application.client.company_name}</p>
@@ -363,26 +365,26 @@ export default function ApplicationDetails() {
           {/* ===== AUDITOR CONTROLS ===== */}
           {isAuditor && (
             <>
-              <h3 className="app-card-title">Audit Controls</h3>
+              <h3 className="app-card-title">{t('admin.auditControls')}</h3>
               {application.status === 'audited' ? (
-                <div className="audit-completed-banner"><CheckCircle2 size={20} /><span>Audit has been submitted for this application.</span></div>
+                <div className="audit-completed-banner"><CheckCircle2 size={20} /><span>{t('admin.auditSubmitted')}</span></div>
               ) : (
                 <>
                   <div className="form-group" style={{ marginBottom: '1.25rem' }}>
-                    <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.875rem', fontWeight: 500, color: 'var(--color-text-secondary)' }}>Audit Decision *</label>
+                    <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.875rem', fontWeight: 500, color: 'var(--color-text-secondary)' }}>{t('admin.auditDecision')}</label>
                     <Select value={auditDecision} onChange={(e) => setAuditDecision(e.target.value)}>
-                      <option value="">-- Select Decision --</option>
-                      <option value="approved">Approved</option>
-                      <option value="rejected">Rejected</option>
-                      <option value="needs_changes">Needs Changes</option>
+                      <option value="">{t('admin.selectDecision')}</option>
+                      <option value="approved">{t('admin.approved')}</option>
+                      <option value="rejected">{t('admin.rejected')}</option>
+                      <option value="needs_changes">{t('admin.needsChanges')}</option>
                     </Select>
                   </div>
                   <div className="form-group" style={{ marginBottom: '1.5rem' }}>
-                    <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.875rem', fontWeight: 500, color: 'var(--color-text-secondary)' }}>Auditor Comments</label>
-                    <textarea className="form-textarea" rows={4} value={auditComment} onChange={(e) => setAuditComment(e.target.value)} placeholder="Add your audit findings and comments..." />
+                    <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.875rem', fontWeight: 500, color: 'var(--color-text-secondary)' }}>{t('admin.auditorComments')}</label>
+                    <textarea className="form-textarea" rows={4} value={auditComment} onChange={(e) => setAuditComment(e.target.value)} placeholder={t('admin.auditorCommentsPlaceholder')} />
                   </div>
                   <Button variant="primary" onClick={handleSubmitAudit} disabled={submittingAudit || !auditDecision} className="w-full" style={{ width: '100%', justifyContent: 'center' }}>
-                    <ClipboardCheck size={18} /> {submittingAudit ? 'Submitting...' : 'Submit Audit'}
+                    <ClipboardCheck size={18} /> {submittingAudit ? t('common.submitting') : t('admin.submitAudit')}
                   </Button>
                 </>
               )}
@@ -392,38 +394,38 @@ export default function ApplicationDetails() {
           {/* ===== CB CONTROLS ===== */}
           {isCB && (
             <>
-              <h3 className="app-card-title">Certification Decision</h3>
+              <h3 className="app-card-title">{t('admin.certDecision')}</h3>
 
               {/* Audit Report Summary */}
               <div className="cb-audit-summary">
                 <h4 style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--color-text-secondary)', marginBottom: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-                  Auditor Report
+                  {t('admin.auditorReport')}
                 </h4>
                 {auditReport ? (
                   <div className="cb-audit-report-card">
                     <div className="cb-report-row">
-                      <span>Auditor</span>
+                      <span>{t('admin.auditor')}</span>
                       <strong>{auditReport.auditor?.full_name || '—'}</strong>
                     </div>
                     <div className="cb-report-row">
-                      <span>Decision</span>
+                      <span>{t('admin.decision')}</span>
                       <StatusBadge status={auditReport.status} label={getAuditDecisionLabel(auditReport.status)} />
                     </div>
                     {auditReport.report_url && (
                       <div className="cb-report-row" style={{ flexDirection: 'column', alignItems: 'flex-start', gap: '4px' }}>
-                        <span>Comments</span>
+                        <span>{t('admin.comments')}</span>
                         <p style={{ margin: 0, color: 'var(--color-text-primary)', fontSize: '0.85rem' }}>{auditReport.report_url}</p>
                       </div>
                     )}
                     <div className="cb-report-row">
-                      <span>Date</span>
+                      <span>{t('dashboard.date')}</span>
                       <strong>{auditReport.created_at ? new Date(auditReport.created_at).toLocaleDateString() : '—'}</strong>
                     </div>
                   </div>
                 ) : (
                   <div className="cb-no-report">
                     <AlertCircle size={16} />
-                    <span>No audit report submitted yet.</span>
+                    <span>{t('admin.noAuditReport')}</span>
                   </div>
                 )}
               </div>
@@ -432,13 +434,13 @@ export default function ApplicationDetails() {
               {alreadyCertified ? (
                 <div className="audit-completed-banner" style={application.status === 'rejected' ? { background: 'rgba(239,68,68,0.08)', borderColor: 'rgba(239,68,68,0.25)', color: '#ef4444' } : {}}>
                   {application.status === 'approved' ? <Award size={20} /> : <XCircle size={20} />}
-                  <span>Certification {application.status === 'approved' ? 'approved' : 'rejected'}.</span>
+                  <span>{application.status === 'approved' ? t('admin.certApproved') : t('admin.certRejected')}</span>
                 </div>
               ) : (
                 <>
                   <div className="form-group" style={{ marginBottom: '1.25rem', marginTop: '1.5rem' }}>
-                    <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.875rem', fontWeight: 500, color: 'var(--color-text-secondary)' }}>Comments (optional)</label>
-                    <textarea className="form-textarea" rows={3} value={cbComment} onChange={(e) => setCbComment(e.target.value)} placeholder="Add certification decision notes..." />
+                    <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.875rem', fontWeight: 500, color: 'var(--color-text-secondary)' }}>{t('admin.commentsOptional')}</label>
+                    <textarea className="form-textarea" rows={3} value={cbComment} onChange={(e) => setCbComment(e.target.value)} placeholder={t('admin.certNotesPlaceholder')} />
                   </div>
                   <div style={{ display: 'flex', gap: '12px' }}>
                     <Button
@@ -447,7 +449,7 @@ export default function ApplicationDetails() {
                       disabled={submittingCbDecision}
                       style={{ flex: 1, justifyContent: 'center' }}
                     >
-                      <ShieldCheck size={18} /> {submittingCbDecision ? 'Processing...' : 'Approve Certification'}
+                      <ShieldCheck size={18} /> {submittingCbDecision ? t('common.processing') : t('admin.approveCert')}
                     </Button>
                     <Button
                       variant="outline"
@@ -455,7 +457,7 @@ export default function ApplicationDetails() {
                       disabled={submittingCbDecision}
                       style={{ flex: 1, justifyContent: 'center', color: '#ef4444', borderColor: '#ef4444' }}
                     >
-                      <XCircle size={18} /> Reject
+                      <XCircle size={18} /> {t('common.reject')}
                     </Button>
                   </div>
                 </>
@@ -466,25 +468,25 @@ export default function ApplicationDetails() {
           {/* ===== ADMIN CONTROLS ===== */}
           {canAssign && (
             <>
-              <h3 className="app-card-title">Workflow Controls</h3>
+              <h3 className="app-card-title">{t('admin.workflowControls')}</h3>
               <div className="form-group" style={{ marginBottom: '1.25rem' }}>
-                <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.875rem', fontWeight: 500, color: 'var(--color-text-secondary)' }}>Application Status</label>
+                <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.875rem', fontWeight: 500, color: 'var(--color-text-secondary)' }}>{t('admin.appStatus')}</label>
                 <Select value={status} onChange={(e) => setStatus(e.target.value)}>
-                  <option value="pending">Pending</option>
-                  <option value="awaiting_payment">Awaiting Payment</option>
-                  <option value="in_review">In Review</option>
-                  <option value="audit_scheduled">Audit Scheduled</option>
-                  <option value="audited">Audited</option>
-                  <option value="approved">Approved</option>
-                  <option value="rejected">Rejected</option>
+                  <option value="pending">{t('admin.pending')}</option>
+                  <option value="awaiting_payment">{t('admin.awaitingPayment')}</option>
+                  <option value="in_review">{t('admin.inReview')}</option>
+                  <option value="audit_scheduled">{t('admin.auditScheduled')}</option>
+                  <option value="audited">{t('admin.audited')}</option>
+                  <option value="approved">{t('admin.approved')}</option>
+                  <option value="rejected">{t('admin.rejected')}</option>
                 </Select>
               </div>
               <div className="form-group" style={{ marginBottom: '1.25rem' }}>
                 <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.875rem', fontWeight: 500, color: 'var(--color-text-secondary)' }}>
-                  Assign Auditor {isRegionalAdmin && <span style={{ fontSize: '0.75rem', color: 'var(--color-text-tertiary)' }}>({getRegionLabel(user.region)} only)</span>}
+                  {t('admin.assignAuditor')} {isRegionalAdmin && <span style={{ fontSize: '0.75rem', color: 'var(--color-text-tertiary)' }}>{t('admin.regionOnly', { region: getRegionLabel(user.region) })}</span>}
                 </label>
                 <Select value={assignedAuditor} onChange={(e) => setAssignedAuditor(e.target.value)}>
-                  <option value="">-- Select Auditor --</option>
+                  <option value="">{t('admin.selectAuditor')}</option>
                   {auditors.map(aud => (
                     <option key={aud.id} value={aud.id}>{aud.full_name || aud.id.slice(0, 8)}{aud.region ? ` (${getRegionLabel(aud.region)})` : ''}</option>
                   ))}
@@ -492,10 +494,10 @@ export default function ApplicationDetails() {
               </div>
               <div className="form-group" style={{ marginBottom: '1.25rem' }}>
                 <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.875rem', fontWeight: 500, color: 'var(--color-text-secondary)' }}>
-                  Assign Certification Body {isRegionalAdmin && <span style={{ fontSize: '0.75rem', color: 'var(--color-text-tertiary)' }}>({getRegionLabel(user.region)} only)</span>}
+                  {t('admin.assignCB')} {isRegionalAdmin && <span style={{ fontSize: '0.75rem', color: 'var(--color-text-tertiary)' }}>{t('admin.regionOnly', { region: getRegionLabel(user.region) })}</span>}
                 </label>
                 <Select value={assignedCb} onChange={(e) => setAssignedCb(e.target.value)}>
-                  <option value="">-- Select Certification Body --</option>
+                  <option value="">{t('admin.selectCB')}</option>
                   {cbs.map(cb => (
                     <option key={cb.id} value={cb.id}>{cb.full_name || cb.id.slice(0, 8)}{cb.region ? ` (${getRegionLabel(cb.region)})` : ''}</option>
                   ))}
@@ -505,11 +507,11 @@ export default function ApplicationDetails() {
               {auditReport && (
                 <div className="cb-audit-summary" style={{ marginBottom: '1.25rem' }}>
                   <h4 style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--color-text-secondary)', marginBottom: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-                    Auditor Report
+                    {t('admin.auditorReport')}
                   </h4>
                   <div className="cb-audit-report-card">
                     <div className="cb-report-row">
-                      <span>Auditor</span>
+                      <span>{t('admin.auditor')}</span>
                       <strong>{auditReport.auditor?.full_name || '—'}</strong>
                     </div>
                     <div className="cb-report-row">
@@ -531,11 +533,11 @@ export default function ApplicationDetails() {
               )}
 
               <div className="form-group" style={{ marginBottom: '1.5rem' }}>
-                <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.875rem', fontWeight: 500, color: 'var(--color-text-secondary)' }}>Internal Notes</label>
-                <textarea className="form-textarea" rows={4} value={internalNotes} onChange={(e) => setInternalNotes(e.target.value)} placeholder="Add admin notes here... (Not visible to client)" />
+                <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.875rem', fontWeight: 500, color: 'var(--color-text-secondary)' }}>{t('admin.internalNotes')}</label>
+                <textarea className="form-textarea" rows={4} value={internalNotes} onChange={(e) => setInternalNotes(e.target.value)} placeholder={t('admin.internalNotesPlaceholder')} />
               </div>
               <Button variant="primary" onClick={handleSave} disabled={saving} className="w-full" style={{ width: '100%', justifyContent: 'center' }}>
-                {saving ? 'Saving...' : 'Save Changes'}
+                {saving ? t('common.saving') : t('common.save')}
               </Button>
             </>
           )}
@@ -545,9 +547,9 @@ export default function ApplicationDetails() {
       {/* REQUIRED DOCUMENTS CHECKLIST */}
       {getRequiredDocs(application.recommended_iso).length > 0 && (
         <div className="app-card" style={{ marginTop: '1.5rem' }}>
-          <h3 className="app-card-title">Required Documents for {application.recommended_iso}</h3>
+          <h3 className="app-card-title">{t('admin.requiredDocsFor', { iso: application.recommended_iso })}</h3>
           <p style={{ fontSize: '0.85rem', color: 'var(--color-text-secondary)', marginBottom: '1rem' }}>
-            The following documents are typically required for this certification:
+            {t('admin.requiredDocsDesc')}
           </p>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
             {getRequiredDocs(application.recommended_iso).map((docName, i) => {
@@ -565,9 +567,9 @@ export default function ApplicationDetails() {
 
       {/* DOCUMENTS SECTION */}
       <div className="app-card" style={{ marginTop: '1.5rem' }}>
-        <h3 className="app-card-title">{isAuditor ? 'Document Review' : 'Uploaded Documents'}</h3>
+        <h3 className="app-card-title">{isAuditor ? t('admin.documentReview') : t('dashboard.uploadedDocs')}</h3>
         {documents.length === 0 ? (
-          <p className="no-docs">No documents attached to this application.</p>
+          <p className="no-docs">{t('admin.noDocsAttached')}</p>
         ) : (
           <div className="documents-review-list">
             {documents.map(doc => (
@@ -596,7 +598,7 @@ export default function ApplicationDetails() {
                 {isAuditor && application.status !== 'audited' && (
                   <div className="document-review-actions">
                     <div style={{ flex: 1 }}>
-                      <input className="form-input" style={{ width: '100%', fontSize: '0.8rem' }} placeholder="Add review comment (optional)..."
+                      <input className="form-input" style={{ width: '100%', fontSize: '0.8rem' }} placeholder={t('admin.reviewComment')}
                         value={reviewComments[doc.id] || ''} onChange={(e) => setReviewComments(prev => ({ ...prev, [doc.id]: e.target.value }))} />
                     </div>
                     <Button size="sm" variant="outline" onClick={() => handleDocumentReview(doc.id, 'approved')} style={{ color: 'var(--color-accent, #3ECF8E)', borderColor: 'var(--color-accent, #3ECF8E)' }}>

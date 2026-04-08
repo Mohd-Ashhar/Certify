@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../contexts/AuthContext';
 import { Input, Select, Button, Autocomplete } from '../../components/ui/FormElements';
 import { REGIONS } from '../../utils/roles';
@@ -50,6 +51,7 @@ const fetchGeoapifyOptions = async (text, type) => {
 export default function SignUp() {
   const { signup, signInWithGoogle } = useAuth();
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const [searchParams] = useSearchParams();
   const referralCode = searchParams.get('ref') || '';
   const registrationType = searchParams.get('type') || '';
@@ -122,27 +124,27 @@ export default function SignUp() {
     setError('');
     if (step === 1) {
       if (!formData.company_name || !formData.activity || !formData.location) {
-        setError('Please fill in all required company fields');
+        setError(t('auth.validationCompanyFields'));
         return false;
       }
     }
     if (step === 2) {
       if (!formData.contact_person_name || !formData.email || !formData.contact_number) {
-        setError('Please fill in all contact fields');
+        setError(t('auth.validationContactFields'));
         return false;
       }
       if (formData.certification_types.length === 0) {
-        setError('Please select at least one certification type');
+        setError(t('auth.validationCertType'));
         return false;
       }
     }
     if (step === 3) {
       if (formData.password.length < 6) {
-        setError('Password must be at least 6 characters');
+        setError(t('auth.validationPasswordLength'));
         return false;
       }
       if (formData.password !== formData.confirmPassword) {
-        setError('Passwords do not match');
+        setError(t('auth.validationPasswordMatch'));
         return false;
       }
     }
@@ -206,15 +208,14 @@ export default function SignUp() {
       <div className="auth-form">
         <div className="auth-form__pending">
           <Clock size={48} className="auth-form__pending-icon" />
-          <h2 className="auth-form__title">Registration Submitted</h2>
+          <h2 className="auth-form__title">{t('auth.registrationSubmitted')}</h2>
           <p className="auth-form__subtitle" style={{ marginBottom: '12px' }}>
-            Thank you for registering as {stakeholderConfig ? `a ${stakeholderConfig.singularTitle}` : 'a stakeholder'}!
+            {t('auth.thankYouRegister', { type: stakeholderConfig ? stakeholderConfig.singularTitle : 'a stakeholder' })}
           </p>
           <p style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-text-secondary)', lineHeight: 1.6, marginBottom: '24px' }}>
-            Your registration is now under review. A CertifyCX administrator will verify your details and approve your account.
-            You will be able to log in once your account has been approved.
+            {t('auth.registrationUnderReview')}
           </p>
-          <Link to="/login" className="auth-form__link" style={{ fontSize: 'var(--font-size-sm)' }}>Go to Login Page</Link>
+          <Link to="/login" className="auth-form__link" style={{ fontSize: 'var(--font-size-sm)' }}>{t('auth.goToLogin')}</Link>
         </div>
       </div>
     );
@@ -223,10 +224,10 @@ export default function SignUp() {
   return (
     <div className="auth-form auth-form--wide">
       <h2 className="auth-form__title">
-        {stakeholderConfig ? `Register as ${stakeholderConfig.singularTitle}` : 'Apply for Certification'}
+        {stakeholderConfig ? t('auth.registerAs', { type: stakeholderConfig.singularTitle }) : t('auth.applyForCert')}
       </h2>
       <p className="auth-form__subtitle">
-        {stakeholderConfig ? stakeholderConfig.description : 'Start your ISO certification journey'}
+        {stakeholderConfig ? stakeholderConfig.description : t('auth.startISOJourney')}
       </p>
 
       <button
@@ -249,16 +250,16 @@ export default function SignUp() {
           <path d="M3.964 10.71A5.41 5.41 0 013.682 9c0-.593.102-1.17.282-1.71V4.958H.957A8.996 8.996 0 000 9c0 1.452.348 2.827.957 4.042l3.007-2.332z" fill="#FBBC05"/>
           <path d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 00.957 4.958L3.964 6.29C4.672 4.163 6.656 2.58 9 3.58z" fill="#EA4335"/>
         </svg>
-        {googleLoading ? 'Redirecting...' : 'Sign up with Google'}
+        {googleLoading ? t('common.redirecting') : t('auth.signUpWithGoogle')}
       </button>
 
       <div className="auth-divider">
-        <span>or fill in your details</span>
+        <span>{t('auth.orFillDetails')}</span>
       </div>
 
       {/* Step indicator */}
       <div className="signup-steps">
-        {['Company Info', 'Contact & Certs', 'Create Account'].map((label, i) => (
+        {[t('auth.companyInfo'), t('auth.contactCerts'), t('auth.createAccount')].map((label, i) => (
           <div key={label} className={`signup-steps__item ${step > i + 1 ? 'signup-steps__item--done' : ''} ${step === i + 1 ? 'signup-steps__item--active' : ''}`}>
             <div className="signup-steps__circle">
               {step > i + 1 ? <CheckCircle size={16} /> : i + 1}
@@ -279,37 +280,37 @@ export default function SignUp() {
         {/* ---- Step 1: Company ---- */}
         {step === 1 && (
           <>
-            <Input label="Company Name *" id="signup-company" name="company_name"
-              placeholder="Your company name" value={formData.company_name}
+            <Input label={t('auth.companyName')} id="signup-company" name="company_name"
+              placeholder={t('auth.companyNamePlaceholder')} value={formData.company_name}
               onChange={handleChange} required />
 
-            <Input label="Business Activity *" id="signup-activity" name="activity"
-              placeholder="e.g. Manufacturing, IT Services"
+            <Input label={t('auth.businessActivity')} id="signup-activity" name="activity"
+              placeholder={t('auth.businessActivityPlaceholder')}
               value={formData.activity} onChange={handleChange} required />
 
             <div className="auth-form__row">
-              <Select label="Number of Employees" id="signup-employees" name="number_of_employees"
+              <Select label={t('auth.numberOfEmployees')} id="signup-employees" name="number_of_employees"
                 value={formData.number_of_employees} onChange={handleChange}>
-                <option value="">Select range</option>
+                <option value="">{t('auth.selectRange')}</option>
                 {EMPLOYEE_RANGES.map(r => <option key={r} value={r}>{r}</option>)}
               </Select>
 
-              <Input label="Number of Locations" id="signup-locations" name="number_of_locations"
+              <Input label={t('auth.numberOfLocations')} id="signup-locations" name="number_of_locations"
                 type="number" placeholder="e.g. 3"
                 value={formData.number_of_locations} onChange={handleChange} />
             </div>
 
-            <Input label="Website" id="signup-website" name="website"
+            <Input label={t('auth.website')} id="signup-website" name="website"
               placeholder="https://yourcompany.com"
               value={formData.website} onChange={handleChange} />
 
-            <Autocomplete label="Location *" id="signup-location" name="location"
-              placeholder="e.g. Dubai, United Arab Emirates" freeSolo
+            <Autocomplete label={t('auth.location')} id="signup-location" name="location"
+              placeholder={t('auth.locationPlaceholder')} freeSolo
               fetchOptions={(text) => fetchGeoapifyOptions(text, 'city')}
               value={formData.location} onChange={handleChange} required />
 
             <Button type="button" variant="primary" size="lg" fullWidth onClick={handleNext}>
-              Continue →
+              {t('auth.continue')}
             </Button>
           </>
         )}
@@ -317,21 +318,21 @@ export default function SignUp() {
         {/* ---- Step 2: Contact & Certs ---- */}
         {step === 2 && (
           <>
-            <Input label="Contact Person Name *" id="signup-contact-name" name="contact_person_name"
-              placeholder="Full name" value={formData.contact_person_name}
+            <Input label={t('auth.contactPersonName')} id="signup-contact-name" name="contact_person_name"
+              placeholder={t('auth.contactPersonPlaceholder')} value={formData.contact_person_name}
               onChange={handleChange} required />
 
-            <Input label="Designation / Role" id="signup-contact-role" name="contact_role"
-              placeholder="e.g. Quality Manager, Director, CEO"
+            <Input label={t('auth.designationRole')} id="signup-contact-role" name="contact_role"
+              placeholder={t('auth.designationPlaceholder')}
               value={formData.contact_role}
               onChange={handleChange} />
 
-            <Input label="Email *" type="email" id="signup-email" name="email"
+            <Input label={t('auth.emailRequired')} type="email" id="signup-email" name="email"
               placeholder="you@company.com" value={formData.email}
               onChange={handleChange} required />
 
             <div className="form-group">
-              <label className="form-label" htmlFor="signup-phone">Contact Number *</label>
+              <label className="form-label" htmlFor="signup-phone">{t('auth.contactNumber')}</label>
               <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
                 <select 
                   className="form-select" 
@@ -359,7 +360,7 @@ export default function SignUp() {
             </div>
 
             <div className="form-group">
-              <label className="form-label">Certification Types *</label>
+              <label className="form-label">{t('auth.certTypes')}</label>
               <div className="cert-multi-select">
                 {ISO_STANDARDS.map((std) => (
                   <label key={std.value} className={`cert-multi-select__item ${formData.certification_types.includes(std.value) ? 'cert-multi-select__item--selected' : ''}`}>
@@ -373,10 +374,10 @@ export default function SignUp() {
 
             <div className="auth-form__row">
               <Button type="button" variant="secondary" size="lg" fullWidth onClick={handleBack}>
-                ← Back
+                {t('auth.backBtn')}
               </Button>
               <Button type="button" variant="primary" size="lg" fullWidth onClick={handleNext}>
-                Continue →
+                {t('auth.continue')}
               </Button>
             </div>
           </>
@@ -391,8 +392,8 @@ export default function SignUp() {
               <p><strong>Certifications:</strong> {formData.certification_types.join(', ')}</p>
             </div>
 
-            <Input label="Password *" type={showPassword ? "text" : "password"} id="signup-password" name="password"
-              placeholder="Min 6 characters" value={formData.password}
+            <Input label={t('auth.passwordRequired')} type={showPassword ? "text" : "password"} id="signup-password" name="password"
+              placeholder={t('auth.passwordPlaceholder')} value={formData.password}
               onChange={handleChange} required 
               rightElement={
                 <button 
@@ -405,8 +406,8 @@ export default function SignUp() {
               }
             />
 
-            <Input label="Confirm Password *" type={showConfirmPassword ? "text" : "password"} id="signup-confirm" name="confirmPassword"
-              placeholder="Re-enter password" value={formData.confirmPassword}
+            <Input label={t('auth.confirmPassword')} type={showConfirmPassword ? "text" : "password"} id="signup-confirm" name="confirmPassword"
+              placeholder={t('auth.confirmPasswordPlaceholder')} value={formData.confirmPassword}
               onChange={handleChange} required 
               rightElement={
                 <button 
@@ -421,10 +422,10 @@ export default function SignUp() {
 
             <div className="auth-form__row">
               <Button type="button" variant="secondary" size="lg" fullWidth onClick={handleBack}>
-                ← Back
+                {t('auth.backBtn')}
               </Button>
               <Button type="submit" variant="primary" size="lg" fullWidth loading={loading}>
-                Create Account
+                {t('auth.createAccount')}
               </Button>
             </div>
           </>
@@ -432,9 +433,9 @@ export default function SignUp() {
       </form>
 
       <p className="auth-form__footer-text">
-        Already have an account? <Link to="/login" className="auth-form__link">Sign In</Link>
+        {t('auth.alreadyHaveAccount')} <Link to="/login" className="auth-form__link">{t('auth.signIn')}</Link>
         {registrationType && (
-          <> | <Link to={`/register/${registrationType}`} className="auth-form__link">Back to Info</Link></>
+          <> | <Link to={`/register/${registrationType}`} className="auth-form__link">{t('auth.backToInfo')}</Link></>
         )}
       </p>
     </div>

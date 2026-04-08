@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import {
   Shield, ArrowRight, CheckCircle2, Award, Globe2,
   FileCheck2, Users, Building2, ChevronRight, Star,
@@ -6,72 +7,36 @@ import {
 } from 'lucide-react';
 import { STAKEHOLDER_TYPES } from '../../utils/stakeholderTypes';
 import SaraChatWidget from '../../components/sara/SaraChatWidget';
+import LanguageSwitcher from '../../components/LanguageSwitcher';
 import './LandingPage.css';
 
-const ISO_STANDARDS = [
-  {
-    code: 'ISO 9001',
-    title: 'Quality Management',
-    desc: 'Demonstrate your ability to consistently provide products and services that meet customer and regulatory requirements.',
-    icon: Award,
-    color: '#3ECF8E',
-  },
-  {
-    code: 'ISO 14001',
-    title: 'Environmental Management',
-    desc: 'Show your commitment to environmental responsibility and sustainable operations.',
-    icon: Globe2,
-    color: '#00C2FF',
-  },
-  {
-    code: 'ISO 45001',
-    title: 'Occupational Health & Safety',
-    desc: 'Protect your workforce with internationally recognized health and safety standards.',
-    icon: Shield,
-    color: '#A78BFA',
-  },
-  {
-    code: 'ISO 22000',
-    title: 'Food Safety Management',
-    desc: 'Ensure food safety across the entire supply chain from farm to fork.',
-    icon: CheckCircle2,
-    color: '#F59E0B',
-  },
-];
-
-const STEPS = [
-  {
-    step: '01',
-    title: 'Register Your Company',
-    desc: 'Create an account and provide your company details to get started.',
-    icon: Building2,
-  },
-  {
-    step: '02',
-    title: 'Select ISO Standard',
-    desc: 'Choose the certification type that fits your business needs.',
-    icon: FileCheck2,
-  },
-  {
-    step: '03',
-    title: 'Receive Certification',
-    desc: 'After a successful audit, receive your internationally recognized certificate.',
-    icon: Award,
-  },
-];
-
-const STAKEHOLDER_LIST = Object.values(STAKEHOLDER_TYPES);
-
-const BENEFITS = [
-  { icon: Star, title: 'Global Recognition', desc: 'IAF-accredited certifications recognized in 100+ countries worldwide.' },
-  { icon: Zap, title: 'Fast Processing', desc: 'Streamlined digital workflow reduces certification time by up to 60%.' },
-  { icon: Lock, title: 'Secure & Compliant', desc: 'Enterprise-grade security with full audit trails and compliance tracking.' },
-  { icon: BarChart3, title: 'Real-time Tracking', desc: 'Monitor your certification status and progress from a single dashboard.' },
-  { icon: Users, title: 'Expert Auditors', desc: 'Access a network of certified auditors across all major regions.' },
-  { icon: Globe2, title: 'Multi-Region Support', desc: 'Operations in Asia, Africa, Europe, North America, and South America.' },
-];
-
 export default function LandingPage() {
+  const { t } = useTranslation();
+
+  const ISO_STANDARDS = [
+    { code: 'ISO 9001', title: t('landing.iso9001Title'), desc: t('landing.iso9001Desc'), icon: Award, color: '#3ECF8E' },
+    { code: 'ISO 14001', title: t('landing.iso14001Title'), desc: t('landing.iso14001Desc'), icon: Globe2, color: '#00C2FF' },
+    { code: 'ISO 45001', title: t('landing.iso45001Title'), desc: t('landing.iso45001Desc'), icon: Shield, color: '#A78BFA' },
+    { code: 'ISO 22000', title: t('landing.iso22000Title'), desc: t('landing.iso22000Desc'), icon: CheckCircle2, color: '#F59E0B' },
+  ];
+
+  const STEPS = [
+    { step: '01', title: t('landing.step1Title'), desc: t('landing.step1Desc'), icon: Building2 },
+    { step: '02', title: t('landing.step2Title'), desc: t('landing.step2Desc'), icon: FileCheck2 },
+    { step: '03', title: t('landing.step3Title'), desc: t('landing.step3Desc'), icon: Award },
+  ];
+
+  const BENEFITS = [
+    { icon: Star, title: t('landing.benefitGlobalTitle'), desc: t('landing.benefitGlobalDesc') },
+    { icon: Zap, title: t('landing.benefitFastTitle'), desc: t('landing.benefitFastDesc') },
+    { icon: Lock, title: t('landing.benefitSecureTitle'), desc: t('landing.benefitSecureDesc') },
+    { icon: BarChart3, title: t('landing.benefitTrackingTitle'), desc: t('landing.benefitTrackingDesc') },
+    { icon: Users, title: t('landing.benefitAuditorsTitle'), desc: t('landing.benefitAuditorsDesc') },
+    { icon: Globe2, title: t('landing.benefitRegionTitle'), desc: t('landing.benefitRegionDesc') },
+  ];
+
+  const STAKEHOLDER_LIST = Object.values(STAKEHOLDER_TYPES);
+
   return (
     <div className="landing">
       {/* ---- Navbar ---- */}
@@ -82,11 +47,12 @@ export default function LandingPage() {
             <span>Certify.cx<sup className="brand-tm">™</sup></span>
           </Link>
           <div className="landing__nav-links">
-            <a href="#how-it-works" className="landing__nav-link">How It Works</a>
-            <a href="#standards" className="landing__nav-link">Standards</a>
-            <a href="#benefits" className="landing__nav-link">Benefits</a>
-            <Link to="/login" className="landing__nav-link landing__nav-link--login">Login</Link>
-            <Link to="/signup" className="landing__nav-btn">Start Your Free Gap Analysis</Link>
+            <a href="#how-it-works" className="landing__nav-link">{t('nav.howItWorks')}</a>
+            <a href="#standards" className="landing__nav-link">{t('nav.standards')}</a>
+            <a href="#benefits" className="landing__nav-link">{t('nav.benefits')}</a>
+            <LanguageSwitcher variant="landing" />
+            <Link to="/login" className="landing__nav-link landing__nav-link--login">{t('nav.login')}</Link>
+            <Link to="/signup" className="landing__nav-btn">{t('nav.startGapAnalysis')}</Link>
           </div>
         </div>
       </nav>
@@ -96,39 +62,37 @@ export default function LandingPage() {
         <div className="landing__hero-bg" />
         <div className="landing__hero-content">
           <div className="landing__hero-badge">
-            <Shield size={14} /> IAF Accredited Partner
+            <Shield size={14} /> {t('landing.iafBadge')}
           </div>
           <h1 className="landing__hero-title">
-            IAF Accredited<br />
-            <span className="landing__hero-accent">ISO Certifications</span>
+            {t('landing.heroTitle')}<br />
+            <span className="landing__hero-accent">{t('landing.heroAccent')}</span>
           </h1>
           <p className="landing__hero-subtitle">
-            The fastest way for businesses to achieve internationally recognized 
-            ISO certifications. Apply online, get audited, and receive your 
-            certificate — all from one platform.
+            {t('landing.heroSubtitle')}
           </p>
           <div className="landing__hero-actions">
             <Link to="/signup" className="landing__btn landing__btn--primary">
-              Start Your Free Gap Analysis <ArrowRight size={18} />
+              {t('nav.startGapAnalysis')} <ArrowRight size={18} />
             </Link>
             <Link to="/login" className="landing__btn landing__btn--secondary">
-              Login
+              {t('nav.login')}
             </Link>
           </div>
           <div className="landing__hero-stats">
             <div className="landing__hero-stat">
               <span className="landing__hero-stat-number">2,500+</span>
-              <span className="landing__hero-stat-label">Companies Certified</span>
+              <span className="landing__hero-stat-label">{t('landing.statCompanies')}</span>
             </div>
             <div className="landing__hero-stat-divider" />
             <div className="landing__hero-stat">
               <span className="landing__hero-stat-number">5</span>
-              <span className="landing__hero-stat-label">Global Regions</span>
+              <span className="landing__hero-stat-label">{t('landing.statRegions')}</span>
             </div>
             <div className="landing__hero-stat-divider" />
             <div className="landing__hero-stat">
               <span className="landing__hero-stat-number">98%</span>
-              <span className="landing__hero-stat-label">Approval Rate</span>
+              <span className="landing__hero-stat-label">{t('landing.statApproval')}</span>
             </div>
           </div>
         </div>
@@ -138,11 +102,9 @@ export default function LandingPage() {
       <section className="landing__section" id="how-it-works">
         <div className="landing__section-inner">
           <div className="landing__section-header">
-            <span className="landing__section-tag">Process</span>
-            <h2 className="landing__section-title">How Certification Works</h2>
-            <p className="landing__section-desc">
-              From registration to certification in three simple steps
-            </p>
+            <span className="landing__section-tag">{t('landing.processTag')}</span>
+            <h2 className="landing__section-title">{t('landing.howCertWorks')}</h2>
+            <p className="landing__section-desc">{t('landing.howCertDesc')}</p>
           </div>
           <div className="landing__steps">
             {STEPS.map((s, i) => (
@@ -152,9 +114,7 @@ export default function LandingPage() {
                 <h3 className="landing__step-title">{s.title}</h3>
                 <p className="landing__step-desc">{s.desc}</p>
                 {i < STEPS.length - 1 && (
-                  <div className="landing__step-arrow">
-                    <ChevronRight size={20} />
-                  </div>
+                  <div className="landing__step-arrow"><ChevronRight size={20} /></div>
                 )}
               </div>
             ))}
@@ -166,11 +126,9 @@ export default function LandingPage() {
       <section className="landing__section landing__section--dark" id="standards">
         <div className="landing__section-inner">
           <div className="landing__section-header">
-            <span className="landing__section-tag">Standards</span>
-            <h2 className="landing__section-title">Supported ISO Standards</h2>
-            <p className="landing__section-desc">
-              We support the most requested international standards
-            </p>
+            <span className="landing__section-tag">{t('landing.standardsTag')}</span>
+            <h2 className="landing__section-title">{t('landing.supportedStandards')}</h2>
+            <p className="landing__section-desc">{t('landing.supportedStandardsDesc')}</p>
           </div>
           <div className="landing__standards">
             {ISO_STANDARDS.map((std) => (
@@ -189,11 +147,9 @@ export default function LandingPage() {
       <section className="landing__section" id="benefits">
         <div className="landing__section-inner">
           <div className="landing__section-header">
-            <span className="landing__section-tag">Why Certify.cx<sup className="brand-tm">™</sup></span>
-            <h2 className="landing__section-title">Benefits of Certification</h2>
-            <p className="landing__section-desc">
-              Join thousands of companies that trust Certify.cx<sup className="brand-tm">™</sup> for their ISO needs
-            </p>
+            <span className="landing__section-tag">{t('landing.whyCertify')}</span>
+            <h2 className="landing__section-title">{t('landing.benefitsTitle')}</h2>
+            <p className="landing__section-desc">{t('landing.benefitsDesc')}</p>
           </div>
           <div className="landing__benefits">
             {BENEFITS.map((b) => (
@@ -210,12 +166,10 @@ export default function LandingPage() {
       {/* ---- CTA Banner ---- */}
       <section className="landing__cta">
         <div className="landing__cta-inner">
-          <h2 className="landing__cta-title">Ready to get certified?</h2>
-          <p className="landing__cta-desc">
-            Start your ISO certification journey today. It takes less than 5 minutes to apply.
-          </p>
+          <h2 className="landing__cta-title">{t('landing.ctaTitle')}</h2>
+          <p className="landing__cta-desc">{t('landing.ctaDesc')}</p>
           <Link to="/signup" className="landing__btn landing__btn--primary landing__btn--lg">
-            Start Your Free Gap Analysis <ArrowRight size={18} />
+            {t('nav.startGapAnalysis')} <ArrowRight size={18} />
           </Link>
         </div>
       </section>
@@ -224,37 +178,28 @@ export default function LandingPage() {
       <footer className="landing__footer">
         <div className="landing__footer-inner">
           <div className="landing__footer-cols">
-            {/* Brand */}
             <div className="landing__footer-col landing__footer-col--brand">
               <div className="landing__footer-logo">
                 <div className="landing__logo-icon landing__logo-icon--sm"><Shield size={16} /></div>
                 <span>Certify.cx<sup className="brand-tm">™</sup></span>
               </div>
-              <p className="landing__footer-tagline">
-                The fastest way to achieve internationally recognized ISO certifications.
-              </p>
+              <p className="landing__footer-tagline">{t('landing.footerTagline')}</p>
             </div>
-
-            {/* Product */}
             <div className="landing__footer-col">
-              <h4 className="landing__footer-heading">Product</h4>
-              <a href="#how-it-works" className="landing__footer-link">How It Works</a>
-              <a href="#standards" className="landing__footer-link">ISO Standards</a>
-              <a href="#benefits" className="landing__footer-link">Benefits</a>
-              <Link to="/signup" className="landing__footer-link">Get Certified</Link>
+              <h4 className="landing__footer-heading">{t('landing.footerProduct')}</h4>
+              <a href="#how-it-works" className="landing__footer-link">{t('nav.howItWorks')}</a>
+              <a href="#standards" className="landing__footer-link">{t('landing.footerISOStandards')}</a>
+              <a href="#benefits" className="landing__footer-link">{t('nav.benefits')}</a>
+              <Link to="/signup" className="landing__footer-link">{t('landing.footerGetCertified')}</Link>
             </div>
-
-            {/* Account */}
             <div className="landing__footer-col">
-              <h4 className="landing__footer-heading">Account</h4>
-              <Link to="/login" className="landing__footer-link">Login</Link>
-              <Link to="/signup" className="landing__footer-link">Sign Up</Link>
-              <Link to="/forgot-password" className="landing__footer-link">Reset Password</Link>
+              <h4 className="landing__footer-heading">{t('landing.footerAccount')}</h4>
+              <Link to="/login" className="landing__footer-link">{t('nav.login')}</Link>
+              <Link to="/signup" className="landing__footer-link">{t('landing.footerSignUp')}</Link>
+              <Link to="/forgot-password" className="landing__footer-link">{t('landing.footerResetPassword')}</Link>
             </div>
-
-            {/* Join Our Network */}
             <div className="landing__footer-col">
-              <h4 className="landing__footer-heading">Join Our Network</h4>
+              <h4 className="landing__footer-heading">{t('landing.footerJoinNetwork')}</h4>
               {STAKEHOLDER_LIST.map((type) => (
                 <Link key={type.id} to={`/register/${type.id}`} className="landing__footer-link">
                   {type.singularTitle}
@@ -262,16 +207,12 @@ export default function LandingPage() {
               ))}
             </div>
           </div>
-
           <div className="landing__footer-bottom">
-            <p className="landing__footer-text">
-              © 2026 Certify.cx<sup className="brand-tm">™</sup>. All rights reserved.
-            </p>
+            <p className="landing__footer-text">{t('common.allRightsReserved')}</p>
           </div>
         </div>
       </footer>
 
-      {/* Sara AI Chat — available for all visitors */}
       <SaraChatWidget />
     </div>
   );

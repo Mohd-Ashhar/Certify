@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Select } from '../../components/ui/FormElements';
 import DataTable from '../../components/ui/DataTable';
 import StatusBadge from '../../components/ui/StatusBadge';
@@ -8,6 +9,7 @@ import { supabase } from '../../lib/supabase';
 
 export default function AdminCertBodies() {
   const { user } = useAuth();
+  const { t } = useTranslation();
   const isRegionalAdmin = user?.role === ROLES.REGIONAL_ADMIN;
 
   const [bodies, setBodies] = useState([]);
@@ -31,24 +33,24 @@ export default function AdminCertBodies() {
     : bodies;
 
   const columns = [
-    { key: 'full_name', label: 'Name', render: (val) => val || '—' },
-    { key: 'email', label: 'Email' },
-    { key: 'region', label: 'Region', render: (val) => {
+    { key: 'full_name', label: t('admin.name'), render: (val) => val || '—' },
+    { key: 'email', label: t('auth.email') },
+    { key: 'region', label: t('admin.region'), render: (val) => {
       if (!val) return '—';
       const r = REGIONS.find(reg => reg.id === val);
       return r ? r.label : val;
     }},
-    { key: 'company_name', label: 'Organization', render: (val) => val || '—' },
-    { key: 'role', label: 'Role', render: (val) => <StatusBadge status={val} label={ROLE_LABELS[val] || val} /> },
-    { key: 'created_at', label: 'Joined', render: (val) => val ? new Date(val).toLocaleDateString() : '—' },
+    { key: 'company_name', label: t('admin.organization'), render: (val) => val || '—' },
+    { key: 'role', label: t('settings.role'), render: (val) => <StatusBadge status={val} label={ROLE_LABELS[val] || val} /> },
+    { key: 'created_at', label: t('admin.joined'), render: (val) => val ? new Date(val).toLocaleDateString() : '—' },
   ];
 
   return (
     <div className="page-container">
       <div className="page-header">
         <div>
-          <h1 className="page-title">Certification Bodies</h1>
-          <p className="page-subtitle">{filtered.length} certification bod{filtered.length !== 1 ? 'ies' : 'y'} found</p>
+          <h1 className="page-title">{t('admin.certBodiesTitle')}</h1>
+          <p className="page-subtitle">{t('admin.certBodiesFound', { count: filtered.length })}</p>
         </div>
         {!isRegionalAdmin && (
           <Select
@@ -58,7 +60,7 @@ export default function AdminCertBodies() {
             onChange={(e) => setRegionFilter(e.target.value)}
             style={{ width: '200px' }}
           >
-            <option value="">All Regions</option>
+            <option value="">{t('common.allRegions')}</option>
             {REGIONS.map(r => (
               <option key={r.id} value={r.id}>{r.label}</option>
             ))}
@@ -67,12 +69,12 @@ export default function AdminCertBodies() {
       </div>
 
       {loading ? (
-        <p>Loading certification bodies...</p>
+        <p>{t('admin.loadingCertBodies')}</p>
       ) : (
         <DataTable
           columns={columns}
           data={filtered}
-          emptyMessage="No certification bodies found."
+          emptyMessage={t('admin.noCertBodiesFound')}
         />
       )}
     </div>

@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../contexts/AuthContext';
 import { Input, Button } from '../../components/ui/FormElements';
 import { AlertCircle, Eye, EyeOff } from 'lucide-react';
@@ -8,6 +9,7 @@ import './Auth.css';
 export default function Login() {
   const { login, signInWithGoogle, getRoleDashboard, user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -15,7 +17,6 @@ export default function Login() {
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
 
-  // Auto-redirect if already logged in
   useEffect(() => {
     if (!authLoading && user) {
       navigate(getRoleDashboard(user.role));
@@ -32,14 +33,12 @@ export default function Login() {
       setError(result.error);
       setLoading(false);
     }
-    // If login succeeds, the auth state listener will redirect via useEffect.
-    // But we also need to check approval_status — handled in AuthContext.
   };
 
   return (
     <div className="auth-form">
-      <h2 className="auth-form__title">Welcome back</h2>
-      <p className="auth-form__subtitle">Sign in to your Certify.cx<sup className="brand-tm">™</sup> account</p>
+      <h2 className="auth-form__title">{t('auth.welcomeBack')}</h2>
+      <p className="auth-form__subtitle">{t('auth.signInSubtitle')}</p>
 
       {error && (
         <div className="auth-form__error">
@@ -68,16 +67,16 @@ export default function Login() {
           <path d="M3.964 10.71A5.41 5.41 0 013.682 9c0-.593.102-1.17.282-1.71V4.958H.957A8.996 8.996 0 000 9c0 1.452.348 2.827.957 4.042l3.007-2.332z" fill="#FBBC05"/>
           <path d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 00.957 4.958L3.964 6.29C4.672 4.163 6.656 2.58 9 3.58z" fill="#EA4335"/>
         </svg>
-        {googleLoading ? 'Redirecting...' : 'Continue with Google'}
+        {googleLoading ? t('common.redirecting') : t('auth.continueWithGoogle')}
       </button>
 
       <div className="auth-divider">
-        <span>or</span>
+        <span>{t('common.or')}</span>
       </div>
 
       <form onSubmit={handleSubmit} className="auth-form__body">
         <Input
-          label="Email"
+          label={t('auth.email')}
           type="email"
           id="login-email"
           placeholder="you@company.com"
@@ -87,7 +86,7 @@ export default function Login() {
         />
 
         <Input
-          label="Password"
+          label={t('auth.password')}
           type={showPassword ? 'text' : 'password'}
           id="login-password"
           placeholder="••••••••"
@@ -95,11 +94,11 @@ export default function Login() {
           onChange={(e) => setPassword(e.target.value)}
           required
           rightElement={
-            <button 
-              type="button" 
+            <button
+              type="button"
               onClick={() => setShowPassword(!showPassword)}
               style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'inherit', display: 'flex', padding: '4px' }}
-              title={showPassword ? "Hide password" : "Show password"}
+              title={showPassword ? t('auth.hidePassword') : t('auth.showPassword')}
             >
               {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
             </button>
@@ -108,17 +107,17 @@ export default function Login() {
 
         <div className="auth-form__actions">
           <Link to="/forgot-password" className="auth-form__link">
-            Forgot password?
+            {t('auth.forgotPassword')}
           </Link>
         </div>
 
         <Button type="submit" variant="primary" size="lg" fullWidth loading={loading}>
-          Sign In
+          {t('auth.signIn')}
         </Button>
       </form>
 
       <p className="auth-form__footer-text">
-        Don't have an account? <Link to="/signup" className="auth-form__link">Apply for Certification</Link>
+        {t('auth.noAccount')} <Link to="/signup" className="auth-form__link">{t('auth.applyForCert')}</Link>
       </p>
     </div>
   );

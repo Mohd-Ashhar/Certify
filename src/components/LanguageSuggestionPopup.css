@@ -1,0 +1,118 @@
+.lang-popup-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10000;
+  animation: langPopupFadeIn 0.3s ease;
+}
+
+@keyframes langPopupFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.lang-popup {
+  background: var(--color-bg-surface, #242424);
+  border: 1px solid var(--color-border, #333);
+  border-radius: var(--radius-xl, 12px);
+  padding: 32px;
+  max-width: 400px;
+  width: 90%;
+  text-align: center;
+  position: relative;
+  animation: langPopupSlideIn 0.3s ease;
+}
+
+@keyframes langPopupSlideIn {
+  from { transform: translateY(20px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+.lang-popup__close {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  background: none;
+  border: none;
+  color: var(--color-text-secondary, #a0a0a0);
+  cursor: pointer;
+  padding: 4px;
+  border-radius: var(--radius-sm, 4px);
+  display: flex;
+  transition: color var(--transition-fast, 150ms ease);
+}
+
+[dir="rtl"] .lang-popup__close {
+  right: auto;
+  left: 12px;
+}
+
+.lang-popup__close:hover {
+  color: var(--color-text-primary, #ededed);
+}
+
+.lang-popup__icon {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: rgba(62, 207, 142, 0.12);
+  color: var(--color-accent, #3ECF8E);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 16px;
+}
+
+.lang-popup__title {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--color-text-primary, #ededed);
+  margin: 0 0 8px;
+}
+
+.lang-popup__message {
+  font-size: 0.9rem;
+  color: var(--color-text-secondary, #a0a0a0);
+  margin: 0 0 24px;
+  line-height: 1.5;
+}
+
+.lang-popup__actions {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.lang-popup__btn {
+  padding: 12px 20px;
+  border-radius: var(--radius-md, 6px);
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--transition-fast, 150ms ease);
+  border: none;
+}
+
+.lang-popup__btn--primary {
+  background: var(--color-accent, #3ECF8E);
+  color: #000;
+}
+
+.lang-popup__btn--primary:hover {
+  background: #35b87c;
+}
+
+.lang-popup__btn--secondary {
+  background: transparent;
+  color: var(--color-text-secondary, #a0a0a0);
+  border: 1px solid var(--color-border, #333);
+}
+
+.lang-popup__btn--secondary:hover {
+  background: var(--color-bg-primary, #171717);
+  color: var(--color-text-primary, #ededed);
+}

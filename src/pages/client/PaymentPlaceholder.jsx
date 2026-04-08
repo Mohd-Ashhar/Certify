@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
 import { calculatePrice, getCountryTier, getFullPrice, getMonthlyPrice } from '../../utils/pricing';
@@ -8,6 +9,7 @@ import { Lock, Shield, CreditCard, CalendarClock, CheckCircle2, Sparkles, Tag } 
 export default function PaymentPlaceholder() {
   const { applicationId } = useParams();
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const { user } = useAuth();
 
   const [application, setApplication] = useState(null);
@@ -100,7 +102,7 @@ export default function PaymentPlaceholder() {
       <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '80vh' }}>
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '16px' }}>
           <div style={{ width: '48px', height: '48px', border: '3px solid rgba(37,99,235,0.15)', borderTopColor: '#2563eb', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
-          <p style={{ color: '#64748b', fontWeight: 500, fontSize: '0.95rem' }}>Loading your order...</p>
+          <p style={{ color: '#64748b', fontWeight: 500, fontSize: '0.95rem' }}>{t('payment.loadingOrder')}</p>
         </div>
         <style>{`@keyframes spin { 100% { transform: rotate(360deg); } }`}</style>
       </div>
@@ -110,9 +112,9 @@ export default function PaymentPlaceholder() {
   if (!application) {
     return (
       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '60vh', gap: '16px' }}>
-        <p style={{ color: '#334155', fontSize: '1.1rem', fontWeight: 500 }}>Application not found.</p>
+        <p style={{ color: '#334155', fontSize: '1.1rem', fontWeight: 500 }}>{t('payment.appNotFound')}</p>
         <button onClick={() => navigate('/client/dashboard')} style={{ padding: '10px 24px', background: '#2563eb', color: 'white', border: 'none', borderRadius: '10px', fontWeight: 600, cursor: 'pointer' }}>
-          Back to Dashboard
+          {t('payment.backToDashboard')}
         </button>
       </div>
     );
@@ -127,8 +129,8 @@ export default function PaymentPlaceholder() {
           <div style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: '56px', height: '56px', borderRadius: '16px', background: 'linear-gradient(135deg, #2563eb, #7c3aed)', marginBottom: '16px', boxShadow: '0 8px 24px rgba(37, 99, 235, 0.25)' }}>
             <CreditCard size={26} color="white" />
           </div>
-          <h1 style={{ fontSize: '1.85rem', fontWeight: 800, color: '#0f172a', margin: '0 0 6px 0', letterSpacing: '-0.02em' }}>Complete Your Order</h1>
-          <p style={{ color: '#64748b', fontSize: '1rem', margin: 0 }}>Secure your ISO certification today</p>
+          <h1 style={{ fontSize: '1.85rem', fontWeight: 800, color: '#0f172a', margin: '0 0 6px 0', letterSpacing: '-0.02em' }}>{t('payment.completeOrder')}</h1>
+          <p style={{ color: '#64748b', fontSize: '1rem', margin: 0 }}>{t('payment.secureISO')}</p>
         </div>
 
         {/* REFERRAL DISCOUNT BANNER */}
@@ -136,8 +138,8 @@ export default function PaymentPlaceholder() {
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '14px 18px', background: 'linear-gradient(135deg, #ecfdf5, #d1fae5)', border: '1px solid #6ee7b7', borderRadius: '14px', marginBottom: '20px' }}>
             <Tag size={20} color="#059669" />
             <div>
-              <p style={{ margin: 0, fontWeight: 700, color: '#065f46', fontSize: '0.95rem' }}>10% Referral Discount Applied!</p>
-              <p style={{ margin: 0, color: '#047857', fontSize: '0.82rem' }}>You signed up via a referral link. Enjoy your discount.</p>
+              <p style={{ margin: 0, fontWeight: 700, color: '#065f46', fontSize: '0.95rem' }}>{t('payment.referralDiscount')}</p>
+              <p style={{ margin: 0, color: '#047857', fontSize: '0.82rem' }}>{t('payment.referralDiscountDesc')}</p>
             </div>
           </div>
         )}
@@ -154,7 +156,7 @@ export default function PaymentPlaceholder() {
                 <Shield size={20} color="white" />
               </div>
               <div>
-                <p style={{ margin: '0 0 2px 0', fontSize: '0.75rem', fontWeight: 600, color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>Certification Standard</p>
+                <p style={{ margin: '0 0 2px 0', fontSize: '0.75rem', fontWeight: 600, color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>{t('payment.certStandard')}</p>
                 <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 700, color: 'white' }}>{isoName}</h3>
               </div>
             </div>
@@ -163,7 +165,7 @@ export default function PaymentPlaceholder() {
           <div style={{ padding: '28px' }}>
 
             {/* PAYMENT OPTIONS */}
-            <h3 style={{ fontSize: '0.8rem', fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.1em', margin: '0 0 16px 0' }}>Choose Payment Option</h3>
+            <h3 style={{ fontSize: '0.8rem', fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.1em', margin: '0 0 16px 0' }}>{t('payment.choosePayment')}</h3>
 
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px', marginBottom: '28px' }}>
 
@@ -191,7 +193,7 @@ export default function PaymentPlaceholder() {
                 <div style={{ width: '44px', height: '44px', borderRadius: '12px', background: !isMonthly ? 'linear-gradient(135deg, #2563eb, #7c3aed)' : '#e2e8f0', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 14px auto', transition: 'all 0.25s ease' }}>
                   <CreditCard size={20} color={!isMonthly ? 'white' : '#94a3b8'} />
                 </div>
-                <h4 style={{ margin: '0 0 4px 0', fontSize: '0.9rem', fontWeight: 700, color: !isMonthly ? '#1e3a5f' : '#64748b' }}>Full Payment</h4>
+                <h4 style={{ margin: '0 0 4px 0', fontSize: '0.9rem', fontWeight: 700, color: !isMonthly ? '#1e3a5f' : '#64748b' }}>{t('payment.fullPayment')}</h4>
                 <div style={{ fontSize: '1.75rem', fontWeight: 800, color: !isMonthly ? '#0f172a' : '#94a3b8', lineHeight: 1.2, margin: '8px 0 4px 0' }}>
                   {hasReferralDiscount ? (
                     <>
@@ -202,10 +204,10 @@ export default function PaymentPlaceholder() {
                     `$${fullPrice}`
                   )}
                 </div>
-                <p style={{ margin: 0, fontSize: '0.78rem', color: '#94a3b8', fontWeight: 500 }}>One-time payment</p>
+                <p style={{ margin: 0, fontSize: '0.78rem', color: '#94a3b8', fontWeight: 500 }}>{t('payment.oneTimePayment')}</p>
                 {!isMonthly && (
                   <div style={{ marginTop: '12px', padding: '4px 10px', background: 'rgba(16,185,129,0.1)', borderRadius: '6px', display: 'inline-block' }}>
-                    <span style={{ fontSize: '0.7rem', fontWeight: 700, color: '#059669' }}>BEST VALUE</span>
+                    <span style={{ fontSize: '0.7rem', fontWeight: 700, color: '#059669' }}>{t('payment.bestValue')}</span>
                   </div>
                 )}
               </button>
@@ -234,7 +236,7 @@ export default function PaymentPlaceholder() {
                 <div style={{ width: '44px', height: '44px', borderRadius: '12px', background: isMonthly ? 'linear-gradient(135deg, #2563eb, #7c3aed)' : '#e2e8f0', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 14px auto', transition: 'all 0.25s ease' }}>
                   <CalendarClock size={20} color={isMonthly ? 'white' : '#94a3b8'} />
                 </div>
-                <h4 style={{ margin: '0 0 4px 0', fontSize: '0.9rem', fontWeight: 700, color: isMonthly ? '#1e3a5f' : '#64748b' }}>12-Month Plan</h4>
+                <h4 style={{ margin: '0 0 4px 0', fontSize: '0.9rem', fontWeight: 700, color: isMonthly ? '#1e3a5f' : '#64748b' }}>{t('payment.monthlyPlan')}</h4>
                 <div style={{ fontSize: '1.75rem', fontWeight: 800, color: isMonthly ? '#0f172a' : '#94a3b8', lineHeight: 1.2, margin: '8px 0 4px 0' }}>
                   {hasReferralDiscount ? (
                     <>
@@ -245,10 +247,10 @@ export default function PaymentPlaceholder() {
                     <>${monthlyPrice}<span style={{ fontSize: '0.9rem', fontWeight: 500, color: '#64748b' }}>/mo</span></>
                   )}
                 </div>
-                <p style={{ margin: 0, fontSize: '0.78rem', color: '#94a3b8', fontWeight: 500 }}>12-month commitment</p>
+                <p style={{ margin: 0, fontSize: '0.78rem', color: '#94a3b8', fontWeight: 500 }}>{t('payment.monthlyCommitment')}</p>
                 {isMonthly && (
                   <div style={{ marginTop: '12px', padding: '4px 10px', background: 'rgba(37,99,235,0.08)', borderRadius: '6px', display: 'inline-block' }}>
-                    <span style={{ fontSize: '0.7rem', fontWeight: 700, color: '#2563eb' }}>FLEXIBLE</span>
+                    <span style={{ fontSize: '0.7rem', fontWeight: 700, color: '#2563eb' }}>{t('payment.flexible')}</span>
                   </div>
                 )}
               </button>
@@ -261,11 +263,11 @@ export default function PaymentPlaceholder() {
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px', padding: '20px', background: '#f8fafc', borderRadius: '14px', border: '1px solid #e2e8f0' }}>
               <div>
                 <p style={{ margin: '0 0 2px 0', fontSize: '0.78rem', fontWeight: 600, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
-                  {isMonthly ? 'Monthly Payment' : 'Total Amount'}
+                  {isMonthly ? t('payment.monthlyPayment') : t('payment.totalAmount')}
                 </p>
                 <p style={{ margin: 0, fontSize: '0.82rem', color: '#64748b' }}>
-                  {hasReferralDiscount && <span style={{ color: '#059669', fontWeight: 600 }}>10% referral discount applied &bull; </span>}
-                  {isMonthly ? `$${(currentPrice * 12).toFixed(0)} total over 12 months` : 'Due today'}
+                  {hasReferralDiscount && <span style={{ color: '#059669', fontWeight: 600 }}>{t('payment.referralApplied')} &bull; </span>}
+                  {isMonthly ? t('payment.totalOver12', { total: (currentPrice * 12).toFixed(0) }) : t('payment.dueToday')}
                 </p>
               </div>
               <div style={{ textAlign: 'right' }}>
@@ -315,11 +317,11 @@ export default function PaymentPlaceholder() {
               {processing ? (
                 <>
                   <div style={{ width: '18px', height: '18px', border: '2px solid rgba(255,255,255,0.3)', borderTopColor: 'white', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
-                  Processing...
+                  {t('common.processing')}
                 </>
               ) : (
                 <>
-                  <Lock size={18} /> Proceed to Secure Checkout
+                  <Lock size={18} /> {t('payment.proceedCheckout')}
                 </>
               )}
             </button>
@@ -328,15 +330,15 @@ export default function PaymentPlaceholder() {
             <div style={{ display: 'flex', justifyContent: 'center', gap: '20px', marginTop: '20px', paddingTop: '16px' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
                 <Lock size={13} color="#94a3b8" />
-                <span style={{ fontSize: '0.72rem', color: '#94a3b8', fontWeight: 500 }}>SSL Encrypted</span>
+                <span style={{ fontSize: '0.72rem', color: '#94a3b8', fontWeight: 500 }}>{t('payment.sslEncrypted')}</span>
               </div>
               <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
                 <Shield size={13} color="#94a3b8" />
-                <span style={{ fontSize: '0.72rem', color: '#94a3b8', fontWeight: 500 }}>Secure Payment</span>
+                <span style={{ fontSize: '0.72rem', color: '#94a3b8', fontWeight: 500 }}>{t('payment.securePayment')}</span>
               </div>
               <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
                 <Sparkles size={13} color="#94a3b8" />
-                <span style={{ fontSize: '0.72rem', color: '#94a3b8', fontWeight: 500 }}>Powered by Stripe</span>
+                <span style={{ fontSize: '0.72rem', color: '#94a3b8', fontWeight: 500 }}>{t('payment.poweredByStripe')}</span>
               </div>
             </div>
 
@@ -346,7 +348,7 @@ export default function PaymentPlaceholder() {
                 onClick={() => navigate('/client/dashboard')}
                 style={{ background: 'none', border: 'none', color: '#94a3b8', cursor: 'pointer', fontSize: '0.85rem', fontWeight: 500 }}
               >
-                Cancel and return to dashboard
+                {t('payment.cancelReturn')}
               </button>
             </div>
           </div>

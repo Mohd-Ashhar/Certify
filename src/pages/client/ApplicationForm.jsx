@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { CheckCircle2 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { supabase } from '../../lib/supabase';
@@ -29,6 +30,7 @@ function parseEmployeeRange(range) {
 export default function ApplicationForm() {
   const { user, getRoleDashboard } = useAuth();
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const location = useLocation();
   const selectedPackage = location.state?.package || null;
 
@@ -61,7 +63,7 @@ export default function ApplicationForm() {
     const submittedCompanyName = user?.company_name || formData.companyName;
 
     if (!submittedCompanyName || !formData.industry || !formData.scope || !formData.employeeCount || !formData.locationsCount) {
-      setError('Please fill in all fields.');
+      setError(t('application.fillAllFields'));
       setLoading(false);
       return;
     }
@@ -110,8 +112,8 @@ export default function ApplicationForm() {
     <div className="page-container">
       <div className="page-header">
         <div>
-          <h1 className="page-title">New ISO Certification Application</h1>
-          <p className="page-subtitle">Provide details about your organization to get started.</p>
+          <h1 className="page-title">{t('application.title')}</h1>
+          <p className="page-subtitle">{t('application.subtitle')}</p>
         </div>
       </div>
 
@@ -209,10 +211,10 @@ export default function ApplicationForm() {
               onClick={() => navigate(getRoleDashboard(user?.role))}
               disabled={loading}
             >
-              Cancel
+              {t('common.cancel')}
             </Button>
             <Button type="submit" loading={loading} variant="primary">
-              Submit Application
+              {t('application.submitApplication')}
             </Button>
           </div>
         </form>

@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Select } from '../../components/ui/FormElements';
 import DataTable from '../../components/ui/DataTable';
 import StatusBadge from '../../components/ui/StatusBadge';
@@ -8,6 +9,7 @@ import { supabase } from '../../lib/supabase';
 
 export default function AdminAuditors() {
   const { user } = useAuth();
+  const { t } = useTranslation();
   const isRegionalAdmin = user?.role === ROLES.REGIONAL_ADMIN;
 
   const [auditors, setAuditors] = useState([]);
@@ -31,23 +33,23 @@ export default function AdminAuditors() {
     : auditors;
 
   const columns = [
-    { key: 'full_name', label: 'Name', render: (val) => val || '—' },
-    { key: 'email', label: 'Email' },
-    { key: 'region', label: 'Region', render: (val) => {
+    { key: 'full_name', label: t('admin.name'), render: (val) => val || '—' },
+    { key: 'email', label: t('auth.email') },
+    { key: 'region', label: t('admin.region'), render: (val) => {
       if (!val) return '—';
       const r = REGIONS.find(reg => reg.id === val);
       return r ? r.label : val;
     }},
-    { key: 'role', label: 'Role', render: (val) => <StatusBadge status={val} label={ROLE_LABELS[val] || val} /> },
-    { key: 'created_at', label: 'Joined', render: (val) => val ? new Date(val).toLocaleDateString() : '—' },
+    { key: 'role', label: t('settings.role'), render: (val) => <StatusBadge status={val} label={ROLE_LABELS[val] || val} /> },
+    { key: 'created_at', label: t('admin.joined'), render: (val) => val ? new Date(val).toLocaleDateString() : '—' },
   ];
 
   return (
     <div className="page-container">
       <div className="page-header">
         <div>
-          <h1 className="page-title">Auditors</h1>
-          <p className="page-subtitle">{filtered.length} auditor{filtered.length !== 1 ? 's' : ''} found</p>
+          <h1 className="page-title">{t('admin.auditorsTitle')}</h1>
+          <p className="page-subtitle">{t('admin.auditorsFound', { count: filtered.length })}</p>
         </div>
         {!isRegionalAdmin && (
           <Select
@@ -57,7 +59,7 @@ export default function AdminAuditors() {
             onChange={(e) => setRegionFilter(e.target.value)}
             style={{ width: '200px' }}
           >
-            <option value="">All Regions</option>
+            <option value="">{t('common.allRegions')}</option>
             {REGIONS.map(r => (
               <option key={r.id} value={r.id}>{r.label}</option>
             ))}
@@ -66,12 +68,12 @@ export default function AdminAuditors() {
       </div>
 
       {loading ? (
-        <p>Loading auditors...</p>
+        <p>{t('admin.loadingAuditors')}</p>
       ) : (
         <DataTable
           columns={columns}
           data={filtered}
-          emptyMessage="No auditors found."
+          emptyMessage={t('admin.noAuditorsFound')}
         />
       )}
     </div>

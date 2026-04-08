@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../contexts/AuthContext';
 import { Input, Select, Button } from '../../components/ui/FormElements';
 import Modal from '../../components/ui/Modal';
@@ -11,6 +12,7 @@ import './AdminUsers.css';
 
 export default function AdminUsers() {
   const { user } = useAuth();
+  const { t } = useTranslation();
   const [users, setUsers] = useState([]);
   const [fetchingUsers, setFetchingUsers] = useState(false);
 
@@ -70,17 +72,17 @@ export default function AdminUsers() {
     const region = isRegionalAdmin ? (user?.region || createForm.region) : createForm.region;
 
     if (!full_name || !email || !password || !role) {
-      setError('Please fill in all required fields');
+      setError(t('admin.fillRequired'));
       return;
     }
 
     if (password.length < 6) {
-      setError('Password must be at least 6 characters');
+      setError(t('admin.passwordMinLength'));
       return;
     }
 
     if (!allowedRoles.includes(role)) {
-      setError('You do not have permission to create this role');
+      setError(t('admin.noPermissionCreate'));
       return;
     }
 
@@ -99,7 +101,7 @@ export default function AdminUsers() {
         throw new Error(data.error || 'Failed to create user');
       }
 
-      setSuccess(`Successfully created ${ROLE_LABELS[role]}: ${full_name}`);
+      setSuccess(`${t('admin.successCreated')} ${ROLE_LABELS[role]}: ${full_name}`);
       setShowCreateModal(false);
       setCreateForm({ full_name: '', email: '', password: '', role: '', region: '' });
       fetchUsers();
@@ -117,7 +119,7 @@ export default function AdminUsers() {
     setSuccess('');
 
     if (!allowedRoles.includes(newRole)) {
-      setError('You do not have permission to assign this role');
+      setError(t('admin.noPermissionAssign'));
       return;
     }
 
@@ -133,11 +135,11 @@ export default function AdminUsers() {
       const result = await response.json();
       if (!response.ok) throw new Error(result.error || 'Failed to update role');
 
-      setSuccess(`Updated role for ${editingUser.full_name || editingUser.email} to ${ROLE_LABELS[newRole]}`);
+      setSuccess(t('admin.roleUpdated', { name: editingUser.full_name || editingUser.email, role: ROLE_LABELS[newRole] }));
       setUsers(prev => prev.map(u => u.id === editingUser.id ? { ...u, role: newRole } : u));
       setShowEditModal(false);
     } catch (err) {
-      setError(err.message || 'An error occurred');
+      setError(err.message || t('admin.errorOccurred'));
     }
     setLoading(false);
   };
@@ -161,7 +163,7 @@ export default function AdminUsers() {
         throw new Error(data.error || 'Failed to delete user');
       }
 
-      setSuccess(`Successfully deleted user: ${deletingUser.full_name || deletingUser.email}`);
+      setSuccess(`${t('admin.successDeleted')} ${deletingUser.full_name || deletingUser.email}`);
       setUsers(prev => prev.filter(u => u.id !== deletingUser.id));
       setShowDeleteModal(false);
       setDeletingUser(null);
@@ -173,17 +175,17 @@ export default function AdminUsers() {
   };
 
   const columns = [
-    { key: 'full_name', label: 'Name', render: (val) => val || '—' },
-    { key: 'email', label: 'Email' },
-    { key: 'role', label: 'System Role', render: (val) => <StatusBadge status={val} label={ROLE_LABELS[val] || val} /> },
-    { key: 'region', label: 'Region', render: (val) => {
+    { key: 'full_name', label: t('admin.name'), render: (val) => val || '—' },
+    { key: 'email', label: t('auth.email') },
+    { key: 'role', label: t('admin.systemRole'), render: (val) => <StatusBadge status={val} label={ROLE_LABELS[val] || val} /> },
+    { key: 'region', label: t('admin.region'), render: (val) => {
       if (!val) return '—';
       const r = REGIONS.find(reg => reg.id === val);
       return r ? r.label : val;
     }},
-    { key: 'created_at', label: 'Joined', render: (val) => val ? new Date(val).toLocaleDateString() : '—' },
+    { key: 'created_at', label: t('admin.joined'), render: (val) => val ? new Date(val).toLocaleDateString() : '—' },
     {
-      key: 'actions', label: 'Action', render: (_, userRow) => (
+      key: 'actions', label: t('dashboard.action'), render: (_, userRow) => (
         <div style={{ display: 'flex', gap: '4px' }}>
           <Button size="sm" variant="ghost" onClick={() => {
             setEditingUser(userRow);
@@ -191,7 +193,7 @@ export default function AdminUsers() {
             setError('');
             setShowEditModal(true);
           }}>
-            Edit Role
+            {t('admin.editRole')}
           </Button>
           {userRow.id !== user?.id && (
             <Button size="sm" variant="ghost" onClick={() => {
@@ -211,15 +213,15 @@ export default function AdminUsers() {
     <div className="page-container">
       <div className="page-header">
         <div>
-          <h1 className="page-title">User Management</h1>
-          <p className="page-subtitle">Create and manage platform users</p>
+          <h1 className="page-title">{t('admin.userManagement')}</h1>
+          <p className="page-subtitle">{t('admin.userManagementDesc')}</p>
         </div>
         <Button variant="primary" size="md" onClick={() => {
           setError('');
           setCreateForm({ full_name: '', email: '', password: '', role: '', region: '' });
           setShowCreateModal(true);
         }}>
-          <UserPlus size={18} /> Create User
+          <UserPlus size={18} /> {t('admin.createUser')}
         </Button>
       </div>
 
@@ -227,7 +229,7 @@ export default function AdminUsers() {
       <div className="admin-users__info">
         <Shield size={18} />
         <span>
-          You can create: {allowedRoles.map(r => ROLE_LABELS[r]).join(', ')}
+          {t('admin.youCanCreate')} {allowedRoles.map(r => ROLE_LABELS[r]).join(', ')}
         </span>
       </div>
 
@@ -240,12 +242,12 @@ export default function AdminUsers() {
 
       {/* Users Table */}
       {fetchingUsers ? (
-        <p>Loading users...</p>
+        <p>{t('admin.loadingUsers')}</p>
       ) : (
         <DataTable
           columns={columns}
           data={users}
-          emptyMessage="No users found."
+          emptyMessage={t('admin.noUsersFound')}
         />
       )}
 
@@ -253,7 +255,7 @@ export default function AdminUsers() {
       <Modal
         isOpen={showCreateModal}
         onClose={() => setShowCreateModal(false)}
-        title="Create New User"
+        title={t('admin.createNewUser')}
       >
         <form onSubmit={handleCreateUser} className="admin-users__form">
           {error && (
@@ -264,60 +266,60 @@ export default function AdminUsers() {
           )}
 
           <Input
-            label="Full Name *"
+            label={t('admin.fullName')}
             id="create-user-name"
             name="full_name"
-            placeholder="Enter full name"
+            placeholder={t('admin.fullNamePlaceholder')}
             value={createForm.full_name}
             onChange={handleCreateChange}
             required
           />
 
           <Input
-            label="Email *"
+            label={t('auth.emailRequired')}
             type="email"
             id="create-user-email"
             name="email"
-            placeholder="user@example.com"
+            placeholder={t('admin.emailPlaceholder')}
             value={createForm.email}
             onChange={handleCreateChange}
             required
           />
 
           <Input
-            label="Password *"
+            label={t('auth.passwordRequired')}
             type="password"
             id="create-user-password"
             name="password"
-            placeholder="Min 6 characters"
+            placeholder={t('admin.passwordPlaceholder')}
             value={createForm.password}
             onChange={handleCreateChange}
             required
           />
 
           <Select
-            label="Role *"
+            label={t('admin.roleRequired')}
             id="create-user-role"
             name="role"
             value={createForm.role}
             onChange={handleCreateChange}
             required
           >
-            <option value="">Select a role</option>
+            <option value="">{t('admin.selectRole')}</option>
             {allowedRoles.map(r => (
               <option key={r} value={r}>{ROLE_LABELS[r]}</option>
             ))}
           </Select>
 
           <Select
-            label={`Region${isRegionalAdmin ? '' : ' (optional)'}`}
+            label={isRegionalAdmin ? t('admin.region') : t('admin.regionOptional')}
             id="create-user-region"
             name="region"
             value={isRegionalAdmin ? (user?.region || createForm.region) : createForm.region}
             onChange={handleCreateChange}
             disabled={isRegionalAdmin}
           >
-            <option value="">Select a region</option>
+            <option value="">{t('admin.selectRegion')}</option>
             {REGIONS.map(r => (
               <option key={r.id} value={r.id}>{r.label}</option>
             ))}
@@ -325,10 +327,10 @@ export default function AdminUsers() {
 
           <div className="admin-users__form-actions">
             <Button type="button" variant="ghost" size="md" onClick={() => setShowCreateModal(false)}>
-              Cancel
+              {t('common.cancel')}
             </Button>
             <Button type="submit" variant="primary" size="md" loading={loading}>
-              Create User
+              {t('admin.createUser')}
             </Button>
           </div>
         </form>
@@ -338,7 +340,7 @@ export default function AdminUsers() {
       <Modal
         isOpen={showDeleteModal}
         onClose={() => setShowDeleteModal(false)}
-        title="Delete User"
+        title={t('admin.deleteUser')}
       >
         <div className="admin-users__form">
           {error && (
@@ -349,15 +351,15 @@ export default function AdminUsers() {
           )}
 
           <p style={{ color: 'var(--color-text-secondary)' }}>
-            Are you sure you want to permanently delete <strong>{deletingUser?.full_name || deletingUser?.email}</strong>?
+            {t('admin.deleteUserConfirm')} <strong>{deletingUser?.full_name || deletingUser?.email}</strong>?
           </p>
           <p style={{ color: 'var(--color-danger, #ef4444)', fontSize: '0.85rem', marginTop: '8px' }}>
-            This action cannot be undone. The user's account and profile will be permanently removed.
+            {t('admin.deleteUserWarning')}
           </p>
 
           <div className="admin-users__form-actions" style={{ marginTop: '16px' }}>
             <Button type="button" variant="ghost" size="md" onClick={() => setShowDeleteModal(false)}>
-              Cancel
+              {t('common.cancel')}
             </Button>
             <Button
               type="button"
@@ -367,7 +369,7 @@ export default function AdminUsers() {
               onClick={handleDeleteUser}
               style={{ background: 'var(--color-danger, #ef4444)' }}
             >
-              Delete User
+              {t('admin.deleteUser')}
             </Button>
           </div>
         </div>
@@ -377,7 +379,7 @@ export default function AdminUsers() {
       <Modal
         isOpen={showEditModal}
         onClose={() => setShowEditModal(false)}
-        title="Edit User Role"
+        title={t('admin.editUserRole')}
       >
         <form onSubmit={handleUpdateRole} className="admin-users__form">
           {error && (
@@ -388,18 +390,18 @@ export default function AdminUsers() {
           )}
 
           <p style={{ marginBottom: '16px', color: 'var(--color-text-secondary)' }}>
-            Updating role for <strong>{editingUser?.full_name || editingUser?.email}</strong> ({editingUser?.email})
+            {t('admin.updatingRole')} <strong>{editingUser?.full_name || editingUser?.email}</strong> ({editingUser?.email})
           </p>
 
           <Select
-            label="New Role *"
+            label={t('admin.newRole')}
             id="update-user-role"
             name="role"
             value={newRole}
             onChange={(e) => setNewRole(e.target.value)}
             required
           >
-            <option value="">Select a role</option>
+            <option value="">{t('admin.selectRole')}</option>
             {allowedRoles.map(r => (
               <option key={r} value={r}>{ROLE_LABELS[r]}</option>
             ))}
@@ -407,10 +409,10 @@ export default function AdminUsers() {
 
           <div className="admin-users__form-actions">
             <Button type="button" variant="ghost" size="md" onClick={() => setShowEditModal(false)}>
-              Cancel
+              {t('common.cancel')}
             </Button>
             <Button type="submit" variant="primary" size="md" loading={loading}>
-              Update Role
+              {t('admin.updateRole')}
             </Button>
           </div>
         </form>

@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../contexts/AuthContext';
 import { Input, Button, Select } from '../../components/ui/FormElements';
 import { REGIONS, ROLES, ROLE_LABELS, PERMISSIONS, getRolePermissions, hasPermission } from '../../utils/roles';
@@ -17,6 +18,7 @@ const allTabs = [
 
 export default function Settings() {
   const { user } = useAuth();
+  const { t } = useTranslation();
   const [activeTab, setActiveTab] = useState('profile');
 
   const isAdmin = hasPermission(user?.role, PERMISSIONS.MANAGE_USERS);
@@ -31,8 +33,8 @@ export default function Settings() {
     <div className="page-container">
       <div className="page-header">
         <div>
-          <h1 className="page-title">{isAdmin ? 'Settings' : 'My Profile'}</h1>
-          <p className="page-subtitle">{isAdmin ? 'Manage your account and platform settings' : 'Manage your account details'}</p>
+          <h1 className="page-title">{isAdmin ? t('settings.title') : t('settings.myProfile')}</h1>
+          <p className="page-subtitle">{isAdmin ? t('settings.manageAccount') : t('settings.manageDetails')}</p>
         </div>
       </div>
 

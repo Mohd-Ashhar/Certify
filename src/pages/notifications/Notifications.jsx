@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../contexts/AuthContext';
 import { supabase } from '../../lib/supabase';
 import { Bell, Gift, DollarSign, CheckCircle2, Info } from 'lucide-react';
@@ -12,6 +13,7 @@ const ICON_MAP = {
 
 export default function Notifications() {
   const { user } = useAuth();
+  const { t } = useTranslation();
   const [notifications, setNotifications] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -48,23 +50,23 @@ export default function Notifications() {
     <div className="page-container">
       <div className="page-header">
         <div>
-          <h1 className="page-title">Notifications</h1>
-          <p className="page-subtitle">Stay updated on your referrals, payouts, and account activity</p>
+          <h1 className="page-title">{t('notifications.title')}</h1>
+          <p className="page-subtitle">{t('notifications.subtitle')}</p>
         </div>
         {unreadCount > 0 && (
           <button className="notif__mark-all-btn" onClick={markAllRead}>
-            <CheckCircle2 size={16} /> Mark all as read
+            <CheckCircle2 size={16} /> {t('notifications.markAllRead')}
           </button>
         )}
       </div>
 
       {loading ? (
-        <p style={{ color: 'var(--color-text-secondary)' }}>Loading notifications...</p>
+        <p style={{ color: 'var(--color-text-secondary)' }}>{t('notifications.loadingNotifications')}</p>
       ) : notifications.length === 0 ? (
         <div className="notifications__empty">
           <Bell size={48} color="var(--text-muted)" />
-          <h3>No notifications yet</h3>
-          <p>You will be notified here when there are updates to your referrals, payouts, or account.</p>
+          <h3>{t('notifications.noNotifications')}</h3>
+          <p>{t('notifications.noNotificationsDesc')}</p>
         </div>
       ) : (
         <div className="notif__list">

@@ -1,0 +1,62 @@
+import { useState, useRef, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
+import { Globe, ChevronDown } from 'lucide-react';
+import './LanguageSwitcher.css';
+
+const LANGUAGES = [
+  { code: 'en', label: 'English', flag: '🇬🇧' },
+  { code: 'ar', label: 'العربية', flag: '🇸🇦' },
+  { code: 'es', label: 'Español', flag: '🇪🇸' },
+];
+
+export default function LanguageSwitcher({ variant = 'default' }) {
+  const { i18n } = useTranslation();
+  const [open, setOpen] = useState(false);
+  const ref = useRef(null);
+
+  const currentLang = LANGUAGES.find(l => l.code === i18n.language) || LANGUAGES[0];
+
+  useEffect(() => {
+    const handler = (e) => {
+      if (ref.current && !ref.current.contains(e.target)) setOpen(false);
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, []);
+
+  const switchLanguage = (code) => {
+    i18n.changeLanguage(code);
+    localStorage.setItem('certifycx-lang', code);
+    document.documentElement.dir = code === 'ar' ? 'rtl' : 'ltr';
+    document.documentElement.lang = code;
+    setOpen(false);
+  };
+
+  return (
+    <div className={`lang-switcher ${variant === 'landing' ? 'lang-switcher--landing' : ''}`} ref={ref}>
+      <button
+        className="lang-switcher__trigger"
+        onClick={() => setOpen(!open)}
+        aria-label="Select language"
+      >
+        <Globe size={16} />
+        <span className="lang-switcher__label">{currentLang.flag} {currentLang.label}</span>
+        <ChevronDown size={14} className={`lang-switcher__chevron ${open ? 'lang-switcher__chevron--open' : ''}`} />
+      </button>
+      {open && (
+        <div className="lang-switcher__menu">
+          {LANGUAGES.map((lang) => (
+            <button
+              key={lang.code}
+              className={`lang-switcher__item ${lang.code === i18n.language ? 'lang-switcher__item--active' : ''}`}
+              onClick={() => switchLanguage(lang.code)}
+            >
+              <span>{lang.flag}</span>
+              <span>{lang.label}</span>
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}

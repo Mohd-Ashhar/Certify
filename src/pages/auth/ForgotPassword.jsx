@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../contexts/AuthContext';
 import { Input, Button } from '../../components/ui/FormElements';
 import { AlertCircle, CheckCircle } from 'lucide-react';
@@ -7,6 +8,7 @@ import './Auth.css';
 
 export default function ForgotPassword() {
   const { resetPassword } = useAuth();
+  const { t } = useTranslation();
   const [email, setEmail] = useState('');
   const [sent, setSent] = useState(false);
   const [error, setError] = useState('');
@@ -31,13 +33,13 @@ export default function ForgotPassword() {
         <div className="auth-form__success-icon">
           <CheckCircle size={48} />
         </div>
-        <h2 className="auth-form__title">Check your email</h2>
+        <h2 className="auth-form__title">{t('auth.checkEmail')}</h2>
         <p className="auth-form__subtitle">
-          We've sent a password reset link to <strong>{email}</strong>
+          {t('auth.resetLinkSent')} <strong>{email}</strong>
         </p>
         <Link to="/login">
           <Button variant="secondary" size="md" fullWidth>
-            Back to Sign In
+            {t('auth.backToSignIn')}
           </Button>
         </Link>
       </div>
@@ -46,14 +48,12 @@ export default function ForgotPassword() {
 
   return (
     <div className="auth-form">
-      <h2 className="auth-form__title">Reset your password</h2>
-      <p className="auth-form__subtitle">
-        Enter your email and we'll send you a reset link
-      </p>
+      <h2 className="auth-form__title">{t('auth.resetPassword')}</h2>
+      <p className="auth-form__subtitle">{t('auth.resetPasswordDesc')}</p>
 
       <form onSubmit={handleSubmit} className="auth-form__body">
         <Input
-          label="Email"
+          label={t('auth.email')}
           type="email"
           id="forgot-email"
           placeholder="you@company.com"
@@ -63,12 +63,12 @@ export default function ForgotPassword() {
         />
 
         <Button type="submit" variant="primary" size="lg" fullWidth loading={loading}>
-          Send Reset Link
+          {t('auth.sendResetLink')}
         </Button>
       </form>
 
       <p className="auth-form__footer-text">
-        Remember your password? <Link to="/login" className="auth-form__link">Sign In</Link>
+        {t('auth.rememberPassword')} <Link to="/login" className="auth-form__link">{t('auth.signIn')}</Link>
       </p>
     </div>
   );

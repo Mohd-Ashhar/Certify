@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../contexts/AuthContext';
 import { supabase } from '../../lib/supabase';
 import { ROLES } from '../../utils/roles';
@@ -18,6 +19,7 @@ const STATUS_TABS = [
 
 export default function RegistrationRequests() {
   const { user } = useAuth();
+  const { t } = useTranslation();
   const [requests, setRequests] = useState([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('pending');
@@ -94,8 +96,8 @@ export default function RegistrationRequests() {
     <div className="page-container">
       <div className="page-header">
         <div>
-          <h1 className="page-title">Registration Requests</h1>
-          <p className="page-subtitle">Review and verify stakeholder registration requests</p>
+          <h1 className="page-title">{t('admin.registrationRequests')}</h1>
+          <p className="page-subtitle">{t('admin.registrationRequestsDesc')}</p>
         </div>
       </div>
 
@@ -119,7 +121,7 @@ export default function RegistrationRequests() {
         <input
           type="text"
           className="reg-req__search-input"
-          placeholder="Search by name, email, company, or type..."
+          placeholder={t('admin.searchPlaceholder')}
           value={search}
           onChange={(e) => setSearch(e.target.value)}
         />
@@ -127,15 +129,15 @@ export default function RegistrationRequests() {
 
       {/* List */}
       {loading ? (
-        <p style={{ color: 'var(--color-text-secondary)', padding: 'var(--spacing-lg)' }}>Loading registrations...</p>
+        <p style={{ color: 'var(--color-text-secondary)', padding: 'var(--spacing-lg)' }}>{t('admin.loadingRegistrations')}</p>
       ) : filtered.length === 0 ? (
         <div className="reg-req__empty">
           <UserPlus size={48} color="var(--color-text-tertiary)" />
-          <h3>No {activeTab} registrations</h3>
+          <h3>{t('admin.noRegistrations', { tab: activeTab })}</h3>
           <p>
             {activeTab === 'pending'
-              ? 'All registration requests have been processed.'
-              : `No ${activeTab} registrations found.`}
+              ? t('admin.allProcessed')
+              : t('admin.noRegistrationsFound', { tab: activeTab })}
           </p>
         </div>
       ) : (
@@ -167,7 +169,7 @@ export default function RegistrationRequests() {
                       loading={actionLoading === req.id}
                       onClick={() => handleAction(req.id, 'approved')}
                     >
-                      <CheckCircle2 size={14} /> Approve
+                      <CheckCircle2 size={14} /> {t('common.approve')}
                     </Button>
                     <Button
                       size="sm"
@@ -175,7 +177,7 @@ export default function RegistrationRequests() {
                       loading={actionLoading === req.id}
                       onClick={() => handleAction(req.id, 'rejected')}
                     >
-                      <XCircle size={14} /> Reject
+                      <XCircle size={14} /> {t('common.reject')}
                     </Button>
                   </div>
                 )}
@@ -214,7 +216,7 @@ export default function RegistrationRequests() {
               </div>
               {req.created_at && (
                 <div className="reg-req__date">
-                  Registered {new Date(req.created_at).toLocaleDateString()} at {new Date(req.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                  {t('admin.registered', { date: new Date(req.created_at).toLocaleDateString(), time: new Date(req.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) })}
                 </div>
               )}
             </div>

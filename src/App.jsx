@@ -1,9 +1,11 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import ProtectedRoute from './components/ProtectedRoute';
 import ErrorBoundary from './components/ErrorBoundary';
 import DashboardLayout from './components/layout/DashboardLayout';
 import AuthLayout from './components/layout/AuthLayout';
+import LanguageSuggestionPopup from './components/LanguageSuggestionPopup';
 import { ROLES, PERMISSIONS } from './utils/roles';
 
 // Public Pages
@@ -41,12 +43,13 @@ import Referrals from './pages/referrals/Referrals';
 
 function AppRoutes() {
   const { loading } = useAuth();
+  const { t } = useTranslation();
 
   return (
     <>
       {loading ? (
         <div style={{ display: 'flex', height: '100vh', alignItems: 'center', justifyContent: 'center' }}>
-          Loading...
+          {t('common.loading')}
         </div>
       ) : (
         <Routes>
@@ -221,6 +224,7 @@ export default function App() {
       <AuthProvider>
         <ErrorBoundary>
           <AppRoutes />
+          <LanguageSuggestionPopup />
         </ErrorBoundary>
       </AuthProvider>
     </BrowserRouter>

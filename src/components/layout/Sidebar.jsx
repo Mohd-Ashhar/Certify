@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../contexts/AuthContext';
 import { hasAnyPermission, PERMISSIONS, ROLE_LABELS, ROLES } from '../../utils/roles';
 import {
@@ -24,26 +25,27 @@ import {
 } from 'lucide-react';
 import './Sidebar.css';
 
-const navItems = [
-  { path: '/dashboard', label: 'Dashboard', icon: LayoutDashboard, permissions: [PERMISSIONS.VIEW_DASHBOARD] },
-  { path: '/client/apply', label: 'New Application', icon: PlusCircle, permissions: [PERMISSIONS.CREATE_CERTIFICATION] },
-  { path: '/admin/applications', label: 'Applications', icon: FileCheck2, permissions: [PERMISSIONS.VIEW_ALL_CERTIFICATIONS] },
-  { path: '/admin/companies', label: 'Companies', icon: Building2, permissions: [PERMISSIONS.VIEW_COMPANIES] },
-  { path: '/admin/regional-admins', label: 'Regional Admins', icon: ShieldCheck, permissions: [PERMISSIONS.CREATE_ADMINS] },
-  { path: '/admin/auditors', label: 'Auditors', icon: UserCheck, permissions: [PERMISSIONS.MANAGE_AUDITORS] },
-  { path: '/admin/cert-bodies', label: 'Cert Bodies', icon: Award, permissions: [PERMISSIONS.MANAGE_BODIES] },
-  { path: '/admin/users', label: 'Users', icon: Users, permissions: [PERMISSIONS.CREATE_ADMINS, PERMISSIONS.MANAGE_AUDITORS] },
-  { path: '/admin/shareable-links', label: 'Shareable Links', icon: Link2, permissions: [PERMISSIONS.MANAGE_USERS] },
-  { path: '/admin/registrations', label: 'Registrations', icon: UserPlus, permissions: [PERMISSIONS.MANAGE_USERS] },
-  { path: '/referrals', label: 'Referrals', icon: Gift, permissions: [PERMISSIONS.VIEW_DASHBOARD], excludeRoles: [ROLES.SUPER_ADMIN, ROLES.REGIONAL_ADMIN] },
-  { path: '/profile', label: 'My Profile', icon: User, permissions: [PERMISSIONS.MANAGE_SETTINGS] },
-  { path: '/notifications', label: 'Notifications', icon: Bell, permissions: [PERMISSIONS.VIEW_DASHBOARD] },
-  { path: '/settings', label: 'Settings', icon: Settings, permissions: [PERMISSIONS.MANAGE_USERS] },
-];
-
 export default function Sidebar({ isOpen, onClose, collapsed, onToggleCollapse }) {
   const { user, logout } = useAuth();
+  const { t } = useTranslation();
   const location = useLocation();
+
+  const navItems = [
+    { path: '/dashboard', labelKey: 'nav.dashboard', icon: LayoutDashboard, permissions: [PERMISSIONS.VIEW_DASHBOARD] },
+    { path: '/client/apply', labelKey: 'nav.newApplication', icon: PlusCircle, permissions: [PERMISSIONS.CREATE_CERTIFICATION] },
+    { path: '/admin/applications', labelKey: 'nav.applications', icon: FileCheck2, permissions: [PERMISSIONS.VIEW_ALL_CERTIFICATIONS] },
+    { path: '/admin/companies', labelKey: 'nav.companies', icon: Building2, permissions: [PERMISSIONS.VIEW_COMPANIES] },
+    { path: '/admin/regional-admins', labelKey: 'nav.regionalAdmins', icon: ShieldCheck, permissions: [PERMISSIONS.CREATE_ADMINS] },
+    { path: '/admin/auditors', labelKey: 'nav.auditors', icon: UserCheck, permissions: [PERMISSIONS.MANAGE_AUDITORS] },
+    { path: '/admin/cert-bodies', labelKey: 'nav.certBodies', icon: Award, permissions: [PERMISSIONS.MANAGE_BODIES] },
+    { path: '/admin/users', labelKey: 'nav.users', icon: Users, permissions: [PERMISSIONS.CREATE_ADMINS, PERMISSIONS.MANAGE_AUDITORS] },
+    { path: '/admin/shareable-links', labelKey: 'nav.shareableLinks', icon: Link2, permissions: [PERMISSIONS.MANAGE_USERS] },
+    { path: '/admin/registrations', labelKey: 'nav.registrations', icon: UserPlus, permissions: [PERMISSIONS.MANAGE_USERS] },
+    { path: '/referrals', labelKey: 'nav.referrals', icon: Gift, permissions: [PERMISSIONS.VIEW_DASHBOARD], excludeRoles: [ROLES.SUPER_ADMIN, ROLES.REGIONAL_ADMIN] },
+    { path: '/profile', labelKey: 'nav.myProfile', icon: User, permissions: [PERMISSIONS.MANAGE_SETTINGS] },
+    { path: '/notifications', labelKey: 'nav.notifications', icon: Bell, permissions: [PERMISSIONS.VIEW_DASHBOARD] },
+    { path: '/settings', labelKey: 'nav.settings', icon: Settings, permissions: [PERMISSIONS.MANAGE_USERS] },
+  ];
 
   const filteredNav = navItems.filter(item =>
     hasAnyPermission(user?.role, item.permissions) &&
@@ -52,11 +54,9 @@ export default function Sidebar({ isOpen, onClose, collapsed, onToggleCollapse }
 
   return (
     <>
-      {/* Mobile overlay */}
       {isOpen && <div className="sidebar-overlay" onClick={onClose} />}
 
       <aside className={`sidebar ${isOpen ? 'sidebar--open' : ''} ${collapsed ? 'sidebar--collapsed' : ''}`}>
-        {/* Logo */}
         <div className="sidebar__header">
           <div className="sidebar__logo">
             <div className="sidebar__logo-icon">
@@ -74,25 +74,26 @@ export default function Sidebar({ isOpen, onClose, collapsed, onToggleCollapse }
           )}
         </div>
 
-        {/* Navigation */}
         <nav className="sidebar__nav">
-          {filteredNav.map((item) => (
-            <NavLink
-              key={item.path}
-              to={item.path}
-              className={({ isActive }) =>
-                `sidebar__link ${isActive ? 'sidebar__link--active' : ''}`
-              }
-              onClick={onClose}
-              title={collapsed ? item.label : undefined}
-            >
-              <item.icon size={20} className="sidebar__link-icon" />
-              {!collapsed && <span className="sidebar__link-label">{item.label}</span>}
-            </NavLink>
-          ))}
+          {filteredNav.map((item) => {
+            const label = t(item.labelKey);
+            return (
+              <NavLink
+                key={item.path}
+                to={item.path}
+                className={({ isActive }) =>
+                  `sidebar__link ${isActive ? 'sidebar__link--active' : ''}`
+                }
+                onClick={onClose}
+                title={collapsed ? label : undefined}
+              >
+                <item.icon size={20} className="sidebar__link-icon" />
+                {!collapsed && <span className="sidebar__link-label">{label}</span>}
+              </NavLink>
+            );
+          })}
         </nav>
 
-        {/* User section */}
         <div className="sidebar__footer">
           <div className="sidebar__user">
             <div className="sidebar__avatar">
@@ -100,18 +101,18 @@ export default function Sidebar({ isOpen, onClose, collapsed, onToggleCollapse }
             </div>
             {!collapsed && (
               <div className="sidebar__user-info">
-                <span className="sidebar__user-name">{user?.name || 'User'}</span>
+                <span className="sidebar__user-name">{user?.name || t('common.user')}</span>
                 <span className="sidebar__user-role">
                   {user?.role === 'client' && user?.company_name
                     ? user.company_name
-                    : ROLE_LABELS[user?.role] || 'Unknown'}
+                    : ROLE_LABELS[user?.role] || t('common.unknown')}
                 </span>
               </div>
             )}
           </div>
-          <button className="sidebar__logout" onClick={logout} title="Sign out">
+          <button className="sidebar__logout" onClick={logout} title={t('common.signOut')}>
             <LogOut size={18} />
-            {!collapsed && <span>Sign Out</span>}
+            {!collapsed && <span>{t('common.signOut')}</span>}
           </button>
         </div>
       </aside>

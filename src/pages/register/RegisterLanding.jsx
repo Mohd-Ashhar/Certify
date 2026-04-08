@@ -1,4 +1,5 @@
 import { useParams, useNavigate, Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { getStakeholderType, getStakeholderSlugs } from '../../utils/stakeholderTypes';
 import {
   Shield, Award, Briefcase, Gift, Building2, UserCheck, TrendingUp,
@@ -13,6 +14,7 @@ const ICON_MAP = {
 export default function RegisterLanding() {
   const { type } = useParams();
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const config = getStakeholderType(type);
 
   if (!config) {
@@ -26,9 +28,9 @@ export default function RegisterLanding() {
             </Link>
           </div>
           <div className="reg-landing__not-found">
-            <h2>Invalid Registration Type</h2>
-            <p>The registration type &quot;{type}&quot; is not recognized.</p>
-            <Link to="/" className="reg-landing__btn reg-landing__btn--primary">Go to Homepage</Link>
+            <h2>{t('register.invalidType')}</h2>
+            <p>{t('register.typeNotRecognized', { type })}</p>
+            <Link to="/" className="reg-landing__btn reg-landing__btn--primary">{t('register.goToHomepage')}</Link>
           </div>
         </div>
       </div>
@@ -59,7 +61,7 @@ export default function RegisterLanding() {
             className="reg-landing__btn reg-landing__btn--primary reg-landing__btn--lg"
             onClick={() => navigate(`/signup?type=${config.id}`)}
           >
-            Register Now <ArrowRight size={18} />
+            {t('register.registerNow')} <ArrowRight size={18} />
           </button>
         </div>
 
@@ -67,7 +69,7 @@ export default function RegisterLanding() {
         <section className="reg-landing__section">
           <h2 className="reg-landing__section-title">
             <CheckCircle size={20} className="reg-landing__section-icon reg-landing__section-icon--green" />
-            Benefits
+            {t('register.benefits')}
           </h2>
           <div className="reg-landing__cards">
             {config.benefits.map((benefit, i) => (
@@ -83,7 +85,7 @@ export default function RegisterLanding() {
         <section className="reg-landing__section">
           <h2 className="reg-landing__section-title">
             <BookOpen size={20} className="reg-landing__section-icon reg-landing__section-icon--blue" />
-            Rules &amp; Regulations
+            {t('register.rulesRegulations')}
           </h2>
           <div className="reg-landing__rules">
             {config.rules.map((rule, i) => (
@@ -97,26 +99,26 @@ export default function RegisterLanding() {
 
         {/* CTA Footer */}
         <div className="reg-landing__cta">
-          <h3 className="reg-landing__cta-title">Ready to get started?</h3>
+          <h3 className="reg-landing__cta-title">{t('register.readyToStart')}</h3>
           <p className="reg-landing__cta-desc">
-            Join CertifyCX as {config.singularTitle === 'Investor' ? 'an' : 'a'} {config.singularTitle} and be part of the future of ISO certification.
+            {t('register.joinCertifyCX', { article: config.singularTitle === 'Investor' ? 'an' : 'a', type: config.singularTitle })}
           </p>
           <div className="reg-landing__cta-actions">
             <button
               className="reg-landing__btn reg-landing__btn--primary reg-landing__btn--lg"
               onClick={() => navigate(`/signup?type=${config.id}`)}
             >
-              Register as {config.singularTitle} <ArrowRight size={18} />
+              {t('register.registerAs', { type: config.singularTitle })} <ArrowRight size={18} />
             </button>
             <Link to="/login" className="reg-landing__btn reg-landing__btn--secondary">
-              Already have an account? Sign In
+              {t('register.alreadyHaveAccount')}
             </Link>
           </div>
         </div>
 
         {/* Footer */}
         <div className="reg-landing__footer">
-          <p>&copy; 2026 Certify.cx&trade;. All rights reserved.</p>
+          <p>{t('common.allRightsReserved')}</p>
         </div>
       </div>
     </div>

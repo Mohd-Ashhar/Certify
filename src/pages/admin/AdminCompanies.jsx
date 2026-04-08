@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Input, Select, Button } from '../../components/ui/FormElements';
 import Modal from '../../components/ui/Modal';
 import DataTable from '../../components/ui/DataTable';
@@ -9,6 +10,7 @@ import { UserPlus, AlertCircle, CheckCircle, Pencil } from 'lucide-react';
 
 export default function AdminCompanies() {
   const { user } = useAuth();
+  const { t } = useTranslation();
   const isSuperAdmin = user?.role === ROLES.SUPER_ADMIN;
   const isRegionalAdmin = user?.role === ROLES.REGIONAL_ADMIN;
 
@@ -53,11 +55,11 @@ export default function AdminCompanies() {
     const { full_name, email, password, company_name, region } = createForm;
 
     if (!full_name || !email || !password || !company_name) {
-      setError('Please fill in all required fields');
+      setError(t('admin.fillRequired'));
       return;
     }
     if (password.length < 6) {
-      setError('Password must be at least 6 characters');
+      setError(t('admin.passwordMinLength'));
       return;
     }
 
@@ -71,7 +73,7 @@ export default function AdminCompanies() {
       const data = await response.json();
       if (!response.ok) throw new Error(data.error || 'Failed to create client');
 
-      setSuccess(`Successfully created client: ${company_name}`);
+      setSuccess(`${t('admin.clientCreated')} ${company_name}`);
       setShowCreateModal(false);
       setCreateForm({ full_name: '', email: '', password: '', company_name: '', region: '' });
       fetchCompanies();
@@ -98,7 +100,7 @@ export default function AdminCompanies() {
     e.preventDefault();
     setError('');
     if (!editForm.full_name || !editForm.email || !editForm.company_name) {
-      setError('Name, email, and company name are required');
+      setError(t('admin.namesRequired'));
       return;
     }
 
@@ -118,7 +120,7 @@ export default function AdminCompanies() {
       const data = await response.json();
       if (!response.ok) throw new Error(data.error || 'Failed to update client');
 
-      setSuccess(`Successfully updated: ${editForm.company_name}`);
+      setSuccess(`${t('admin.clientUpdated')} ${editForm.company_name}`);
       setShowEditModal(false);
       setCompanies(prev => prev.map(c =>
         c.id === editingClient.id ? { ...c, ...editForm } : c
@@ -130,19 +132,19 @@ export default function AdminCompanies() {
   };
 
   const columns = [
-    { key: 'company_name', label: 'Company Name', render: (val) => val || '—' },
-    { key: 'full_name', label: 'Contact Person', render: (val) => val || '—' },
-    { key: 'email', label: 'Email' },
-    { key: 'region', label: 'Region', render: (val) => {
+    { key: 'company_name', label: t('admin.companyName'), render: (val) => val || '—' },
+    { key: 'full_name', label: t('admin.contactPerson'), render: (val) => val || '—' },
+    { key: 'email', label: t('auth.email') },
+    { key: 'region', label: t('admin.region'), render: (val) => {
       if (!val) return '—';
       const r = REGIONS.find(reg => reg.id === val);
       return r ? r.label : val;
     }},
-    { key: 'created_at', label: 'Joined', render: (val) => val ? new Date(val).toLocaleDateString() : '—' },
+    { key: 'created_at', label: t('admin.joined'), render: (val) => val ? new Date(val).toLocaleDateString() : '—' },
     ...(isSuperAdmin ? [{
-      key: 'actions', label: 'Action', render: (_, row) => (
+      key: 'actions', label: t('dashboard.action'), render: (_, row) => (
         <Button size="sm" variant="ghost" onClick={() => openEditModal(row)}>
-          <Pencil size={14} /> Edit
+          <Pencil size={14} /> {t('common.edit')}
         </Button>
       )
     }] : []),
@@ -152,8 +154,8 @@ export default function AdminCompanies() {
     <div className="page-container">
       <div className="page-header">
         <div>
-          <h1 className="page-title">Companies</h1>
-          <p className="page-subtitle">{filtered.length} compan{filtered.length !== 1 ? 'ies' : 'y'} found</p>
+          <h1 className="page-title">{t('admin.companiesTitle')}</h1>
+          <p className="page-subtitle">{t('admin.companiesFound', { count: filtered.length })}</p>
         </div>
         <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
           {!isRegionalAdmin && (
@@ -164,7 +166,7 @@ export default function AdminCompanies() {
               onChange={(e) => setRegionFilter(e.target.value)}
               style={{ width: '180px' }}
             >
-              <option value="">All Regions</option>
+              <option value="">{t('common.allRegions')}</option>
               {REGIONS.map(r => (
                 <option key={r.id} value={r.id}>{r.label}</option>
               ))}
@@ -176,7 +178,7 @@ export default function AdminCompanies() {
               setCreateForm({ full_name: '', email: '', password: '', company_name: '', region: '' });
               setShowCreateModal(true);
             }}>
-              <UserPlus size={18} /> Add Client
+              <UserPlus size={18} /> {t('admin.addClient')}
             </Button>
           )}
         </div>
@@ -190,13 +192,13 @@ export default function AdminCompanies() {
       )}
 
       {loading ? (
-        <p>Loading companies...</p>
+        <p>{t('admin.loadingCompanies')}</p>
       ) : (
-        <DataTable columns={columns} data={filtered} emptyMessage="No companies found." />
+        <DataTable columns={columns} data={filtered} emptyMessage={t('admin.noCompaniesFound')} />
       )}
 
       {/* Create Client Modal */}
-      <Modal isOpen={showCreateModal} onClose={() => setShowCreateModal(false)} title="Add New Client">
+      <Modal isOpen={showCreateModal} onClose={() => setShowCreateModal(false)} title={t('admin.addNewClient')}>
         <form onSubmit={handleCreateClient} className="admin-users__form">
           {error && (
             <div className="auth-form__error"><AlertCircle size={16} /><span>{error}</span></div>
@@ -220,14 +222,14 @@ export default function AdminCompanies() {
             {REGIONS.map(r => <option key={r.id} value={r.id}>{r.label}</option>)}
           </Select>
           <div className="admin-users__form-actions">
-            <Button type="button" variant="ghost" size="md" onClick={() => setShowCreateModal(false)}>Cancel</Button>
-            <Button type="submit" variant="primary" size="md" loading={saving}>Create Client</Button>
+            <Button type="button" variant="ghost" size="md" onClick={() => setShowCreateModal(false)}>{t('common.cancel')}</Button>
+            <Button type="submit" variant="primary" size="md" loading={saving}>{t('admin.createClient')}</Button>
           </div>
         </form>
       </Modal>
 
       {/* Edit Client Modal */}
-      <Modal isOpen={showEditModal} onClose={() => setShowEditModal(false)} title="Edit Client">
+      <Modal isOpen={showEditModal} onClose={() => setShowEditModal(false)} title={t('admin.editClient')}>
         <form onSubmit={handleEditClient} className="admin-users__form">
           {error && (
             <div className="auth-form__error"><AlertCircle size={16} /><span>{error}</span></div>
@@ -248,8 +250,8 @@ export default function AdminCompanies() {
             {REGIONS.map(r => <option key={r.id} value={r.id}>{r.label}</option>)}
           </Select>
           <div className="admin-users__form-actions">
-            <Button type="button" variant="ghost" size="md" onClick={() => setShowEditModal(false)}>Cancel</Button>
-            <Button type="submit" variant="primary" size="md" loading={saving}>Save Changes</Button>
+            <Button type="button" variant="ghost" size="md" onClick={() => setShowEditModal(false)}>{t('common.cancel')}</Button>
+            <Button type="submit" variant="primary" size="md" loading={saving}>{t('common.save')}</Button>
           </div>
         </form>
       </Modal>

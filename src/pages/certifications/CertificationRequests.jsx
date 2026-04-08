@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import DataTable from '../../components/ui/DataTable';
 import StatusBadge from '../../components/ui/StatusBadge';
 import { Button, Select } from '../../components/ui/FormElements';
@@ -10,6 +11,7 @@ import { Plus, Search, CheckCircle } from 'lucide-react';
 import './CertificationRequests.css';
 
 export default function CertificationRequests() {
+  const { t } = useTranslation();
   const { user, loading } = useAuth();
   const navigate = useNavigate();
   const [search, setSearch] = useState('');
@@ -40,7 +42,7 @@ export default function CertificationRequests() {
     fetchRequests();
   }, [user]);
 
-  if (!user || loading) return <div className="page-container"><p>Loading dashboard...</p></div>;
+  if (!user || loading) return <div className="page-container"><p>{t('common.loadingDashboard')}</p></div>;
 
   const canManage = hasPermission(user?.role, PERMISSIONS.MANAGE_CERTIFICATIONS);
 
@@ -53,19 +55,19 @@ export default function CertificationRequests() {
   });
 
   const columns = [
-    { key: 'company_name', label: 'Company' },
-    { key: 'recommended_iso', label: 'Certificate' },
-    { key: 'auditor_name', label: 'Assigned Auditor' },
-    { key: 'cb_name', label: 'Assigned CB' },
-    { key: 'status', label: 'Status', render: (val) => <StatusBadge status={val} /> },
-    { 
-      key: 'actions', 
-      label: 'Action', 
+    { key: 'company_name', label: t('dashboard.company') },
+    { key: 'recommended_iso', label: t('dashboard.certificate') },
+    { key: 'auditor_name', label: t('dashboard.assignedAuditor') },
+    { key: 'cb_name', label: t('dashboard.assignedCB') },
+    { key: 'status', label: t('dashboard.status'), render: (val) => <StatusBadge status={val} /> },
+    {
+      key: 'actions',
+      label: t('dashboard.action'),
       render: (_, row) => (
         <Button size="sm" onClick={() => navigate(`/admin/applications/${row.id}`)}>
-          Manage
+          {t('common.manage')}
         </Button>
-      ) 
+      )
     },
   ];
 
@@ -80,8 +82,8 @@ export default function CertificationRequests() {
 
       <div className="page-header">
         <div>
-          <h1 className="page-title">Certification Requests</h1>
-          <p className="page-subtitle">{filtered.length} requests found</p>
+          <h1 className="page-title">{t('admin.certRequestsTitle')}</h1>
+          <p className="page-subtitle">{t('admin.certRequestsFound', { count: filtered.length })}</p>
         </div>
       </div>
 
@@ -90,7 +92,7 @@ export default function CertificationRequests() {
           <Search size={16} className="companies__search-icon" />
           <input
             type="text"
-            placeholder="Search by company or email..."
+            placeholder={t('common.search')}
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="companies__search-input"
@@ -101,23 +103,23 @@ export default function CertificationRequests() {
           value={statusFilter}
           onChange={(e) => setStatusFilter(e.target.value)}
         >
-          <option value="all">All Statuses</option>
-          <option value="pending">Pending</option>
-          <option value="awaiting_payment">Awaiting Payment</option>
-          <option value="audit_scheduled">Audit Scheduled</option>
-          <option value="in_review">In Review</option>
-          <option value="approved">Approved</option>
-          <option value="rejected">Rejected</option>
+          <option value="all">{t('admin.allStatuses')}</option>
+          <option value="pending">{t('admin.pending')}</option>
+          <option value="awaiting_payment">{t('admin.awaitingPayment')}</option>
+          <option value="audit_scheduled">{t('admin.auditScheduled')}</option>
+          <option value="in_review">{t('admin.inReview')}</option>
+          <option value="approved">{t('admin.approved')}</option>
+          <option value="rejected">{t('admin.rejected')}</option>
         </Select>
       </div>
 
       {fetching ? (
-        <p>Loading certification requests...</p>
+        <p>{t('admin.loadingCertRequests')}</p>
       ) : (
         <DataTable
           columns={columns}
           data={filtered}
-          emptyMessage="No certification requests found"
+          emptyMessage={t('admin.noCertRequestsFound')}
         />
       )}
     </div>

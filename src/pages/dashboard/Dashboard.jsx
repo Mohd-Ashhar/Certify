@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { Building2, FileCheck2, Clock, UserCheck, Percent, PlusCircle, CheckCircle2, ChevronRight, Upload, FileText, AlertCircle, MessageSquare, Download, Trash2, Eye, XCircle, Award } from 'lucide-react';
 import StatCard from '../../components/ui/StatCard';
 import DataTable from '../../components/ui/DataTable';
@@ -11,15 +12,15 @@ import { useAuth } from '../../contexts/AuthContext';
 import { getPriceForISO, getCountryTier } from '../../utils/pricing';
 import './Dashboard.css';
 
-const STEPS = [
-  { id: 1, label: 'Submitted', statuses: ['pending', 'awaiting_payment'] },
-  { id: 2, label: 'Under Review', statuses: ['in_review'] },
-  { id: 3, label: 'Audit Scheduled', statuses: ['audit_scheduled'] },
-  { id: 4, label: 'Certified', statuses: ['approved'] }
+const STEP_KEYS = [
+  { id: 1, labelKey: 'dashboard.submitted', statuses: ['pending', 'awaiting_payment'] },
+  { id: 2, labelKey: 'dashboard.underReview', statuses: ['in_review'] },
+  { id: 3, labelKey: 'dashboard.auditScheduled', statuses: ['audit_scheduled'] },
+  { id: 4, labelKey: 'dashboard.certified', statuses: ['approved'] }
 ];
 
 const getCurrentStepIndex = (status) => {
-  const stepIndex = STEPS.findIndex(s => s.statuses.includes(status));
+  const stepIndex = STEP_KEYS.findIndex(s => s.statuses.includes(status));
   return stepIndex >= 0 ? stepIndex : 0;
 };
 
@@ -43,6 +44,7 @@ function getRequiredDocsForISO(isoName) {
 export default function Dashboard() {
   const { user, loading } = useAuth();
   const navigate = useNavigate();
+  const { t } = useTranslation();
   
   const [clientApplications, setClientApplications] = useState([]);
   const [adminApplications, setAdminApplications] = useState([]);
@@ -231,7 +233,7 @@ export default function Dashboard() {
     setDeletingDocId(null);
   };
 
-  if (!user || loading) return <div className="page-container"><p>Loading dashboard...</p></div>;
+  if (!user || loading) return <div className="page-container"><p>{t('common.loadingDashboard')}</p></div>;
 
   const isClient = user?.role === ROLES.CLIENT;
   const isAdmin = user?.role === ROLES.SUPER_ADMIN || user?.role === ROLES.REGIONAL_ADMIN;
@@ -249,8 +251,8 @@ export default function Dashboard() {
     <div className="page-container">
       <div className="page-header">
         <div>
-          <h1 className="page-title">Dashboard</h1>
-          <p className="page-subtitle">{isClient ? 'Manage your applications' : 'Overview of your certification platform'}</p>
+          <h1 className="page-title">{t('dashboard.title')}</h1>
+          <p className="page-subtitle">{isClient ? t('dashboard.manageApplications') : t('dashboard.platformOverview')}</p>
         </div>
       </div>
 
@@ -261,30 +263,30 @@ export default function Dashboard() {
               {user?.gap_analysis_score == null ? (
                 <>
                   <FileCheck2 size={48} color="var(--text-muted)" style={{ margin: '0 auto 16px' }} />
-                  <h3 style={{ marginBottom: '8px' }}>Take Your Free Gap Analysis</h3>
-                  <p style={{ color: 'var(--text-muted)', marginBottom: '24px' }}>Find out if your organization is ready for ISO certification.</p>
-                  <Button onClick={() => navigate('/client/gap-analysis')}>Take Gap Analysis Quiz</Button>
+                  <h3 style={{ marginBottom: '8px' }}>{t('dashboard.takeGapAnalysis')}</h3>
+                  <p style={{ color: 'var(--text-muted)', marginBottom: '24px' }}>{t('dashboard.takeGapAnalysisDesc')}</p>
+                  <Button onClick={() => navigate('/client/gap-analysis')}>{t('dashboard.takeGapAnalysisBtn')}</Button>
                 </>
               ) : user?.gap_analysis_score < 60 ? (
                 <>
                   <AlertCircle size={48} color="var(--color-warning)" style={{ margin: '0 auto 16px' }} />
-                  <h3 style={{ marginBottom: '8px' }}>Gap Analysis Completed</h3>
+                  <h3 style={{ marginBottom: '8px' }}>{t('dashboard.gapCompleted')}</h3>
                   <div style={{ fontSize: '1.75rem', fontWeight: 800, color: 'var(--color-warning)', margin: '12px 0' }}>
-                    Your Score: {user.gap_analysis_score}%
+                    {t('dashboard.yourScore', { score: user.gap_analysis_score })}
                   </div>
                   <p style={{ color: 'var(--text-muted)', marginBottom: '24px' }}>
-                    Your organization needs some foundational work before starting the certification process. Please contact our support team for guidance.
+                    {t('dashboard.needsWork')}
                   </p>
                 </>
               ) : (
                 <>
                   <CheckCircle2 size={48} color="var(--color-success)" style={{ margin: '0 auto 16px' }} />
-                  <h3 style={{ marginBottom: '8px' }}>You are ready for Certification!</h3>
+                  <h3 style={{ marginBottom: '8px' }}>{t('dashboard.readyForCert')}</h3>
                   <div style={{ fontSize: '1.75rem', fontWeight: 800, color: 'var(--color-success)', margin: '12px 0' }}>
-                    Your Score: {user.gap_analysis_score}%
+                    {t('dashboard.yourScore', { score: user.gap_analysis_score })}
                   </div>
                   <p style={{ color: 'var(--text-muted)', marginBottom: '24px' }}>
-                    Your organization demonstrates strong foundational practices. Choose a certification below to begin your journey.
+                    {t('dashboard.readyForCertDesc')}
                   </p>
                   <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '12px', marginBottom: '24px', textAlign: 'left' }}>
                     {[
@@ -304,25 +306,25 @@ export default function Dashboard() {
                       </div>
                     ))}
                   </div>
-                  <Button onClick={() => navigate('/client/apply')}>Start Your Certification Application</Button>
+                  <Button onClick={() => navigate('/client/apply')}>{t('dashboard.startCertApp')}</Button>
                 </>
               )}
             </div>
           ) : fetchingApps ? (
-            <p>Loading applications...</p>
+            <p>{t('dashboard.loadingApps')}</p>
           ) : (
             <>
               {activeApp && (
                 <>
                   <div className="dashboard__section dashboard__tracker-section">
                     <div className="dashboard__section-header" style={{ marginBottom: '2rem' }}>
-                      <h2 className="dashboard__section-title">Active Application: {activeApp.recommended_iso || 'Pending ISO Analysis'}</h2>
+                      <h2 className="dashboard__section-title">{t('dashboard.activeApp', { iso: activeApp.recommended_iso || t('dashboard.pendingISOAnalysis') })}</h2>
                       <StatusBadge status={activeApp.status} />
                     </div>
                     
                     {/* Stepper */}
                     <div className="tracker-stepper">
-                      {STEPS.map((step, idx) => {
+                      {STEP_KEYS.map((step, idx) => {
                         const currentIdx = getCurrentStepIndex(activeApp.status);
                         const isCompleted = idx < currentIdx;
                         const isActive = idx === currentIdx;
@@ -332,8 +334,8 @@ export default function Dashboard() {
                             <div className="stepper-icon">
                               {isCompleted ? <CheckCircle2 size={20} /> : <span>{step.id}</span>}
                             </div>
-                            <div className="stepper-label">{step.label}</div>
-                            {idx < STEPS.length - 1 && <div className="stepper-connector" />}
+                            <div className="stepper-label">{t(step.labelKey)}</div>
+                            {idx < STEP_KEYS.length - 1 && <div className="stepper-connector" />}
                           </div>
                         );
                       })}
@@ -344,7 +346,7 @@ export default function Dashboard() {
                   <div className="dashboard__grid">
                     <div className="dashboard__section">
                       <div className="section-subtitle-container">
-                        <AlertCircle size={18}/> <h3 className="section-subtitle">Tasks Required</h3>
+                        <AlertCircle size={18}/> <h3 className="section-subtitle">{t('dashboard.tasksRequired')}</h3>
                       </div>
                       <div className="tasks-container">
                         {activeApp.status === 'awaiting_payment' ? (
@@ -361,8 +363,8 @@ export default function Dashboard() {
                         ) : (
                           <div className="task-card success">
                             <CheckCircle2 size={24} style={{ marginBottom: '12px', color: 'var(--color-success)' }} />
-                            <h4>You're all set!</h4>
-                            <p>No pending tasks at this time. We will notify you when the next step requires action.</p>
+                            <h4>{t('dashboard.allSet')}</h4>
+                            <p>{t('dashboard.noTasks')}</p>
                           </div>
                         )}
                       </div>
@@ -370,7 +372,7 @@ export default function Dashboard() {
                     
                     <div className="dashboard__section">
                       <div className="section-subtitle-container">
-                        <MessageSquare size={18}/> <h3 className="section-subtitle">Messages & Updates</h3>
+                        <MessageSquare size={18}/> <h3 className="section-subtitle">{t('dashboard.messagesUpdates')}</h3>
                       </div>
                       <ul className="messages-list">
                         <li>
@@ -534,40 +536,40 @@ export default function Dashboard() {
         <>
           {/* Stat Cards */}
           <div className="dashboard__stats">
-            <StatCard title="Total Applications" value={totalApplications} icon={Building2} iconColor="#3ECF8E" onClick={() => navigate('/admin/applications')} />
-            <StatCard title="Approved" value={approvedCertifications} icon={FileCheck2} iconColor="#60A5FA" onClick={() => navigate('/admin/applications?status=approved')} />
-            <StatCard title="Pending Processing" value={pendingProcessing} icon={Clock} iconColor="#FBBF24" onClick={() => navigate('/admin/applications?status=pending')} />
-            <StatCard title="Active Review" value={activeReview} icon={UserCheck} iconColor="#A78BFA" onClick={() => navigate('/admin/applications?status=in_review')} />
-            <StatCard title="Awaiting Payment" value={awaitingPayment} icon={Percent} iconColor="#F87171" onClick={() => navigate('/admin/applications?status=awaiting_payment')} />
+            <StatCard title={t('dashboard.totalApplications')} value={totalApplications} icon={Building2} iconColor="#3ECF8E" onClick={() => navigate('/admin/applications')} />
+            <StatCard title={t('dashboard.approved')} value={approvedCertifications} icon={FileCheck2} iconColor="#60A5FA" onClick={() => navigate('/admin/applications?status=approved')} />
+            <StatCard title={t('dashboard.pendingProcessing')} value={pendingProcessing} icon={Clock} iconColor="#FBBF24" onClick={() => navigate('/admin/applications?status=pending')} />
+            <StatCard title={t('dashboard.activeReview')} value={activeReview} icon={UserCheck} iconColor="#A78BFA" onClick={() => navigate('/admin/applications?status=in_review')} />
+            <StatCard title={t('dashboard.awaitingPayment')} value={awaitingPayment} icon={Percent} iconColor="#F87171" onClick={() => navigate('/admin/applications?status=awaiting_payment')} />
           </div>
 
           {/* Main content grid */}
           <div className="dashboard__grid" style={{ display: 'block' }}>
             <div className="dashboard__section">
               <div className="dashboard__section-header">
-                <h2 className="dashboard__section-title">Recent Applications</h2>
+                <h2 className="dashboard__section-title">{t('dashboard.recentApplications')}</h2>
                 {adminApplications.length > 5 && (
                   <Button size="sm" variant="outline" onClick={() => navigate('/admin/applications')}>
-                    View All <ChevronRight size={14} />
+                    {t('dashboard.viewAll')} <ChevronRight size={14} />
                   </Button>
                 )}
               </div>
               {fetchingApps ? (
-                <p>Loading applications...</p>
+                <p>{t('dashboard.loadingApps')}</p>
               ) : (
                 <DataTable
                   columns={[
-                    { key: 'company_name', label: 'Company' },
-                    { key: 'recommended_iso', label: 'Certificate' },
-                    { key: 'auditor_name', label: 'Assigned Auditor' },
-                    { key: 'cb_name', label: 'Assigned CB' },
-                    { key: 'status', label: 'Status', render: (val) => <StatusBadge status={val} /> },
-                    { key: 'action', label: 'Action', render: (_, row) => (
-                      <Button size="sm" variant="outline" onClick={() => navigate(`/admin/applications/${row.id}`)}>Manage</Button>
+                    { key: 'company_name', label: t('dashboard.company') },
+                    { key: 'recommended_iso', label: t('dashboard.certificate') },
+                    { key: 'auditor_name', label: t('dashboard.assignedAuditor') },
+                    { key: 'cb_name', label: t('dashboard.assignedCB') },
+                    { key: 'status', label: t('dashboard.status'), render: (val) => <StatusBadge status={val} /> },
+                    { key: 'action', label: t('dashboard.action'), render: (_, row) => (
+                      <Button size="sm" variant="outline" onClick={() => navigate(`/admin/applications/${row.id}`)}>{t('common.manage')}</Button>
                     )}
                   ]}
                   data={adminApplications.slice(0, 5)}
-                  emptyMessage="No applications found in the database."
+                  emptyMessage={t('dashboard.noAppsFound')}
                 />
               )}
             </div>
@@ -576,17 +578,17 @@ export default function Dashboard() {
       ) : isAuditor ? (
         <>
           <div className="dashboard__stats">
-            <StatCard title="Total Assigned" value={auditorApplications.length} icon={UserCheck} iconColor="#A78BFA" />
-            <StatCard title="In Review" value={auditorApplications.filter(a => a.status === 'in_review').length} icon={Clock} iconColor="#FBBF24" />
-            <StatCard title="Completed" value={auditorApplications.filter(a => a.status === 'audited').length} icon={CheckCircle2} iconColor="#3ECF8E" />
+            <StatCard title={t('dashboard.totalAssigned')} value={auditorApplications.length} icon={UserCheck} iconColor="#A78BFA" />
+            <StatCard title={t('dashboard.inReview')} value={auditorApplications.filter(a => a.status === 'in_review').length} icon={Clock} iconColor="#FBBF24" />
+            <StatCard title={t('dashboard.completed')} value={auditorApplications.filter(a => a.status === 'audited').length} icon={CheckCircle2} iconColor="#3ECF8E" />
           </div>
           <div className="dashboard__grid" style={{ display: 'block' }}>
             <div className="dashboard__section">
               <div className="dashboard__section-header">
-                <h2 className="dashboard__section-title">My Assigned Applications</h2>
+                <h2 className="dashboard__section-title">{t('dashboard.myAssignedApps')}</h2>
               </div>
               {fetchingApps ? (
-                <p>Loading applications...</p>
+                <p>{t('dashboard.loadingApps')}</p>
               ) : (
                 <DataTable
                   columns={[
@@ -609,17 +611,17 @@ export default function Dashboard() {
       ) : isCB ? (
         <>
           <div className="dashboard__stats">
-            <StatCard title="Assigned Applications" value={cbApplications.length} icon={Building2} iconColor="#3ECF8E" />
-            <StatCard title="Awaiting Decision" value={cbApplications.filter(a => a.status === 'audited' || a.status === 'in_review').length} icon={Clock} iconColor="#FBBF24" />
-            <StatCard title="Certified" value={cbApplications.filter(a => a.status === 'approved').length} icon={CheckCircle2} iconColor="#60A5FA" />
+            <StatCard title={t('dashboard.assignedApplications')} value={cbApplications.length} icon={Building2} iconColor="#3ECF8E" />
+            <StatCard title={t('dashboard.awaitingDecision')} value={cbApplications.filter(a => a.status === 'audited' || a.status === 'in_review').length} icon={Clock} iconColor="#FBBF24" />
+            <StatCard title={t('dashboard.certified')} value={cbApplications.filter(a => a.status === 'approved').length} icon={CheckCircle2} iconColor="#60A5FA" />
           </div>
           <div className="dashboard__grid" style={{ display: 'block' }}>
             <div className="dashboard__section">
               <div className="dashboard__section-header">
-                <h2 className="dashboard__section-title">My Assigned Applications</h2>
+                <h2 className="dashboard__section-title">{t('dashboard.myAssignedApps')}</h2>
               </div>
               {fetchingApps ? (
-                <p>Loading applications...</p>
+                <p>{t('dashboard.loadingApps')}</p>
               ) : (
                 <DataTable
                   columns={[
@@ -641,8 +643,8 @@ export default function Dashboard() {
         </>
       ) : (
         <div style={{ textAlign: 'center', padding: '60px', background: 'var(--color-bg-surface)', borderRadius: 'var(--radius-lg)', border: '1px solid var(--color-border)' }}>
-          <h2 style={{ marginBottom: '16px' }}>Welcome to your Portal</h2>
-          <p style={{ color: 'var(--color-text-secondary)' }}>Your portal is currently being set up. Check back later.</p>
+          <h2 style={{ marginBottom: '16px' }}>{t('dashboard.welcomePortal')}</h2>
+          <p style={{ color: 'var(--color-text-secondary)' }}>{t('dashboard.portalSetup')}</p>
         </div>
       )}
     </div>

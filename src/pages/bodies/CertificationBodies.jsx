@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import DataTable from '../../components/ui/DataTable';
 import StatusBadge from '../../components/ui/StatusBadge';
 import Modal from '../../components/ui/Modal';
@@ -10,6 +11,7 @@ import { hasPermission, PERMISSIONS } from '../../utils/roles';
 import { Plus, Search } from 'lucide-react';
 
 export default function CertificationBodies() {
+  const { t } = useTranslation();
   const { user, loading } = useAuth();
   const [search, setSearch] = useState('');
   const [bodies, setBodies] = useState([]);
@@ -18,7 +20,7 @@ export default function CertificationBodies() {
   const [formData, setFormData] = useState({ name: '', country: '', website: '' });
   const [adding, setAdding] = useState(false);
 
-  if (!user || loading) return <div className="page-container"><p>Loading dashboard...</p></div>;
+  if (!user || loading) return <div className="page-container"><p>{t('common.loadingDashboard')}</p></div>;
 
   const fetchBodies = async () => {
     setFetching(true);
@@ -61,22 +63,22 @@ export default function CertificationBodies() {
   });
 
   const columns = [
-    { key: 'name', label: 'Body Name', render: (val) => (
+    { key: 'name', label: t('admin.bodyName'), render: (val) => (
       <span style={{ fontWeight: 500, color: 'var(--color-text-primary)' }}>{val || '—'}</span>
     )},
-    { key: 'country', label: 'Country', render: (val) => (
+    { key: 'country', label: t('admin.country'), render: (val) => (
       <span style={{ fontWeight: 500, color: 'var(--color-info)' }}>{val || '—'}</span>
     )},
-    { key: 'website', label: 'Website', render: (val) => val || '—' },
-    { key: 'status', label: 'Status', render: (val) => <StatusBadge status={val} /> },
+    { key: 'website', label: t('admin.website'), render: (val) => val || '—' },
+    { key: 'status', label: t('dashboard.status'), render: (val) => <StatusBadge status={val} /> },
   ];
 
   return (
     <div className="page-container">
       <div className="page-header">
         <div>
-          <h1 className="page-title">Certification Bodies</h1>
-          <p className="page-subtitle">{filtered.length} certification bodies registered</p>
+          <h1 className="page-title">{t('admin.certBodiesTitle')}</h1>
+          <p className="page-subtitle">{t('admin.certBodiesFound', { count: filtered.length })}</p>
         </div>
         {canManage && (
           <Button variant="primary" size="md" onClick={() => setShowModal(true)}>
@@ -90,7 +92,7 @@ export default function CertificationBodies() {
           <Search size={16} className="companies__search-icon" />
           <input
             type="text"
-            placeholder="Search certification bodies..."
+            placeholder={t('common.search')}
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="companies__search-input"
@@ -99,12 +101,12 @@ export default function CertificationBodies() {
       </div>
 
       {fetching ? (
-        <p>Loading certification bodies...</p>
+        <p>{t('admin.loadingCertBodies')}</p>
       ) : (
         <DataTable
           columns={columns}
           data={filtered}
-          emptyMessage="No certification bodies found"
+          emptyMessage={t('admin.noCertBodiesFound')}
         />
       )}
 
@@ -116,7 +118,7 @@ export default function CertificationBodies() {
           <Input label="Website" name="website" type="url" placeholder="https://..." value={formData.website} onChange={e => setFormData({ ...formData, website: e.target.value })} />
           
           <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end', marginTop: '8px' }}>
-            <Button type="button" variant="ghost" onClick={() => setShowModal(false)}>Cancel</Button>
+            <Button type="button" variant="ghost" onClick={() => setShowModal(false)}>{t('common.cancel')}</Button>
             <Button type="submit" variant="primary" loading={adding}>Add Body</Button>
           </div>
         </form>

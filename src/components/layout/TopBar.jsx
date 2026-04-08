@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../contexts/AuthContext';
 import { REGIONS, ROLES, ROLE_LABELS, hasPermission, PERMISSIONS } from '../../utils/roles';
 import {
@@ -12,11 +13,13 @@ import {
   Settings,
   ChevronRight,
 } from 'lucide-react';
+import LanguageSwitcher from '../LanguageSwitcher';
 import './TopBar.css';
 
 export default function TopBar({ pageTitle, onMenuClick, collapsed }) {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const [regionOpen, setRegionOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
   const [selectedRegion, setSelectedRegion] = useState('all');
@@ -25,7 +28,6 @@ export default function TopBar({ pageTitle, onMenuClick, collapsed }) {
 
   const isAdmin = hasPermission(user?.role, PERMISSIONS.MANAGE_USERS);
 
-  // Close dropdowns on outside click
   useEffect(() => {
     const handler = (e) => {
       if (regionRef.current && !regionRef.current.contains(e.target)) setRegionOpen(false);
@@ -36,8 +38,8 @@ export default function TopBar({ pageTitle, onMenuClick, collapsed }) {
   }, []);
 
   const currentRegion = selectedRegion === 'all'
-    ? 'All Regions'
-    : REGIONS.find(r => r.id === selectedRegion)?.label || 'All Regions';
+    ? t('common.allRegions')
+    : REGIONS.find(r => r.id === selectedRegion)?.label || t('common.allRegions');
 
   return (
     <header className={`topbar ${collapsed ? 'topbar--expanded' : ''}`}>
@@ -46,7 +48,7 @@ export default function TopBar({ pageTitle, onMenuClick, collapsed }) {
           <Menu size={20} />
         </button>
         <div className="topbar__title-section">
-          <h1 className="topbar__title">{pageTitle || 'Dashboard'}</h1>
+          <h1 className="topbar__title">{pageTitle || t('common.dashboard')}</h1>
         </div>
       </div>
 
@@ -68,7 +70,7 @@ export default function TopBar({ pageTitle, onMenuClick, collapsed }) {
                   className={`topbar__dropdown-item ${selectedRegion === 'all' ? 'topbar__dropdown-item--active' : ''}`}
                   onClick={() => { setSelectedRegion('all'); setRegionOpen(false); }}
                 >
-                  All Regions
+                  {t('common.allRegions')}
                 </button>
                 {REGIONS.map((region) => (
                   <button
@@ -84,8 +86,11 @@ export default function TopBar({ pageTitle, onMenuClick, collapsed }) {
           </div>
         )}
 
+        {/* Language Switcher */}
+        <LanguageSwitcher />
+
         {/* Notifications */}
-        <button className="topbar__icon-btn" title="Notifications" onClick={() => navigate('/notifications')}>
+        <button className="topbar__icon-btn" title={t('common.notifications')} onClick={() => navigate('/notifications')}>
           <Bell size={18} />
         </button>
 
@@ -108,16 +113,16 @@ export default function TopBar({ pageTitle, onMenuClick, collapsed }) {
               </div>
               <div className="topbar__dropdown-divider" />
               <button className="topbar__dropdown-item" onClick={() => { setProfileOpen(false); navigate('/profile'); }}>
-                <User size={16} /> Profile
+                <User size={16} /> {t('common.profile')}
               </button>
               {isAdmin && (
                 <button className="topbar__dropdown-item" onClick={() => { setProfileOpen(false); navigate('/settings'); }}>
-                  <Settings size={16} /> Settings
+                  <Settings size={16} /> {t('common.settings')}
                 </button>
               )}
               <div className="topbar__dropdown-divider" />
               <button className="topbar__dropdown-item topbar__dropdown-item--danger" onClick={logout}>
-                <LogOut size={16} /> Sign Out
+                <LogOut size={16} /> {t('common.signOut')}
               </button>
             </div>
           )}
