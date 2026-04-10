@@ -9,13 +9,6 @@ import { supabase } from '../../lib/supabase';
 import { AlertCircle, CheckCircle, Eye, EyeOff, Clock } from 'lucide-react';
 import './Auth.css';
 
-const ISO_STANDARDS = [
-  { value: 'ISO 9001', label: 'ISO 9001 — Quality Management' },
-  { value: 'ISO 14001', label: 'ISO 14001 — Environmental Management' },
-  { value: 'ISO 45001', label: 'ISO 45001 — Health & Safety' },
-  { value: 'ISO 22000', label: 'ISO 22000 — Food Safety' },
-];
-
 const EMPLOYEE_RANGES = [
   '1-10', '11-50', '51-200', '201-500', '501-1000', '1000+',
 ];
@@ -268,7 +261,6 @@ export default function SignUp() {
     contact_code: '+971',
     contact_number: '',
     email: '',
-    certification_types: [],
     // Step 3 — Password
     password: '',
     confirmPassword: '',
@@ -305,15 +297,6 @@ export default function SignUp() {
     });
   };
 
-  const toggleCert = (val) => {
-    setFormData(prev => ({
-      ...prev,
-      certification_types: prev.certification_types.includes(val)
-        ? prev.certification_types.filter(v => v !== val)
-        : [...prev.certification_types, val],
-    }));
-  };
-
   const validateStep = () => {
     setError('');
     if (step === 1) {
@@ -325,10 +308,6 @@ export default function SignUp() {
     if (step === 2) {
       if (!formData.contact_person_name || !formData.email || !formData.contact_number) {
         setError(t('auth.validationContactFields'));
-        return false;
-      }
-      if (formData.certification_types.length === 0) {
-        setError(t('auth.validationCertType'));
         return false;
       }
     }
@@ -372,7 +351,6 @@ export default function SignUp() {
       country: formData.country,
       contact_number: `${formData.contact_code} ${formData.contact_number}`,
       contact_role: formData.contact_role,
-      certification_types: formData.certification_types,
       referral_code: referralCode,
       role: targetRole,
       stakeholder_type: registrationType || 'client',
@@ -553,19 +531,6 @@ export default function SignUp() {
               </div>
             </div>
 
-            <div className="form-group">
-              <label className="form-label">{t('auth.certTypes')}</label>
-              <div className="cert-multi-select">
-                {ISO_STANDARDS.map((std) => (
-                  <label key={std.value} className={`cert-multi-select__item ${formData.certification_types.includes(std.value) ? 'cert-multi-select__item--selected' : ''}`}>
-                    <input type="checkbox" checked={formData.certification_types.includes(std.value)}
-                      onChange={() => toggleCert(std.value)} />
-                    <span>{std.label}</span>
-                  </label>
-                ))}
-              </div>
-            </div>
-
             <div className="auth-form__row">
               <Button type="button" variant="secondary" size="lg" fullWidth onClick={handleBack}>
                 {t('auth.backBtn')}
@@ -583,7 +548,6 @@ export default function SignUp() {
             <div className="signup-summary">
               <p><strong>Company:</strong> {formData.company_name}</p>
               <p><strong>Contact:</strong> {formData.contact_person_name} ({formData.email})</p>
-              <p><strong>Certifications:</strong> {formData.certification_types.join(', ')}</p>
             </div>
 
             <Input label={t('auth.passwordRequired')} type={showPassword ? "text" : "password"} id="signup-password" name="password"
