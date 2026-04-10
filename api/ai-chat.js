@@ -70,6 +70,20 @@ const SARA_SYSTEM_PROMPT = `You are Sara, the friendly and knowledgeable AI supp
 - Never pretend to have access to the client's specific application data — direct them to check their dashboard
 - Be honest about timelines — certifications typically take 4-12 weeks depending on organizational readiness`;
 
+const LANGUAGE_INSTRUCTIONS = {
+  en: '',
+  ar: `\n\n## Language Requirement (CRITICAL)
+You MUST respond ENTIRELY in Modern Standard Arabic (العربية الفصحى). Every word of your reply must be in Arabic — including greetings, explanations, and call-to-actions. The only exceptions are:
+- Proper nouns like "Certify.cx", "ISO", and standard numbers (e.g., "ISO 9001", "ISO 14001") which should remain in their original form.
+- Currency symbols and prices (e.g., "$2,999").
+Write naturally and professionally as a native Arabic speaker would. Use right-to-left friendly punctuation. Never mix English sentences into your Arabic response, even if the user writes in English.`,
+  es: `\n\n## Language Requirement (CRITICAL)
+You MUST respond ENTIRELY in Spanish (Español). Every word of your reply must be in Spanish — including greetings, explanations, and call-to-actions. The only exceptions are:
+- Proper nouns like "Certify.cx", "ISO", and standard numbers (e.g., "ISO 9001", "ISO 14001") which should remain in their original form.
+- Currency symbols and prices (e.g., "$2,999").
+Write naturally and professionally as a native Spanish speaker would. Use neutral/international Spanish suitable for a global business audience. Never mix English sentences into your Spanish response, even if the user writes in English.`,
+};
+
 export default async function handler(req, res) {
   // CORS headers
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -151,11 +165,14 @@ export default async function handler(req, res) {
   }
 
   try {
-    const { messages, userId } = req.body;
+    const { messages, userId, language } = req.body;
 
     if (!messages || !Array.isArray(messages) || messages.length === 0) {
       return res.status(400).json({ error: 'Messages array is required' });
     }
+
+    const langCode = typeof language === 'string' ? language.split('-')[0].toLowerCase() : 'en';
+    const languageInstruction = LANGUAGE_INSTRUCTIONS[langCode] || '';
 
     // Optional: fetch client profile for personalized responses
     let clientContext = '';
@@ -191,7 +208,7 @@ export default async function handler(req, res) {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         system_instruction: {
-          parts: [{ text: SARA_SYSTEM_PROMPT + clientContext }],
+          parts: [{ text: SARA_SYSTEM_PROMPT + clientContext + languageInstruction }],
         },
         contents,
         generationConfig: {
@@ -213,9 +230,15 @@ export default async function handler(req, res) {
     }
 
     const data = await geminiRes.json();
+    const fallbackReplies = {
+      en: 'Sorry, I could not generate a response. Please try again.',
+      ar: 'عذرًا، لم أتمكن من توليد رد. يرجى المحاولة مرة أخرى.',
+      es: 'Lo siento, no pude generar una respuesta. Por favor, inténtalo de nuevo.',
+    };
     const reply =
       data?.candidates?.[0]?.content?.parts?.[0]?.text ||
-      'Sorry, I could not generate a response. Please try again.';
+      fallbackReplies[langCode] ||
+      fallbackReplies.en;
 
     return res.status(200).json({ reply });
   } catch (error) {

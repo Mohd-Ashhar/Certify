@@ -1,29 +1,27 @@
 import { useState, useRef, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { X, Send, Bot, User, Sparkles, Mail, Tag, CheckCircle } from 'lucide-react';
 import './SaraChatWidget.css';
 
-const INITIAL_MESSAGE = {
-  role: 'assistant',
-  content:
-    "Hi! I'm Sara, your ISO certification advisor. I can help you understand quality standards, guide you through the certification process, and answer any questions about your journey. How can I help you today?",
-};
-
-const INTEREST_OPTIONS = [
-  'ISO 9001 — Quality Management',
-  'ISO 14001 — Environmental',
-  'ISO 27001 — Information Security',
-  'ISO 45001 — Health & Safety',
-  'ISO 22000 — Food Safety',
-  'ISO 13485 — Medical Devices',
-  'Not sure yet',
+const INTEREST_KEYS = [
+  'sara.iso9001',
+  'sara.iso14001',
+  'sara.iso27001',
+  'sara.iso45001',
+  'sara.iso22000',
+  'sara.iso13485',
+  'sara.notSure',
 ];
 
 // Number of user messages before showing lead capture (for anonymous users)
 const LEAD_CAPTURE_AFTER = 2;
 
 export default function SaraChatWidget({ user }) {
+  const { t, i18n } = useTranslation();
+  const currentLang = i18n.language?.split('-')[0] || 'en';
+  const initialMessage = { role: 'assistant', content: t('sara.greeting') };
   const [isOpen, setIsOpen] = useState(false);
-  const [messages, setMessages] = useState([INITIAL_MESSAGE]);
+  const [messages, setMessages] = useState([initialMessage]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
   const [leadCaptured, setLeadCaptured] = useState(false);
@@ -37,6 +35,14 @@ export default function SaraChatWidget({ user }) {
 
   const isLoggedIn = !!user;
   const userMessageCount = messages.filter((m) => m.role === 'user').length;
+
+  // Reset conversation when language changes so Sara's greeting and context switch cleanly
+  useEffect(() => {
+    setMessages([{ role: 'assistant', content: t('sara.greeting') }]);
+    setInput('');
+    setLoading(false);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentLang]);
 
   // Auto-scroll to bottom on new messages
   useEffect(() => {
@@ -60,14 +66,13 @@ export default function SaraChatWidget({ user }) {
           ...prev,
           {
             role: 'assistant',
-            content:
-              "I'm enjoying helping you! If you'd like, share your email and interest below so our team can send you personalized updates and offers.",
+            content: t('sara.leadCapture'),
           },
         ]);
       }, 1000);
       return () => clearTimeout(timer);
     }
-  }, [userMessageCount, isLoggedIn, leadCaptured, loading]);
+  }, [userMessageCount, isLoggedIn, leadCaptured, loading, t]);
 
   const submitLead = async () => {
     if (!leadEmail || !leadEmail.includes('@')) return;
@@ -131,6 +136,7 @@ export default function SaraChatWidget({ user }) {
         body: JSON.stringify({
           messages: cleanConversation,
           userId: user?.id || null,
+          language: currentLang,
         }),
       });
 
@@ -151,8 +157,7 @@ export default function SaraChatWidget({ user }) {
         ...prev,
         {
           role: 'assistant',
-          content:
-            "I'm having trouble connecting right now. Please try again in a moment, or reach out to our support team for immediate help.",
+          content: t('sara.errorMessage'),
         },
       ]);
     } finally {
@@ -174,10 +179,10 @@ export default function SaraChatWidget({ user }) {
   };
 
   const quickQuestions = [
-    'What is ISO 9001?',
-    'How long does certification take?',
-    'What are the pricing plans?',
-    'How do I get started?',
+    t('sara.q1'),
+    t('sara.q2'),
+    t('sara.q3'),
+    t('sara.q4'),
   ];
 
   const handleQuickQuestion = (q) => {
@@ -210,12 +215,12 @@ export default function SaraChatWidget({ user }) {
       <button
         className={`sara-fab ${isOpen ? 'sara-fab--hidden' : ''}`}
         onClick={() => setIsOpen(true)}
-        aria-label="Chat with Sara"
+        aria-label={t('sara.chatWithSara')}
       >
         <div className="sara-fab__icon">
           <Sparkles size={24} />
         </div>
-        <span className="sara-fab__label">Ask Sara</span>
+        <span className="sara-fab__label">{t('sara.askSara')}</span>
         <div className="sara-fab__pulse" />
       </button>
 
@@ -228,17 +233,17 @@ export default function SaraChatWidget({ user }) {
               <Bot size={20} />
             </div>
             <div>
-              <h3 className="sara-chat__name">Sara</h3>
+              <h3 className="sara-chat__name">{t('sara.saraTitle')}</h3>
               <span className="sara-chat__status">
                 <span className="sara-chat__status-dot" />
-                ISO Certification Advisor
+                {t('sara.saraRole')}
               </span>
             </div>
           </div>
           <button
             className="sara-chat__close"
             onClick={() => setIsOpen(false)}
-            aria-label="Close chat"
+            aria-label={t('sara.closeChat')}
           >
             <X size={18} />
           </button>
@@ -285,7 +290,7 @@ export default function SaraChatWidget({ user }) {
                   <Mail size={16} />
                   <input
                     type="email"
-                    placeholder="Your email address"
+                    placeholder={t('sara.emailPlaceholder')}
                     value={leadEmail}
                     onChange={(e) => setLeadEmail(e.target.value)}
                     className="sara-chat__lead-input"
@@ -299,9 +304,9 @@ export default function SaraChatWidget({ user }) {
                     onChange={(e) => setLeadInterest(e.target.value)}
                     className="sara-chat__lead-select"
                   >
-                    <option value="">Select your interest</option>
-                    {INTEREST_OPTIONS.map((opt) => (
-                      <option key={opt} value={opt}>{opt}</option>
+                    <option value="">{t('sara.selectInterest')}</option>
+                    {INTEREST_KEYS.map((key) => (
+                      <option key={key} value={t(key)}>{t(key)}</option>
                     ))}
                   </select>
                 </div>
@@ -311,13 +316,13 @@ export default function SaraChatWidget({ user }) {
                     onClick={submitLead}
                     disabled={!leadEmail.includes('@') || leadSubmitting}
                   >
-                    {leadSubmitting ? 'Sending...' : 'Keep Me Updated'}
+                    {leadSubmitting ? t('common.loading') : t('sara.keepUpdated')}
                   </button>
                   <button
                     className="sara-chat__lead-dismiss"
                     onClick={dismissLeadForm}
                   >
-                    No thanks
+                    {t('sara.noThanks')}
                   </button>
                 </div>
               </div>
@@ -328,14 +333,14 @@ export default function SaraChatWidget({ user }) {
           {showLeadForm && leadSuccess && (
             <div className="sara-chat__lead-success">
               <CheckCircle size={18} />
-              <span>Thanks! We'll be in touch.</span>
+              <span>{t('sara.thankYou')}</span>
             </div>
           )}
 
           {/* Quick Questions (only show if just the initial message) */}
           {messages.length === 1 && !loading && (
             <div className="sara-chat__quick-questions">
-              <p className="sara-chat__quick-label">Quick questions:</p>
+              <p className="sara-chat__quick-label">{t('sara.quickQuestions')}</p>
               {quickQuestions.map((q, i) => (
                 <button
                   key={i}
@@ -356,7 +361,7 @@ export default function SaraChatWidget({ user }) {
           <textarea
             ref={inputRef}
             className="sara-chat__input"
-            placeholder="Ask Sara anything about ISO certification..."
+            placeholder={t('sara.inputPlaceholder')}
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={handleKeyDown}
@@ -367,7 +372,7 @@ export default function SaraChatWidget({ user }) {
             className="sara-chat__send"
             onClick={handleSend}
             disabled={!input.trim() || loading}
-            aria-label="Send message"
+            aria-label={t('common.send', 'Send')}
           >
             <Send size={18} />
           </button>
