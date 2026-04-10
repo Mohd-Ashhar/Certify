@@ -29,15 +29,15 @@ export default function AdminApplications() {
         .order('created_at', { ascending: false });
 
       if (data) {
-        // Fetch CB names separately (assigned_cb_id FK points to certification_bodies, not profiles)
+        // Fetch CB names from certification_bodies registry
         const cbIds = [...new Set(data.map(a => a.assigned_cb_id).filter(Boolean))];
         let cbMap = {};
         if (cbIds.length > 0) {
-          const { data: cbProfiles } = await supabase
-            .from('profiles')
-            .select('id, full_name')
+          const { data: cbRegistry } = await supabase
+            .from('certification_bodies')
+            .select('id, name, acronym')
             .in('id', cbIds);
-          if (cbProfiles) cbMap = Object.fromEntries(cbProfiles.map(p => [p.id, p.full_name]));
+          if (cbRegistry) cbMap = Object.fromEntries(cbRegistry.map(cb => [cb.id, cb.acronym ? `${cb.name} (${cb.acronym})` : cb.name]));
         }
         setApplications(data.map(app => ({
           ...app,

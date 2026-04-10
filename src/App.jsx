@@ -24,6 +24,8 @@ import AdminApplications from './pages/admin/AdminApplications';
 import AdminRegionalAdmins from './pages/admin/AdminRegionalAdmins';
 import AdminAuditors from './pages/admin/AdminAuditors';
 import AdminCertBodies from './pages/admin/AdminCertBodies';
+import AdminAccreditationBodies from './pages/admin/AdminAccreditationBodies';
+import CertificationBodiesRegistry from './pages/bodies/CertificationBodies';
 import AdminCompanies from './pages/admin/AdminCompanies';
 import ApplicationDetails from './pages/admin/ApplicationDetails';
 import ShareableLinks from './pages/admin/ShareableLinks';
@@ -153,10 +155,24 @@ function AppRoutes() {
               </ProtectedRoute>
             } />
 
-            {/* Admin — Certification Bodies */}
+            {/* Admin — Certification Body user accounts */}
             <Route path="/admin/cert-bodies" element={
               <ProtectedRoute requiredPermission={PERMISSIONS.MANAGE_BODIES}>
                 <AdminCertBodies />
+              </ProtectedRoute>
+            } />
+
+            {/* Admin — Certification Bodies Registry (separate from CB user accounts) */}
+            <Route path="/admin/cb-registry" element={
+              <ProtectedRoute requiredPermission={PERMISSIONS.MANAGE_BODIES}>
+                <CertificationBodiesRegistry />
+              </ProtectedRoute>
+            } />
+
+            {/* Admin — Accreditation Bodies (master list) */}
+            <Route path="/admin/accreditation-bodies" element={
+              <ProtectedRoute requiredPermission={PERMISSIONS.MANAGE_BODIES}>
+                <AdminAccreditationBodies />
               </ProtectedRoute>
             } />
 

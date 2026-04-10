@@ -123,9 +123,14 @@ export default function ApplicationDetails() {
         if (regionFilter) audQuery = audQuery.eq('region', regionFilter);
         const { data: audData } = await audQuery;
 
-        let cbQuery = supabase.from('profiles').select('id, full_name, region').eq('role', ROLES.CERTIFICATION_BODY);
-        if (regionFilter) cbQuery = cbQuery.eq('region', regionFilter);
-        const { data: cbData } = await cbQuery;
+        // CB dropdown is populated from the registry (certification_bodies table),
+        // NOT from user profiles. Regional admins see all registry entries since
+        // the registry is global, not region-scoped.
+        const { data: cbData } = await supabase
+          .from('certification_bodies')
+          .select('id, name, acronym, country, status')
+          .eq('status', 'active')
+          .order('name');
 
         const { data: docData } = await supabase
           .from('documents')
@@ -499,7 +504,11 @@ export default function ApplicationDetails() {
                 <Select value={assignedCb} onChange={(e) => setAssignedCb(e.target.value)}>
                   <option value="">{t('admin.selectCB')}</option>
                   {cbs.map(cb => (
-                    <option key={cb.id} value={cb.id}>{cb.full_name || cb.id.slice(0, 8)}{cb.region ? ` (${getRegionLabel(cb.region)})` : ''}</option>
+                    <option key={cb.id} value={cb.id}>
+                      {cb.name || cb.id.slice(0, 8)}
+                      {cb.acronym ? ` (${cb.acronym})` : ''}
+                      {cb.country ? ` — ${cb.country}` : ''}
+                    </option>
                   ))}
                 </Select>
               </div>

@@ -54,6 +54,7 @@ export default function Dashboard() {
   const [documents, setDocuments] = useState([]);
   const [fetchingDocs, setFetchingDocs] = useState(false);
   const [uploadingDoc, setUploadingDoc] = useState(false);
+  const [assignedCbRegistry, setAssignedCbRegistry] = useState(null);
 
   useEffect(() => {
     if (!user) return;
@@ -73,15 +74,15 @@ export default function Dashboard() {
           .select('*, auditor:profiles!assigned_auditor_id(full_name), client:profiles!client_id(region)')
           .order('created_at', { ascending: false });
         if (data) {
-          // Fetch CB names separately (assigned_cb_id FK points to certification_bodies, not profiles)
+          // Fetch CB names from the certification_bodies registry
           const cbIds = [...new Set(data.map(a => a.assigned_cb_id).filter(Boolean))];
           let cbMap = {};
           if (cbIds.length > 0) {
-            const { data: cbProfiles } = await supabase
-              .from('profiles')
-              .select('id, full_name')
+            const { data: cbRegistry } = await supabase
+              .from('certification_bodies')
+              .select('id, name, acronym')
               .in('id', cbIds);
-            if (cbProfiles) cbMap = Object.fromEntries(cbProfiles.map(p => [p.id, p.full_name]));
+            if (cbRegistry) cbMap = Object.fromEntries(cbRegistry.map(cb => [cb.id, cb.acronym ? `${cb.name} (${cb.acronym})` : cb.name]));
           }
           let flattened = data.map(app => ({
             ...app,
@@ -103,12 +104,23 @@ export default function Dashboard() {
           .order('created_at', { ascending: false });
         if (data) setAuditorApplications(data);
       } else if (user.role === ROLES.CERTIFICATION_BODY) {
-        const { data } = await supabase
-          .from('applications')
-          .select('*')
-          .eq('assigned_cb_id', user.id)
-          .order('created_at', { ascending: false });
-        if (data) setCbApplications(data);
+        // Look up the CB registry row(s) this user owns, then fetch applications
+        // assigned to any of those registry rows.
+        const { data: myCbs } = await supabase
+          .from('certification_bodies')
+          .select('id')
+          .eq('created_by', user.id);
+        const cbRegistryIds = (myCbs || []).map(cb => cb.id);
+        if (cbRegistryIds.length > 0) {
+          const { data } = await supabase
+            .from('applications')
+            .select('*')
+            .in('assigned_cb_id', cbRegistryIds)
+            .order('created_at', { ascending: false });
+          if (data) setCbApplications(data);
+        } else {
+          setCbApplications([]);
+        }
       }
       setFetchingApps(false);
     };
@@ -119,6 +131,29 @@ export default function Dashboard() {
   const activeApp = selectedAppId
     ? clientApplications.find(a => a.id === selectedAppId) || clientApplications[0]
     : clientApplications[0];
+
+  // Client: reveal the assigned certification body only after payment is completed.
+  // Pre-payment statuses = pending / awaiting_payment. Anything else = paid.
+  const isPaid = activeApp && !['pending', 'awaiting_payment'].includes(activeApp.status);
+
+  useEffect(() => {
+    if (!activeApp || !isPaid || !activeApp.assigned_cb_id) {
+      setAssignedCbRegistry(null);
+      return;
+    }
+    const fetchAssignedCb = async () => {
+      const { data } = await supabase
+        .from('certification_bodies')
+        .select(`
+          id, name, acronym, website, country,
+          cb_accreditation_bodies ( accreditation_bodies ( name, acronym ) )
+        `)
+        .eq('id', activeApp.assigned_cb_id)
+        .maybeSingle();
+      if (data) setAssignedCbRegistry(data);
+    };
+    fetchAssignedCb();
+  }, [activeApp, isPaid]);
 
   useEffect(() => {
     if (!activeApp) return;
@@ -416,6 +451,86 @@ export default function Dashboard() {
                       </ul>
                     </div>
                   </div>
+
+                  {/* Assigned Certification Body — revealed only after payment */}
+                  {isPaid && assignedCbRegistry && (
+                    <div className="dashboard__section" style={{ marginTop: '2rem' }}>
+                      <div className="section-subtitle-container">
+                        <Award size={18} /> <h3 className="section-subtitle" style={{ margin: 0 }}>{t('dashboard.yourCertBody')}</h3>
+                      </div>
+                      <div style={{
+                        marginTop: 14,
+                        padding: '16px 18px',
+                        background: 'var(--color-bg-primary)',
+                        border: '1px solid var(--color-border)',
+                        borderRadius: 'var(--radius-md)',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: 10,
+                      }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                          <div style={{
+                            width: 40, height: 40,
+                            background: 'rgba(62,207,142,0.12)',
+                            color: 'var(--color-accent, #3ECF8E)',
+                            borderRadius: 8,
+                            display: 'flex', alignItems: 'center', justifyContent: 'center',
+                            flexShrink: 0,
+                          }}>
+                            <Award size={20} />
+                          </div>
+                          <div>
+                            <div style={{ fontWeight: 600, fontSize: '1rem' }}>
+                              {assignedCbRegistry.name}
+                              {assignedCbRegistry.acronym && (
+                                <span style={{ color: 'var(--color-text-tertiary)', fontWeight: 400, fontSize: '0.85rem', marginLeft: 8 }}>
+                                  ({assignedCbRegistry.acronym})
+                                </span>
+                              )}
+                            </div>
+                            {assignedCbRegistry.country && (
+                              <div style={{ fontSize: '0.8rem', color: 'var(--color-text-secondary)' }}>
+                                {assignedCbRegistry.country}
+                              </div>
+                            )}
+                          </div>
+                        </div>
+
+                        {assignedCbRegistry.cb_accreditation_bodies?.length > 0 && (
+                          <div>
+                            <div style={{ fontSize: '0.7rem', textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--color-text-tertiary)', marginBottom: 6 }}>
+                              {t('dashboard.accreditedBy')}
+                            </div>
+                            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
+                              {assignedCbRegistry.cb_accreditation_bodies.map((x, i) => (
+                                <span key={i} style={{
+                                  fontSize: '0.7rem',
+                                  padding: '3px 8px',
+                                  borderRadius: 4,
+                                  background: 'rgba(62,207,142,0.12)',
+                                  color: 'var(--color-accent, #3ECF8E)',
+                                  fontWeight: 500,
+                                }}>
+                                  {x.accreditation_bodies?.acronym || x.accreditation_bodies?.name || '—'}
+                                </span>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+
+                        {assignedCbRegistry.website && (
+                          <a
+                            href={assignedCbRegistry.website}
+                            target="_blank"
+                            rel="noreferrer"
+                            style={{ fontSize: '0.8rem', color: 'var(--color-accent, #3ECF8E)' }}
+                          >
+                            {assignedCbRegistry.website.replace(/^https?:\/\//, '').split('/')[0]}
+                          </a>
+                        )}
+                      </div>
+                    </div>
+                  )}
 
                   {/* Required Documents Guidance */}
                   {activeApp.recommended_iso && (
