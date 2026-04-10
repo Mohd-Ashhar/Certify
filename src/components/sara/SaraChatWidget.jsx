@@ -119,11 +119,6 @@ export default function SaraChatWidget({ user }) {
     setLoading(true);
 
     try {
-      const conversationForAPI = updatedMessages
-        .filter((m) => m.role === 'user' || (m.role === 'assistant' && m !== INITIAL_MESSAGE))
-        .slice(messages[0] === INITIAL_MESSAGE ? 0 : undefined)
-        .map((m) => ({ role: m.role, content: m.content }));
-
       // Skip the initial greeting and any lead-capture messages
       const cleanConversation = updatedMessages
         .slice(1)
