@@ -82,7 +82,17 @@ export default function PaymentPlaceholder() {
         }),
       });
 
-      const data = await response.json();
+      const rawText = await response.text();
+      let data;
+      try {
+        data = JSON.parse(rawText);
+      } catch {
+        throw new Error(
+          response.status >= 500
+            ? 'The checkout server is temporarily unavailable. Please try again in a moment.'
+            : `Unexpected response (${response.status}). Please try again or contact support.`
+        );
+      }
       if (!response.ok) throw new Error(data.error || 'Failed to initialize checkout');
       if (data.url) {
         window.location.href = data.url;

@@ -15,6 +15,7 @@ import LandingPage from './pages/landing/LandingPage';
 import Login from './pages/auth/Login';
 import SignUp from './pages/auth/SignUp';
 import ForgotPassword from './pages/auth/ForgotPassword';
+import ResetPassword from './pages/auth/ResetPassword';
 import Unauthorized from './pages/auth/Unauthorized';
 import AuthCallback from './pages/auth/AuthCallback';
 
@@ -66,6 +67,7 @@ function AppRoutes() {
             <Route path="/login" element={<Login />} />
             <Route path="/signup" element={<SignUp />} />
             <Route path="/forgot-password" element={<ForgotPassword />} />
+            <Route path="/reset-password" element={<ResetPassword />} />
           </Route>
 
           {/* ---- OAuth Callback ---- */}
