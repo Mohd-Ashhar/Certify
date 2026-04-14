@@ -266,6 +266,8 @@ export default function SignUp() {
     password: '',
     confirmPassword: '',
   });
+  const [auditorCert, setAuditorCert] = useState(null);
+  const [auditorCv, setAuditorCv] = useState(null);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [error, setError] = useState('');
@@ -326,6 +328,10 @@ export default function SignUp() {
         setError(t('auth.validationPasswordMatch'));
         return false;
       }
+      if (targetRole === 'auditor' && (!auditorCert || !auditorCv)) {
+        setError(t('auth.validationAuditorDocs'));
+        return false;
+      }
     }
     return true;
   };
@@ -363,6 +369,22 @@ export default function SignUp() {
     });
 
     if (result.success) {
+      if (targetRole === 'auditor' && result.data?.user && (auditorCert || auditorCv)) {
+        try {
+          const uploads = [];
+          if (auditorCert) {
+            uploads.push(supabase.storage.from('auditor-documents')
+              .upload(`${result.data.user.id}/lead-auditor-certificate-${Date.now()}-${auditorCert.name}`, auditorCert, { upsert: true }));
+          }
+          if (auditorCv) {
+            uploads.push(supabase.storage.from('auditor-documents')
+              .upload(`${result.data.user.id}/cv-${Date.now()}-${auditorCv.name}`, auditorCv, { upsert: true }));
+          }
+          await Promise.all(uploads);
+        } catch (uploadErr) {
+          console.error('Auditor document upload error:', uploadErr);
+        }
+      }
       if (result.needsApproval) {
         // Sign out immediately — user can't access dashboard until approved
         await supabase.auth.signOut();
@@ -458,17 +480,16 @@ export default function SignUp() {
         {/* ---- Step 1: Company ---- */}
         {step === 1 && (
           <>
-            {targetRole !== 'auditor' && (
-              <Input
-                label={isIndividualStakeholder ? t('auth.practiceName') : t('auth.companyName')}
-                id="signup-company"
-                name="company_name"
-                placeholder={isIndividualStakeholder ? t('auth.practiceNamePlaceholder') : t('auth.companyNamePlaceholder')}
-                value={formData.company_name}
-                onChange={handleChange}
-                required={!isIndividualStakeholder}
-              />
-            )}
+            <Input
+              label={isIndividualStakeholder ? t('auth.practiceName') : t('auth.companyName')}
+              id="signup-company"
+              name="company_name"
+              placeholder={isIndividualStakeholder ? t('auth.practiceNamePlaceholder') : t('auth.companyNamePlaceholder')}
+              value={formData.company_name}
+              onChange={handleChange}
+              required={!isIndividualStakeholder}
+            />
+
 
             <Input
               label={targetRole === 'auditor' ? t('auth.professionalExpertise') : t('auth.businessActivity')}
@@ -570,7 +591,7 @@ export default function SignUp() {
         {step === 3 && (
           <>
             <div className="signup-summary">
-              {targetRole !== 'auditor' && formData.company_name && (
+              {formData.company_name && (
                 <p><strong>Company:</strong> {formData.company_name}</p>
               )}
               <p><strong>Contact:</strong> {formData.contact_person_name} ({formData.email})</p>
@@ -603,6 +624,37 @@ export default function SignUp() {
                 </button>
               }
             />
+
+            {targetRole === 'auditor' && (
+              <div style={{ marginTop: '8px', padding: '16px', border: '1px solid var(--color-border)', borderRadius: '8px', background: 'var(--color-bg-subtle, #f9fafb)' }}>
+                <p style={{ fontSize: 'var(--font-size-sm)', fontWeight: 600, marginBottom: '4px' }}>{t('auth.auditorDocsTitle')}</p>
+                <p style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-text-secondary)', marginBottom: '12px' }}>{t('auth.auditorDocsEnglishNote')}</p>
+
+                <div className="form-group">
+                  <label className="form-label" htmlFor="signup-cert">{t('auth.leadAuditorCertificate')}</label>
+                  <input
+                    className="form-input"
+                    id="signup-cert"
+                    type="file"
+                    accept=".pdf,.jpg,.jpeg,.png,.doc,.docx"
+                    onChange={(e) => setAuditorCert(e.target.files?.[0] || null)}
+                    required
+                  />
+                </div>
+
+                <div className="form-group">
+                  <label className="form-label" htmlFor="signup-cv">{t('auth.auditorCv')}</label>
+                  <input
+                    className="form-input"
+                    id="signup-cv"
+                    type="file"
+                    accept=".pdf,.doc,.docx"
+                    onChange={(e) => setAuditorCv(e.target.files?.[0] || null)}
+                    required
+                  />
+                </div>
+              </div>
+            )}
 
             <div className="auth-form__row">
               <Button type="button" variant="secondary" size="lg" fullWidth onClick={handleBack}>
