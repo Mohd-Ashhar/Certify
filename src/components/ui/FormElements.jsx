@@ -3,15 +3,20 @@ import './FormElements.css';
 export { Autocomplete } from './Autocomplete';
 
 export function Input({ label, error, id, rightElement, ...props }) {
+  const isLtrType = props.type === 'email' || props.type === 'password' || props.type === 'url' || props.type === 'tel' || props.type === 'number';
+  const inputStyle = {
+    ...(rightElement ? { paddingRight: '40px' } : {}),
+    ...(isLtrType ? { direction: 'ltr', textAlign: 'left', unicodeBidi: 'plaintext' } : {}),
+  };
   return (
     <div className="form-group">
       {label && <label className="form-label" htmlFor={id}>{label}</label>}
       <div style={{ position: 'relative' }}>
-        <input 
-          className={`form-input ${error ? 'form-input--error' : ''}`} 
-          style={rightElement ? { paddingRight: '40px' } : {}}
-          id={id} 
-          {...props} 
+        <input
+          className={`form-input ${error ? 'form-input--error' : ''}`}
+          style={inputStyle}
+          id={id}
+          {...props}
         />
         {rightElement && (
           <div style={{ position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)', display: 'flex', alignItems: 'center', color: 'var(--color-text-tertiary)' }}>

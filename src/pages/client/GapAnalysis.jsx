@@ -19,15 +19,20 @@ export default function GapAnalysis() {
   const [score, setScore] = useState(null);
   const [submitting, setSubmitting] = useState(false);
 
+  const storageKey = user?.id ? `gap_analysis_score_${user.id}` : null;
+  const cachedScore = storageKey ? Number(localStorage.getItem(storageKey)) : null;
+  const hasCached = cachedScore != null && !Number.isNaN(cachedScore) && localStorage.getItem(storageKey) !== null;
+  const existingScore = user?.gap_analysis_score ?? (hasCached ? cachedScore : null);
+
   // If user already completed gap analysis, redirect to dashboard
   useEffect(() => {
-    if (user?.gap_analysis_score != null) {
+    if (existingScore != null) {
       navigate(getRoleDashboard(user?.role), { replace: true });
     }
-  }, [user]);
+  }, [existingScore]);
 
   // Don't render the quiz if user already has a score (avoids flash before redirect)
-  if (user?.gap_analysis_score != null && score === null) {
+  if (existingScore != null && score === null) {
     return null;
   }
 
@@ -48,11 +53,19 @@ export default function GapAnalysis() {
 
     try {
       if (user) {
-        await supabase.from('profiles').update({ gap_analysis_score: finalScore }).eq('id', user.id);
+        const { error } = await supabase
+          .from('profiles')
+          .update({ gap_analysis_score: finalScore })
+          .eq('id', user.id);
+        if (error) console.error('Error saving score to profile:', error);
+        if (storageKey) localStorage.setItem(storageKey, String(finalScore));
+        if (user) user.gap_analysis_score = finalScore;
       }
       setScore(finalScore);
     } catch (err) {
       console.error('Error saving score:', err);
+      if (storageKey) localStorage.setItem(storageKey, String(finalScore));
+      setScore(finalScore);
     } finally {
       setSubmitting(false);
     }

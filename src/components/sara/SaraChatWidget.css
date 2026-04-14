@@ -7,7 +7,7 @@
 .sara-fab {
   position: fixed;
   bottom: 28px;
-  right: 28px;
+  left: 28px;
   z-index: 1000;
   display: flex;
   align-items: center;
@@ -70,7 +70,7 @@
 .sara-chat {
   position: fixed;
   bottom: 28px;
-  right: 28px;
+  left: 28px;
   z-index: 1001;
   width: 420px;
   height: 600px;
@@ -86,7 +86,7 @@
   opacity: 0;
   pointer-events: none;
   transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-  transform-origin: bottom right;
+  transform-origin: bottom left;
 }
 
 .sara-chat--open {
@@ -529,13 +529,13 @@
     height: calc(100vh - 16px);
     max-height: calc(100vh - 16px);
     bottom: 8px;
-    right: 8px;
+    left: 8px;
     border-radius: var(--radius-lg);
   }
 
   .sara-fab {
     bottom: 16px;
-    right: 16px;
+    left: 16px;
     padding: 12px 18px;
     font-size: var(--font-size-sm);
   }

@@ -8,12 +8,12 @@ import { Input, Select, Textarea, Button } from '../../components/ui/FormElement
 import './ApplicationForm.css';
 
 const INDUSTRIES = [
-  'Manufacturing',
-  'IT & Software',
-  'Construction',
-  'Healthcare',
-  'Food & Beverage',
-  'Logistics'
+  { value: 'Manufacturing', key: 'manufacturing' },
+  { value: 'IT & Software', key: 'itSoftware' },
+  { value: 'Construction', key: 'construction' },
+  { value: 'Healthcare', key: 'healthcare' },
+  { value: 'Food & Beverage', key: 'foodBeverage' },
+  { value: 'Logistics', key: 'logistics' },
 ];
 
 /** Parse employee range string (e.g. "51-200") into a representative number */
@@ -35,13 +35,17 @@ export default function ApplicationForm() {
   const selectedPackage = location.state?.package || null;
 
   const meta = user?.user_metadata || {};
+  const prefilledEmployees = parseEmployeeRange(meta.number_of_employees);
+  const prefilledLocations = meta.number_of_locations ? String(meta.number_of_locations) : '';
+  const hasPrefilledEmployees = Boolean(prefilledEmployees);
+  const hasPrefilledLocations = Boolean(prefilledLocations);
 
   const [formData, setFormData] = useState({
     companyName: '',
     industry: '',
     scope: '',
-    employeeCount: parseEmployeeRange(meta.number_of_employees) || '',
-    locationsCount: meta.number_of_locations || ''
+    employeeCount: prefilledEmployees || '',
+    locationsCount: prefilledLocations || ''
   });
   
   const [loading, setLoading] = useState(false);
@@ -131,8 +135,8 @@ export default function ApplicationForm() {
               borderRadius: 'var(--radius-md)',
               border: '1px solid rgba(59, 130, 246, 0.2)'
             }}>
-              <CheckCircle2 size={18}/> 
-              <span>You are applying for the <strong style={{ fontWeight: 700 }}>{selectedPackage}</strong> package.</span>
+              <CheckCircle2 size={18}/>
+              <span>{t('application.applyingFor', { package: selectedPackage })}</span>
             </div>
           )}
           {error && <div className="application-form__error">{error}</div>}
@@ -141,8 +145,8 @@ export default function ApplicationForm() {
             {!user?.company_name && (
               <Input
                 id="companyName"
-                label="Company Name"
-                placeholder="Enter your company name"
+                label={t('application.companyName')}
+                placeholder={t('application.companyNamePlaceholder')}
                 value={formData.companyName}
                 onChange={handleChange}
                 required
@@ -153,15 +157,17 @@ export default function ApplicationForm() {
             <div style={user?.company_name ? { gridColumn: '1 / -1' } : {}}>
               <Select
                 id="industry"
-                label="Industry"
+                label={t('application.industry')}
                 value={formData.industry}
                 onChange={handleChange}
                 required
                 disabled={loading}
               >
-                <option value="" disabled>Select your industry</option>
+                <option value="" disabled>{t('application.selectIndustry')}</option>
                 {INDUSTRIES.map(ind => (
-                  <option key={ind} value={ind}>{ind}</option>
+                  <option key={ind.value} value={ind.value}>
+                    {t(`application.industries.${ind.key}`)}
+                  </option>
                 ))}
               </Select>
             </div>
@@ -169,8 +175,8 @@ export default function ApplicationForm() {
 
           <Textarea
             id="scope"
-            label="Scope of Operations"
-            placeholder="Describe your daily business operations"
+            label={t('application.scopeOfOps')}
+            placeholder={t('application.scopePlaceholder')}
             rows={4}
             value={formData.scope}
             onChange={handleChange}
@@ -178,31 +184,37 @@ export default function ApplicationForm() {
             disabled={loading}
           />
 
-          <div className="application-form__row">
-            <Input
-              id="employeeCount"
-              label="Employee Count"
-              type="number"
-              min="1"
-              placeholder="e.g. 50"
-              value={formData.employeeCount}
-              onChange={handleChange}
-              required
-              disabled={loading}
-            />
+          {(!hasPrefilledEmployees || !hasPrefilledLocations) && (
+            <div className="application-form__row">
+              {!hasPrefilledEmployees && (
+                <Input
+                  id="employeeCount"
+                  label={t('application.employeeCount')}
+                  type="number"
+                  min="1"
+                  placeholder="e.g. 50"
+                  value={formData.employeeCount}
+                  onChange={handleChange}
+                  required
+                  disabled={loading}
+                />
+              )}
 
-            <Input
-              id="locationsCount"
-              label="Number of Locations"
-              type="number"
-              min="1"
-              placeholder="e.g. 2"
-              value={formData.locationsCount}
-              onChange={handleChange}
-              required
-              disabled={loading}
-            />
-          </div>
+              {!hasPrefilledLocations && (
+                <Input
+                  id="locationsCount"
+                  label={t('application.locationsCount')}
+                  type="number"
+                  min="1"
+                  placeholder="e.g. 2"
+                  value={formData.locationsCount}
+                  onChange={handleChange}
+                  required
+                  disabled={loading}
+                />
+              )}
+            </div>
+          )}
 
           <div className="application-form__actions">
             <Button
