@@ -29,8 +29,7 @@ export default async function handler(req, res) {
 
     const { error } = await supabaseAdmin
       .from('profiles')
-      .update(updates)
-      .eq('id', userId);
+      .upsert({ id: userId, ...updates }, { onConflict: 'id' });
 
     if (error) {
       return res.status(500).json({ error: error.message });

@@ -244,6 +244,7 @@ export default function SignUp() {
   const registrationType = searchParams.get('type') || '';
   const stakeholderConfig = getStakeholderType(registrationType);
   const targetRole = stakeholderConfig?.role || 'client';
+  const isIndividualStakeholder = targetRole === 'auditor' || registrationType === 'referral' || registrationType === 'investor';
   const [step, setStep] = useState(1);
   const [formData, setFormData] = useState({
     // Step 1 — Company
@@ -300,7 +301,12 @@ export default function SignUp() {
   const validateStep = () => {
     setError('');
     if (step === 1) {
-      if (!formData.company_name || !formData.activity || !formData.location) {
+      if (isIndividualStakeholder) {
+        if (!formData.activity || !formData.location) {
+          setError(t('auth.validationCompanyFields'));
+          return false;
+        }
+      } else if (!formData.company_name || !formData.activity || !formData.location) {
         setError(t('auth.validationCompanyFields'));
         return false;
       }
@@ -452,29 +458,47 @@ export default function SignUp() {
         {/* ---- Step 1: Company ---- */}
         {step === 1 && (
           <>
-            <Input label={t('auth.companyName')} id="signup-company" name="company_name"
-              placeholder={t('auth.companyNamePlaceholder')} value={formData.company_name}
-              onChange={handleChange} required />
+            {targetRole !== 'auditor' && (
+              <Input
+                label={isIndividualStakeholder ? t('auth.practiceName') : t('auth.companyName')}
+                id="signup-company"
+                name="company_name"
+                placeholder={isIndividualStakeholder ? t('auth.practiceNamePlaceholder') : t('auth.companyNamePlaceholder')}
+                value={formData.company_name}
+                onChange={handleChange}
+                required={!isIndividualStakeholder}
+              />
+            )}
 
-            <Input label={t('auth.businessActivity')} id="signup-activity" name="activity"
-              placeholder={t('auth.businessActivityPlaceholder')}
-              value={formData.activity} onChange={handleChange} required />
+            <Input
+              label={targetRole === 'auditor' ? t('auth.professionalExpertise') : t('auth.businessActivity')}
+              id="signup-activity"
+              name="activity"
+              placeholder={targetRole === 'auditor' ? t('auth.professionalExpertisePlaceholder') : t('auth.businessActivityPlaceholder')}
+              value={formData.activity}
+              onChange={handleChange}
+              required
+            />
 
-            <div className="auth-form__row">
-              <Select label={t('auth.numberOfEmployees')} id="signup-employees" name="number_of_employees"
-                value={formData.number_of_employees} onChange={handleChange}>
-                <option value="">{t('auth.selectRange')}</option>
-                {EMPLOYEE_RANGES.map(r => <option key={r} value={r}>{r}</option>)}
-              </Select>
+            {!isIndividualStakeholder && (
+              <>
+                <div className="auth-form__row">
+                  <Select label={t('auth.numberOfEmployees')} id="signup-employees" name="number_of_employees"
+                    value={formData.number_of_employees} onChange={handleChange}>
+                    <option value="">{t('auth.selectRange')}</option>
+                    {EMPLOYEE_RANGES.map(r => <option key={r} value={r}>{r}</option>)}
+                  </Select>
 
-              <Input label={t('auth.numberOfLocations')} id="signup-locations" name="number_of_locations"
-                type="number" placeholder="e.g. 3"
-                value={formData.number_of_locations} onChange={handleChange} />
-            </div>
+                  <Input label={t('auth.numberOfLocations')} id="signup-locations" name="number_of_locations"
+                    type="number" placeholder="e.g. 3"
+                    value={formData.number_of_locations} onChange={handleChange} />
+                </div>
 
-            <Input label={t('auth.website')} id="signup-website" name="website"
-              placeholder="https://yourcompany.com"
-              value={formData.website} onChange={handleChange} />
+                <Input label={t('auth.website')} id="signup-website" name="website"
+                  placeholder="https://yourcompany.com"
+                  value={formData.website} onChange={handleChange} />
+              </>
+            )}
 
             <Autocomplete label={t('auth.location')} id="signup-location" name="location"
               placeholder={t('auth.locationPlaceholder')} freeSolo
@@ -546,7 +570,9 @@ export default function SignUp() {
         {step === 3 && (
           <>
             <div className="signup-summary">
-              <p><strong>Company:</strong> {formData.company_name}</p>
+              {targetRole !== 'auditor' && formData.company_name && (
+                <p><strong>Company:</strong> {formData.company_name}</p>
+              )}
               <p><strong>Contact:</strong> {formData.contact_person_name} ({formData.email})</p>
             </div>
 
