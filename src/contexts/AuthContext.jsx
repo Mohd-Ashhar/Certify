@@ -169,10 +169,11 @@ export function AuthProvider({ children }) {
     // Route signup through the service-role API so the auth user is created
     // with email_confirm: true — otherwise Supabase marks the user as
     // unconfirmed and login returns "Invalid login credentials".
-    const signupRes = await fetch('/api/public-signup', {
+    const signupRes = await fetch('/api/create-user', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
+        selfSignup: true,
         email, password, name, role: assignedRole,
         company_name, activity,
         number_of_employees, number_of_locations, website,
