@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../contexts/AuthContext';
@@ -245,9 +245,8 @@ export default function SignUp() {
   const stakeholderConfig = getStakeholderType(registrationType);
   const targetRole = stakeholderConfig?.role || 'client';
   const isIndividualStakeholder = targetRole === 'auditor' || registrationType === 'referral' || registrationType === 'investor';
-  const [step, setStep] = useState(1);
-  const [formData, setFormData] = useState({
-    // Step 1 — Company
+  const DRAFT_KEY = `signup_draft_${registrationType || 'default'}`;
+  const DEFAULT_FORM = {
     company_name: '',
     activity: '',
     number_of_employees: '',
@@ -256,16 +255,38 @@ export default function SignUp() {
     location: '',
     city: '',
     country: '',
-    // Step 2 — Contact & Certs
     contact_person_name: '',
     contact_role: '',
     contact_code: '+971',
     contact_number: '',
     email: '',
-    // Step 3 — Password
     password: '',
     confirmPassword: '',
-  });
+  };
+  const loadDraft = () => {
+    try {
+      const raw = sessionStorage.getItem(DRAFT_KEY);
+      if (!raw) return { step: 1, formData: DEFAULT_FORM };
+      const parsed = JSON.parse(raw);
+      return {
+        step: parsed.step || 1,
+        formData: { ...DEFAULT_FORM, ...(parsed.formData || {}), password: '', confirmPassword: '' },
+      };
+    } catch {
+      return { step: 1, formData: DEFAULT_FORM };
+    }
+  };
+  const initial = loadDraft();
+  const [step, setStep] = useState(initial.step);
+  const [formData, setFormData] = useState(initial.formData);
+
+  // Persist draft (excluding passwords) on every change
+  useEffect(() => {
+    try {
+      const { password, confirmPassword, ...safeData } = formData;
+      sessionStorage.setItem(DRAFT_KEY, JSON.stringify({ step, formData: safeData }));
+    } catch { /* storage full or blocked — ignore */ }
+  }, [formData, step, DRAFT_KEY]);
   const [auditorCert, setAuditorCert] = useState(null);
   const [auditorCv, setAuditorCv] = useState(null);
   const [showPassword, setShowPassword] = useState(false);
@@ -369,6 +390,7 @@ export default function SignUp() {
     });
 
     if (result.success) {
+      try { sessionStorage.removeItem(DRAFT_KEY); } catch { /* ignore */ }
       if (targetRole === 'auditor' && result.data?.user && (auditorCert || auditorCv)) {
         try {
           const uploads = [];

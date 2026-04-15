@@ -166,65 +166,54 @@ export function AuthProvider({ children }) {
     const needsApproval = !!stakeholder_type && stakeholder_type !== 'client';
     const approvalStatus = needsApproval ? 'pending' : 'approved';
 
-    const { data, error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        data: {
-          name,
-          role: assignedRole,
-          company_name,
-          activity,
-          number_of_employees: number_of_employees || null,
-          number_of_locations: number_of_locations || null,
-          website: website || null,
-          city,
-          country,
-          region,
-          contact_number,
-          contact_role: contact_role || null,
-          certification_types: certification_types || [],
-          stakeholder_type: stakeholder_type || 'client',
-          approval_status: approvalStatus,
-        },
-      },
+    // Route signup through the service-role API so the auth user is created
+    // with email_confirm: true — otherwise Supabase marks the user as
+    // unconfirmed and login returns "Invalid login credentials".
+    const signupRes = await fetch('/api/public-signup', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        email, password, name, role: assignedRole,
+        company_name, activity,
+        number_of_employees, number_of_locations, website,
+        city, country, region, contact_number, contact_role,
+        stakeholder_type: stakeholder_type || 'client',
+        approval_status: approvalStatus,
+      }),
     });
+    const signupJson = await signupRes.json().catch(() => ({}));
 
-    if (error) {
-      return { success: false, error: error.message };
+    if (!signupRes.ok || !signupJson.success) {
+      return { success: false, error: signupJson.error || 'Signup failed' };
     }
 
-    // Update profile with full details via API (bypasses RLS timing issues)
-    if (data?.user) {
-      await fetch('/api/update-profile', {
+    const createdUser = signupJson.user;
+
+    // For non-approval-required flows, sign the user in right away so the
+    // existing "navigate to dashboard" UX works.
+    let signInData = null;
+    if (!needsApproval) {
+      const { data: sData, error: sErr } = await supabase.auth.signInWithPassword({ email, password });
+      if (sErr) {
+        return { success: false, error: sErr.message };
+      }
+      signInData = sData;
+    }
+
+    // Record referral if user signed up via a referral link (non-blocking)
+    if (referral_code && createdUser?.id) {
+      fetch('/api/record-referral', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          userId: data.user.id,
-          full_name: name,
-          role: assignedRole,
-          company_name: company_name || null,
-          region,
-          stakeholder_type: stakeholder_type || 'client',
-          approval_status: approvalStatus,
+          referralCode: referral_code,
+          referredId: createdUser.id,
+          referredEmail: email,
         }),
-      });
-
-      // Record referral if user signed up via a referral link
-      if (referral_code) {
-        await fetch('/api/record-referral', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            referralCode: referral_code,
-            referredId: data.user.id,
-            referredEmail: email,
-          }),
-        }).catch(() => {}); // non-blocking
-      }
+      }).catch(() => {});
     }
 
-    return { success: true, data, needsApproval };
+    return { success: true, data: signInData || { user: createdUser }, needsApproval };
   };
 
   const logout = async () => {
