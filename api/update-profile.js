@@ -11,7 +11,13 @@ export default async function handler(req, res) {
   }
 
   try {
-    const { userId, full_name, role, company_name, region, email, stakeholder_type, approval_status } = req.body;
+    const {
+      userId, full_name, role, company_name, region, email,
+      stakeholder_type, approval_status,
+      // Extended onboarding fields (stored on auth user_metadata since the
+      // profiles table does not have columns for them)
+      activity, number_of_employees, country, contact_number,
+    } = req.body;
 
     if (!userId) {
       return res.status(400).json({ error: 'Missing userId' });
@@ -40,11 +46,16 @@ export default async function handler(req, res) {
       await supabaseAdmin.auth.admin.updateUserById(userId, { email });
     }
 
-    // Sync user_metadata
+    // Sync user_metadata. Fields without a profiles column (activity, country,
+    // employees, phone) are only persisted here.
     const metaUpdates = {};
     if (full_name !== undefined) metaUpdates.name = full_name;
     if (company_name !== undefined) metaUpdates.company_name = company_name;
     if (region !== undefined) metaUpdates.region = region;
+    if (activity !== undefined) metaUpdates.activity = activity;
+    if (number_of_employees !== undefined) metaUpdates.number_of_employees = number_of_employees;
+    if (country !== undefined) metaUpdates.country = country;
+    if (contact_number !== undefined) metaUpdates.contact_number = contact_number;
 
     if (Object.keys(metaUpdates).length > 0) {
       await supabaseAdmin.auth.admin.updateUserById(userId, {

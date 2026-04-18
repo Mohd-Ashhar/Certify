@@ -9,11 +9,77 @@
   width: 100%;
 }
 
+.auth-form--simple {
+  gap: var(--spacing-lg);
+}
+
 .auth-form__title {
   font-size: var(--font-size-xl);
   font-weight: 700;
   color: var(--color-text-primary);
   text-align: center;
+}
+
+.auth-form__hero-title {
+  font-size: 2rem;
+  line-height: 1.2;
+  font-weight: 600;
+  color: var(--color-text-primary);
+  text-align: center;
+  margin: var(--spacing-base) 0 var(--spacing-sm);
+  letter-spacing: -0.01em;
+}
+
+.auth-form__legal {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-secondary);
+  text-align: center;
+  line-height: 1.6;
+  margin-top: var(--spacing-sm);
+}
+
+.auth-back-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: none;
+  border: none;
+  padding: 0;
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-sm);
+  cursor: pointer;
+  align-self: flex-start;
+}
+
+.auth-back-link:hover {
+  color: var(--color-text-primary);
+}
+
+.auth-google-btn--pill {
+  border-radius: 999px;
+  background: #000;
+  color: #fff;
+  border-color: #000;
+  padding: 14px 16px;
+  font-weight: 600;
+}
+
+.auth-google-btn--pill:hover:not(:disabled) {
+  background: #1a1a1a;
+  border-color: #1a1a1a;
+  color: #fff;
+}
+
+/* Make inputs in the simple signup flow match the width and height of the
+   pill-style buttons above/below them. */
+.auth-form--simple .form-group,
+.auth-form--simple .form-input {
+  width: 100%;
+}
+
+.auth-form--simple .form-input {
+  padding: 14px 16px;
+  font-size: var(--font-size-base);
 }
 
 .auth-form__subtitle {

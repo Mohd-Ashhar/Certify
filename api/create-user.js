@@ -76,11 +76,12 @@ export default async function handler(req, res) {
           region: region || null,
         };
 
-    // Always pre-confirm email — allows immediate login after signup.
+    // Let Supabase send a confirmation email via the configured SMTP.
+    // Users must verify their email before they can log in.
     const { data: authData, error: authError } = await supabaseAdmin.auth.admin.createUser({
       email,
       password,
-      email_confirm: true,
+      email_confirm: false,
       user_metadata: userMetadata,
     });
 

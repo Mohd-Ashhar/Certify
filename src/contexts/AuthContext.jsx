@@ -122,6 +122,13 @@ export function AuthProvider({ children }) {
     });
 
     if (error) {
+      // Supabase returns this when the user hasn't confirmed their email yet
+      if (error.message === 'Email not confirmed') {
+        return {
+          success: false,
+          error: 'Please verify your email address before logging in. Check your inbox for the confirmation link.',
+        };
+      }
       return { success: false, error: error.message };
     }
 
@@ -166,9 +173,9 @@ export function AuthProvider({ children }) {
     const needsApproval = !!stakeholder_type && stakeholder_type !== 'client';
     const approvalStatus = needsApproval ? 'pending' : 'approved';
 
-    // Route signup through the service-role API so the auth user is created
-    // with email_confirm: true — otherwise Supabase marks the user as
-    // unconfirmed and login returns "Invalid login credentials".
+    // Route signup through the service-role API. The user is created with
+    // email_confirm: false so Supabase sends a verification email via SMTP.
+    // Users must confirm their email before they can log in.
     const signupRes = await fetch('/api/create-user', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -190,17 +197,6 @@ export function AuthProvider({ children }) {
 
     const createdUser = signupJson.user;
 
-    // For non-approval-required flows, sign the user in right away so the
-    // existing "navigate to dashboard" UX works.
-    let signInData = null;
-    if (!needsApproval) {
-      const { data: sData, error: sErr } = await supabase.auth.signInWithPassword({ email, password });
-      if (sErr) {
-        return { success: false, error: sErr.message };
-      }
-      signInData = sData;
-    }
-
     // Record referral if user signed up via a referral link (non-blocking)
     if (referral_code && createdUser?.id) {
       fetch('/api/record-referral', {
@@ -214,7 +210,9 @@ export function AuthProvider({ children }) {
       }).catch(() => {});
     }
 
-    return { success: true, data: signInData || { user: createdUser }, needsApproval };
+    // User must verify their email before they can log in.
+    // Return emailVerification flag so the UI shows "check your email".
+    return { success: true, data: { user: createdUser }, needsApproval, emailVerification: true };
   };
 
   const logout = async () => {
