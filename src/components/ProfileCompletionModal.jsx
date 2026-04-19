@@ -48,10 +48,11 @@ export default function ProfileCompletionModal({ user, onComplete, onSkip }) {
     setSaving(true);
     try {
       const region = await getRegionFromCountryAsync(formData.country, supabase);
-      const res = await fetch('/api/update-profile', {
+      const res = await fetch('/api/user', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
+          action: 'update-profile',
           userId: user.id,
           company_name: formData.company_name,
           region: region || null,

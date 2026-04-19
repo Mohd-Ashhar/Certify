@@ -50,10 +50,10 @@ export default function PaymentPlaceholder() {
   // Check if client is eligible for referral discount
   useEffect(() => {
     if (!user?.id) return;
-    fetch('/api/check-referral-discount', {
+    fetch('/api/referrals', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ clientId: user.id }),
+      body: JSON.stringify({ action: 'check-discount', clientId: user.id }),
     })
       .then(r => r.json())
       .then(data => { if (data.hasDiscount) setHasReferralDiscount(true); })

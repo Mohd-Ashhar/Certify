@@ -54,10 +54,11 @@ export function AuthProvider({ children }) {
           const stakeholderType = pendingType || 'client';
           // Non-client stakeholder signups require admin approval, matching email signup
           const approvalStatus = stakeholderType !== 'client' ? 'pending' : 'approved';
-          await fetch('/api/update-profile', {
+          await fetch('/api/user', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
+              action: 'update-profile',
               userId: sessionUser.id,
               full_name: meta.full_name || meta.name || '',
               role: 'client',
@@ -240,10 +241,11 @@ export function AuthProvider({ children }) {
 
     // Record referral if user signed up via a referral link (non-blocking)
     if (referral_code && createdUser?.id) {
-      fetch('/api/record-referral', {
+      fetch('/api/referrals', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
+          action: 'record',
           referralCode: referral_code,
           referredId: createdUser.id,
           referredEmail: email,

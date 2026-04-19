@@ -161,7 +161,7 @@ export default function ApplicationDetails() {
         if (appData) {
           // Fetch client's auth metadata for phone and contact role
           try {
-            const metaRes = await fetch(`/api/get-user-meta?userId=${appData.client_id}`);
+            const metaRes = await fetch(`/api/user?action=get-meta&userId=${appData.client_id}`);
             if (metaRes.ok) {
               const metaData = await metaRes.json();
               appData.client_metadata = metaData.user_metadata || {};

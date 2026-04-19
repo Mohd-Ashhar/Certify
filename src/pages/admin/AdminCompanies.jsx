@@ -106,10 +106,11 @@ export default function AdminCompanies() {
 
     setSaving(true);
     try {
-      const response = await fetch('/api/update-profile', {
+      const response = await fetch('/api/user', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
+          action: 'update-profile',
           userId: editingClient.id,
           full_name: editForm.full_name,
           email: editForm.email,

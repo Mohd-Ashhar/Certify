@@ -264,10 +264,10 @@ function PayoutsTab({ user }) {
     if (!user?.id) return;
     setLoading(true);
     try {
-      const res = await fetch('/api/admin-referrals', {
+      const res = await fetch('/api/referrals', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ adminId: user.id }),
+        body: JSON.stringify({ action: 'list', adminId: user.id }),
       });
       const data = await res.json();
       if (data.referrals) setReferrals(data.referrals);
@@ -284,10 +284,10 @@ function PayoutsTab({ user }) {
     setActionLoading(referralId);
     setMessage(null);
     try {
-      const res = await fetch('/api/mark-payout', {
+      const res = await fetch('/api/referrals', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ adminId: user.id, referralId, payoutStatus: 'paid' }),
+        body: JSON.stringify({ action: 'mark-payout', adminId: user.id, referralId, payoutStatus: 'paid' }),
       });
       const data = await res.json();
       if (data.success) {

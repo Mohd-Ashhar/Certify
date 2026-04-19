@@ -126,10 +126,10 @@ export default function AdminUsers() {
     setLoading(true);
 
     try {
-      const response = await fetch('/api/update-user-role', {
+      const response = await fetch('/api/user', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userId: editingUser.id, newRole }),
+        body: JSON.stringify({ action: 'update-role', userId: editingUser.id, newRole }),
       });
 
       const result = await response.json();
