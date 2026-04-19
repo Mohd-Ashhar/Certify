@@ -19,6 +19,11 @@ export default function PaymentPlaceholder() {
   const [checkoutError, setCheckoutError] = useState(null);
   const [hasReferralDiscount, setHasReferralDiscount] = useState(false);
 
+  const [couponInput, setCouponInput] = useState('');
+  const [coupon, setCoupon] = useState(null);
+  const [couponError, setCouponError] = useState('');
+  const [validatingCoupon, setValidatingCoupon] = useState(false);
+
   useEffect(() => {
     let isMounted = true;
     const fetchApp = async () => {
@@ -55,12 +60,68 @@ export default function PaymentPlaceholder() {
       .catch(() => {});
   }, [user?.id]);
 
+  // Pre-fill coupon from URL (?coupon=CODE) so shareable links auto-apply
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const urlCoupon = params.get('coupon');
+    if (urlCoupon && !coupon && !couponInput) {
+      setCouponInput(urlCoupon);
+      validateCoupon(urlCoupon);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const validateCoupon = async (codeOverride) => {
+    const code = (codeOverride ?? couponInput).trim();
+    if (!code) return;
+    setValidatingCoupon(true);
+    setCouponError('');
+    try {
+      const r = await fetch('/api/validate-coupon', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code }),
+      });
+      const data = await r.json();
+      if (data.valid) {
+        setCoupon(data.coupon);
+        setCouponInput(data.coupon.code);
+      } else {
+        setCoupon(null);
+        setCouponError(
+          data.reason === 'expired' ? t('coupons.expiredCoupon')
+          : data.reason === 'exhausted' ? t('coupons.exhaustedCoupon')
+          : data.reason === 'inactive' ? t('coupons.inactiveCoupon')
+          : t('coupons.invalidCoupon')
+        );
+      }
+    } catch {
+      setCoupon(null);
+      setCouponError(t('coupons.invalidCoupon'));
+    } finally {
+      setValidatingCoupon(false);
+    }
+  };
+
+  const clearCoupon = () => {
+    setCoupon(null);
+    setCouponInput('');
+    setCouponError('');
+  };
+
   const countryTier = getCountryTier(user?.country);
   const isoName = application?.recommended_iso || 'ISO 9001:2015 (Quality Management)';
   const fullPrice = getFullPrice(countryTier);
   const monthlyPrice = getMonthlyPrice(countryTier);
   const originalPrice = isMonthly ? monthlyPrice : fullPrice;
-  const discountedPrice = hasReferralDiscount ? Math.round(originalPrice * 0.9 * 100) / 100 : originalPrice;
+
+  // Coupon and referral discount do not stack — the larger wins.
+  const couponPct = coupon ? Number(coupon.discount_percent) : 0;
+  const referralPct = hasReferralDiscount ? 10 : 0;
+  const appliedDiscountPct = Math.max(couponPct, referralPct);
+  const discountedPrice = appliedDiscountPct > 0
+    ? Math.round(originalPrice * (1 - appliedDiscountPct / 100) * 100) / 100
+    : originalPrice;
   const currentPrice = discountedPrice;
 
   const handleCheckout = async () => {
@@ -78,7 +139,8 @@ export default function PaymentPlaceholder() {
           isMonthly,
           price: originalPrice,
           applicationId,
-          clientId: user?.id
+          clientId: user?.id,
+          couponCode: coupon?.code || null,
         }),
       });
 
@@ -143,16 +205,62 @@ export default function PaymentPlaceholder() {
           <p style={{ color: '#64748b', fontSize: '1rem', margin: 0 }}>{t('payment.secureISO')}</p>
         </div>
 
-        {/* REFERRAL DISCOUNT BANNER */}
-        {hasReferralDiscount && (
+        {/* DISCOUNT BANNER — coupon wins over referral if both present */}
+        {appliedDiscountPct > 0 && (
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '14px 18px', background: 'linear-gradient(135deg, #ecfdf5, #d1fae5)', border: '1px solid #6ee7b7', borderRadius: '14px', marginBottom: '20px' }}>
             <Tag size={20} color="#059669" />
             <div>
-              <p style={{ margin: 0, fontWeight: 700, color: '#065f46', fontSize: '0.95rem' }}>{t('payment.referralDiscount')}</p>
-              <p style={{ margin: 0, color: '#047857', fontSize: '0.82rem' }}>{t('payment.referralDiscountDesc')}</p>
+              <p style={{ margin: 0, fontWeight: 700, color: '#065f46', fontSize: '0.95rem' }}>
+                {coupon && couponPct >= referralPct
+                  ? t('coupons.couponApplied', { percent: couponPct, code: coupon.code })
+                  : t('payment.referralDiscount')}
+              </p>
+              <p style={{ margin: 0, color: '#047857', fontSize: '0.82rem' }}>
+                {coupon && couponPct >= referralPct
+                  ? (coupon.description || t('coupons.couponAppliedDesc'))
+                  : t('payment.referralDiscountDesc')}
+              </p>
             </div>
           </div>
         )}
+
+        {/* COUPON INPUT */}
+        <div style={{ background: 'white', padding: '14px 18px', borderRadius: '14px', border: '1px solid #e2e8f0', marginBottom: '20px' }}>
+          <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 8 }}>
+            {t('coupons.haveCoupon')}
+          </label>
+          {coupon ? (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <div style={{ flex: 1, padding: '8px 12px', background: '#ecfdf5', border: '1px solid #86efac', borderRadius: 8, fontFamily: 'monospace', fontWeight: 700, color: '#065f46' }}>
+                {coupon.code} — {coupon.discount_percent}% off
+              </div>
+              <button type="button" onClick={clearCoupon} style={{ padding: '8px 14px', background: 'transparent', border: '1px solid #e2e8f0', borderRadius: 8, cursor: 'pointer', fontSize: '0.82rem', fontWeight: 600, color: '#64748b' }}>
+                {t('common.remove') || 'Remove'}
+              </button>
+            </div>
+          ) : (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <input
+                type="text"
+                value={couponInput}
+                onChange={e => setCouponInput(e.target.value.toUpperCase())}
+                placeholder={t('coupons.enterCode')}
+                style={{ flex: 1, padding: '8px 12px', border: '1px solid #e2e8f0', borderRadius: 8, fontFamily: 'monospace', fontSize: '0.9rem', textTransform: 'uppercase' }}
+              />
+              <button
+                type="button"
+                onClick={() => validateCoupon()}
+                disabled={!couponInput.trim() || validatingCoupon}
+                style={{ padding: '8px 16px', background: '#2563eb', color: 'white', border: 'none', borderRadius: 8, cursor: 'pointer', fontSize: '0.85rem', fontWeight: 600 }}
+              >
+                {validatingCoupon ? t('common.processing') : t('coupons.applyCode')}
+              </button>
+            </div>
+          )}
+          {couponError && (
+            <p style={{ margin: '8px 0 0 0', fontSize: '0.8rem', color: '#dc2626' }}>{couponError}</p>
+          )}
+        </div>
 
         {/* MAIN CARD */}
         <div style={{ background: 'white', borderRadius: '20px', border: '1px solid #e2e8f0', boxShadow: '0 20px 40px -12px rgba(0,0,0,0.08), 0 0 0 1px rgba(0,0,0,0.02)', overflow: 'hidden' }}>
@@ -205,10 +313,10 @@ export default function PaymentPlaceholder() {
                 </div>
                 <h4 style={{ margin: '0 0 4px 0', fontSize: '0.9rem', fontWeight: 700, color: !isMonthly ? '#1e3a5f' : '#64748b' }}>{t('payment.fullPayment')}</h4>
                 <div style={{ fontSize: '1.75rem', fontWeight: 800, color: !isMonthly ? '#0f172a' : '#94a3b8', lineHeight: 1.2, margin: '8px 0 4px 0' }}>
-                  {hasReferralDiscount ? (
+                  {appliedDiscountPct > 0 ? (
                     <>
                       <span style={{ textDecoration: 'line-through', fontSize: '1.1rem', color: '#94a3b8', marginRight: '6px' }}>${fullPrice}</span>
-                      ${Math.round(fullPrice * 0.9 * 100) / 100}
+                      ${Math.round(fullPrice * (1 - appliedDiscountPct / 100) * 100) / 100}
                     </>
                   ) : (
                     `$${fullPrice}`
@@ -248,10 +356,10 @@ export default function PaymentPlaceholder() {
                 </div>
                 <h4 style={{ margin: '0 0 4px 0', fontSize: '0.9rem', fontWeight: 700, color: isMonthly ? '#1e3a5f' : '#64748b' }}>{t('payment.monthlyPlan')}</h4>
                 <div style={{ fontSize: '1.75rem', fontWeight: 800, color: isMonthly ? '#0f172a' : '#94a3b8', lineHeight: 1.2, margin: '8px 0 4px 0' }}>
-                  {hasReferralDiscount ? (
+                  {appliedDiscountPct > 0 ? (
                     <>
                       <span style={{ textDecoration: 'line-through', fontSize: '1.1rem', color: '#94a3b8', marginRight: '6px' }}>${monthlyPrice}</span>
-                      ${Math.round(monthlyPrice * 0.9 * 100) / 100}<span style={{ fontSize: '0.9rem', fontWeight: 500, color: '#64748b' }}>/mo</span>
+                      ${Math.round(monthlyPrice * (1 - appliedDiscountPct / 100) * 100) / 100}<span style={{ fontSize: '0.9rem', fontWeight: 500, color: '#64748b' }}>/mo</span>
                     </>
                   ) : (
                     <>${monthlyPrice}<span style={{ fontSize: '0.9rem', fontWeight: 500, color: '#64748b' }}>/mo</span></>
@@ -276,12 +384,18 @@ export default function PaymentPlaceholder() {
                   {isMonthly ? t('payment.monthlyPayment') : t('payment.totalAmount')}
                 </p>
                 <p style={{ margin: 0, fontSize: '0.82rem', color: '#64748b' }}>
-                  {hasReferralDiscount && <span style={{ color: '#059669', fontWeight: 600 }}>{t('payment.referralApplied')} &bull; </span>}
+                  {appliedDiscountPct > 0 && (
+                    <span style={{ color: '#059669', fontWeight: 600 }}>
+                      {coupon && couponPct >= referralPct
+                        ? t('coupons.couponAppliedShort', { percent: couponPct })
+                        : t('payment.referralApplied')} &bull;{' '}
+                    </span>
+                  )}
                   {isMonthly ? t('payment.totalOver12', { total: (currentPrice * 12).toFixed(0) }) : t('payment.dueToday')}
                 </p>
               </div>
               <div style={{ textAlign: 'right' }}>
-                {hasReferralDiscount && (
+                {appliedDiscountPct > 0 && (
                   <span style={{ fontSize: '1rem', color: '#94a3b8', textDecoration: 'line-through', marginRight: '8px' }}>
                     ${originalPrice}
                   </span>

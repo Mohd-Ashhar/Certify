@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../contexts/AuthContext';
 import { Input, Button } from '../../components/ui/FormElements';
@@ -9,6 +9,7 @@ import './Auth.css';
 export default function Login() {
   const { login, signInWithGoogle, getRoleDashboard, user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { t } = useTranslation();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -22,6 +23,14 @@ export default function Login() {
       navigate(getRoleDashboard(user.role));
     }
   }, [authLoading, user, navigate, getRoleDashboard]);
+
+  useEffect(() => {
+    if (searchParams.get('pending') === '1') {
+      setError('Your registration is pending approval. A CertifyCX administrator will review and verify your account shortly.');
+    } else if (searchParams.get('rejected') === '1') {
+      setError('Your registration has been declined. Please contact support at mvpcertify@gmail.com for more information.');
+    }
+  }, [searchParams]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();

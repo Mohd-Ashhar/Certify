@@ -5,6 +5,8 @@ import { Input, Button, Select } from '../../components/ui/FormElements';
 import { REGIONS, ROLES, ROLE_LABELS, PERMISSIONS, getRolePermissions, hasPermission } from '../../utils/roles';
 import DataTable from '../../components/ui/DataTable';
 import StatusBadge from '../../components/ui/StatusBadge';
+import CustomFieldRenderer from '../../components/CustomFieldRenderer';
+import { supabase as supabaseClient } from '../../lib/supabase';
 import { User, Globe, Shield, Settings as SettingsIcon, Check, DollarSign } from 'lucide-react';
 import './Settings.css';
 
@@ -72,6 +74,9 @@ function ProfileTab({ user }) {
     company_name: user?.company_name || '',
   });
 
+  const [customFields, setCustomFields] = useState([]);
+  const [customValues, setCustomValues] = useState(user?.custom_fields || {});
+
   const [passwordData, setPasswordData] = useState({
     newPassword: '',
     confirmPassword: '',
@@ -81,6 +86,18 @@ function ProfileTab({ user }) {
   const [passwordLoading, setPasswordLoading] = useState(false);
   const [message, setMessage] = useState(null);
 
+  // Load custom fields scoped to the user's role.
+  useEffect(() => {
+    if (!user?.role) return;
+    supabaseClient
+      .from('custom_user_fields')
+      .select('*')
+      .eq('is_active', true)
+      .contains('applies_to_roles', [user.role])
+      .order('display_order', { ascending: true })
+      .then(({ data }) => setCustomFields(data || []));
+  }, [user?.role]);
+
   const handleProfileUpdate = async () => {
     setProfileLoading(true);
     setMessage(null);
@@ -89,7 +106,8 @@ function ProfileTab({ user }) {
         .from('profiles')
         .update({
           full_name: formData.full_name,
-          company_name: formData.company_name
+          company_name: formData.company_name,
+          custom_fields: customValues,
         })
         .eq('id', user.id);
 
@@ -185,6 +203,21 @@ function ProfileTab({ user }) {
             disabled
           />
         </div>
+
+        {customFields.length > 0 && (
+          <div className="settings__form-grid" style={{ marginTop: 20 }}>
+            {customFields.map(field => (
+              <div key={field.id} style={{ gridColumn: field.field_type === 'textarea' ? '1 / -1' : 'auto' }}>
+                <CustomFieldRenderer
+                  field={field}
+                  value={customValues[field.field_key]}
+                  onChange={(v) => setCustomValues(prev => ({ ...prev, [field.field_key]: v }))}
+                />
+              </div>
+            ))}
+          </div>
+        )}
+
         <div className="settings__form-actions">
           <Button variant="primary" size="md" onClick={handleProfileUpdate} loading={profileLoading}>Save Changes</Button>
           <Button variant="ghost" size="md" onClick={() => setFormData({ full_name: user?.full_name || user?.name || '', company_name: user?.company_name || '' })}>Cancel</Button>

@@ -177,7 +177,19 @@ export default function AdminUsers() {
   const columns = [
     { key: 'full_name', label: t('admin.name'), render: (val) => val || '—' },
     { key: 'email', label: t('auth.email') },
-    { key: 'role', label: t('admin.systemRole'), render: (val) => <StatusBadge status={val} label={ROLE_LABELS[val] || val} /> },
+    { key: 'role', label: t('admin.systemRole'), render: (val, row) => {
+      // For partner stakeholder types (referral/investor/consultancy), show the
+      // stakeholder label instead of the generic "Client" role so admins can
+      // distinguish them.
+      const STAKEHOLDER_LABEL = {
+        referral: 'Referral Partner',
+        investor: 'Investor',
+        consultancy: 'Consultancy',
+      };
+      const stakeholderLabel = row?.stakeholder_type && STAKEHOLDER_LABEL[row.stakeholder_type];
+      const label = stakeholderLabel || ROLE_LABELS[val] || val;
+      return <StatusBadge status={val} label={label} />;
+    }},
     { key: 'region', label: t('admin.region'), render: (val) => {
       if (!val) return '—';
       const r = REGIONS.find(reg => reg.id === val);

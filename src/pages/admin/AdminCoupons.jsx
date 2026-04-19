@@ -1,0 +1,534 @@
+import { useState, useEffect, useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
+import DataTable from '../../components/ui/DataTable';
+import Modal from '../../components/ui/Modal';
+import StatusBadge from '../../components/ui/StatusBadge';
+import { Button, Input, Select } from '../../components/ui/FormElements';
+import { supabase } from '../../lib/supabase';
+import { useAuth } from '../../contexts/AuthContext';
+import { ROLES } from '../../utils/roles';
+import { Plus, Search, Pencil, Trash2, Copy, Check, Link2, RefreshCw } from 'lucide-react';
+
+const EMPTY = {
+  code: '',
+  description: '',
+  discount_percent: 10,
+  max_redemptions: '',
+  expires_at: '',
+  is_active: true,
+};
+
+const DISCOUNT_PRESETS = [10, 15, 20, 25];
+
+function genCode(percent) {
+  const rand = Math.random().toString(36).toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 5);
+  return `SAVE${percent || 10}-${rand}`;
+}
+
+export default function AdminCoupons() {
+  const { t } = useTranslation();
+  const { user, loading } = useAuth();
+
+  const isSuperAdmin = user?.role === ROLES.SUPER_ADMIN;
+  const canWrite = isSuperAdmin;
+
+  const [items, setItems] = useState([]);
+  const [fetching, setFetching] = useState(false);
+  const [search, setSearch] = useState('');
+  const [statusFilter, setStatusFilter] = useState('');
+
+  const [showModal, setShowModal] = useState(false);
+  const [editingId, setEditingId] = useState(null);
+  const [formData, setFormData] = useState(EMPTY);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState('');
+  const [copiedId, setCopiedId] = useState(null);
+
+  const fetchData = async () => {
+    setFetching(true);
+    const { data, error: err } = await supabase
+      .from('discount_coupons')
+      .select('*')
+      .order('created_at', { ascending: false });
+    if (!err && data) setItems(data);
+    setFetching(false);
+  };
+
+  useEffect(() => { fetchData(); }, []);
+
+  const openCreate = () => {
+    if (!canWrite) return;
+    setEditingId(null);
+    setFormData({ ...EMPTY, code: genCode(10) });
+    setError('');
+    setShowModal(true);
+  };
+
+  const openEdit = (row) => {
+    if (!canWrite) return;
+    setEditingId(row.id);
+    setFormData({
+      code: row.code || '',
+      description: row.description || '',
+      discount_percent: row.discount_percent || 10,
+      max_redemptions: row.max_redemptions ?? '',
+      expires_at: row.expires_at ? row.expires_at.slice(0, 10) : '',
+      is_active: !!row.is_active,
+    });
+    setError('');
+    setShowModal(true);
+  };
+
+  const closeModal = () => {
+    setShowModal(false);
+    setEditingId(null);
+    setFormData(EMPTY);
+    setError('');
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setError('');
+
+    const code = formData.code.trim().toUpperCase();
+    const pct = Number(formData.discount_percent);
+
+    if (!code) {
+      setError(t('coupons.codeRequired'));
+      return;
+    }
+    if (!pct || pct <= 0 || pct > 100) {
+      setError(t('coupons.percentInvalid'));
+      return;
+    }
+
+    setSaving(true);
+    try {
+      const payload = {
+        code,
+        description: formData.description.trim() || null,
+        discount_percent: pct,
+        max_redemptions: formData.max_redemptions === '' ? null : Number(formData.max_redemptions),
+        expires_at: formData.expires_at || null,
+        is_active: !!formData.is_active,
+      };
+
+      if (editingId) {
+        const { error: upErr } = await supabase
+          .from('discount_coupons')
+          .update({ ...payload, updated_at: new Date().toISOString() })
+          .eq('id', editingId);
+        if (upErr) throw upErr;
+      } else {
+        const { error: insErr } = await supabase
+          .from('discount_coupons')
+          .insert([{ ...payload, created_by: user?.id }]);
+        if (insErr) throw insErr;
+      }
+
+      await fetchData();
+      closeModal();
+    } catch (err) {
+      console.error('Save coupon error:', err);
+      setError(err.message || t('coupons.saveFailed'));
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleDelete = async (row) => {
+    if (!canWrite) return;
+    if (!window.confirm(t('coupons.confirmDelete', { code: row.code }))) return;
+    try {
+      const { error: delErr } = await supabase
+        .from('discount_coupons')
+        .delete()
+        .eq('id', row.id);
+      if (delErr) throw delErr;
+      setItems(prev => prev.filter(c => c.id !== row.id));
+    } catch (err) {
+      console.error('Delete coupon error:', err);
+      alert(t('coupons.deleteFailed') + ': ' + err.message);
+    }
+  };
+
+  const toggleActive = async (row) => {
+    if (!canWrite) return;
+    try {
+      const { error: upErr } = await supabase
+        .from('discount_coupons')
+        .update({ is_active: !row.is_active, updated_at: new Date().toISOString() })
+        .eq('id', row.id);
+      if (upErr) throw upErr;
+      setItems(prev => prev.map(c => c.id === row.id ? { ...c, is_active: !row.is_active } : c));
+    } catch (err) {
+      console.error('Toggle coupon error:', err);
+      alert(err.message);
+    }
+  };
+
+  const buildShareLink = (code) => `${window.location.origin}/signup?coupon=${encodeURIComponent(code)}`;
+
+  const handleCopyLink = async (row) => {
+    try {
+      await navigator.clipboard.writeText(buildShareLink(row.code));
+      setCopiedId(row.id);
+      setTimeout(() => setCopiedId(null), 2000);
+    } catch {
+      // no-op
+    }
+  };
+
+  const filtered = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    return items.filter(c => {
+      const matchSearch = !q ||
+        c.code?.toLowerCase().includes(q) ||
+        c.description?.toLowerCase().includes(q);
+      const matchStatus =
+        !statusFilter ||
+        (statusFilter === 'active' && c.is_active) ||
+        (statusFilter === 'inactive' && !c.is_active);
+      return matchSearch && matchStatus;
+    });
+  }, [items, search, statusFilter]);
+
+  const columns = [
+    {
+      key: 'code',
+      label: t('coupons.code'),
+      render: (v) => <span style={{ fontFamily: 'monospace', fontWeight: 600 }}>{v}</span>,
+    },
+    {
+      key: 'discount_percent',
+      label: t('coupons.discount'),
+      render: (v) => v ? `${v}%` : '—',
+    },
+    {
+      key: 'redemption_count',
+      label: t('coupons.redemptions'),
+      render: (v, row) => {
+        const used = v || 0;
+        const cap = row.max_redemptions;
+        return cap ? `${used} / ${cap}` : `${used}`;
+      },
+    },
+    {
+      key: 'expires_at',
+      label: t('coupons.expires'),
+      render: (v) => v ? new Date(v).toLocaleDateString() : t('coupons.never'),
+    },
+    {
+      key: 'is_active',
+      label: t('dashboard.status'),
+      render: (v) => (
+        <StatusBadge
+          status={v ? 'active' : 'inactive'}
+          label={v ? t('common.active') : t('common.inactive')}
+        />
+      ),
+    },
+    {
+      key: 'share',
+      label: t('coupons.shareLink'),
+      render: (_, row) => (
+        <button
+          type="button"
+          onClick={() => handleCopyLink(row)}
+          title={buildShareLink(row.code)}
+          style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: 6,
+            padding: '4px 10px',
+            background: 'transparent',
+            border: '1px solid var(--color-border)',
+            borderRadius: 6,
+            fontSize: '0.8rem',
+            cursor: 'pointer',
+            color: 'var(--color-text-secondary)',
+          }}
+        >
+          {copiedId === row.id ? <Check size={14} color="#10b981" /> : <Link2 size={14} />}
+          {copiedId === row.id ? t('common.copied') : t('common.copy')}
+        </button>
+      ),
+    },
+  ];
+
+  if (canWrite) {
+    columns.push({
+      key: 'actions',
+      label: t('common.actions') || 'Actions',
+      render: (_, row) => (
+        <div style={{ display: 'flex', gap: 6 }}>
+          <button
+            type="button"
+            title={row.is_active ? t('common.deactivate') : t('common.activate')}
+            onClick={() => toggleActive(row)}
+            style={{
+              background: 'transparent',
+              border: '1px solid var(--color-border)',
+              borderRadius: 6,
+              padding: 6,
+              cursor: 'pointer',
+              color: 'var(--color-text-secondary)',
+            }}
+          >
+            <RefreshCw size={14} />
+          </button>
+          <button
+            type="button"
+            title={t('common.edit') || 'Edit'}
+            onClick={() => openEdit(row)}
+            style={{
+              background: 'transparent',
+              border: '1px solid var(--color-border)',
+              borderRadius: 6,
+              padding: 6,
+              cursor: 'pointer',
+              color: 'var(--color-text-secondary)',
+            }}
+          >
+            <Pencil size={14} />
+          </button>
+          <button
+            type="button"
+            title={t('common.delete') || 'Delete'}
+            onClick={() => handleDelete(row)}
+            style={{
+              background: 'transparent',
+              border: '1px solid rgba(239,68,68,0.4)',
+              borderRadius: 6,
+              padding: 6,
+              cursor: 'pointer',
+              color: '#ef4444',
+            }}
+          >
+            <Trash2 size={14} />
+          </button>
+        </div>
+      ),
+    });
+  }
+
+  if (!user || loading) {
+    return <div className="page-container"><p>{t('common.loadingDashboard')}</p></div>;
+  }
+
+  if (!isSuperAdmin) {
+    return (
+      <div className="page-container">
+        <p>{t('common.noAccess') || 'You do not have access to this page.'}</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="page-container">
+      <div className="page-header">
+        <div>
+          <h1 className="page-title">{t('coupons.title')}</h1>
+          <p className="page-subtitle">{t('coupons.subtitle', { count: filtered.length })}</p>
+        </div>
+        {canWrite && (
+          <Button variant="primary" size="md" onClick={openCreate}>
+            <Plus size={16} /> {t('coupons.addCoupon')}
+          </Button>
+        )}
+      </div>
+
+      <div style={{ display: 'flex', gap: 'var(--spacing-md)', marginBottom: 'var(--spacing-lg)', flexWrap: 'wrap' }}>
+        <div className="companies__search" style={{ flex: 1, minWidth: 220 }}>
+          <Search size={16} className="companies__search-icon" />
+          <input
+            type="text"
+            placeholder={t('common.search')}
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="companies__search-input"
+          />
+        </div>
+        <Select
+          value={statusFilter}
+          onChange={(e) => setStatusFilter(e.target.value)}
+          style={{ width: 200 }}
+        >
+          <option value="">{t('common.allStatuses') || 'All Statuses'}</option>
+          <option value="active">{t('common.active')}</option>
+          <option value="inactive">{t('common.inactive')}</option>
+        </Select>
+      </div>
+
+      {fetching ? (
+        <p>{t('coupons.loading')}</p>
+      ) : (
+        <DataTable
+          columns={columns}
+          data={filtered}
+          emptyMessage={t('coupons.empty')}
+        />
+      )}
+
+      <Modal
+        isOpen={showModal}
+        onClose={closeModal}
+        title={editingId ? t('coupons.editCoupon') : t('coupons.addCoupon')}
+        size="md"
+      >
+        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+          {error && (
+            <div style={{
+              padding: '10px 12px',
+              background: 'rgba(239,68,68,0.08)',
+              border: '1px solid rgba(239,68,68,0.3)',
+              color: '#ef4444',
+              borderRadius: 6,
+              fontSize: '0.85rem',
+            }}>
+              {error}
+            </div>
+          )}
+
+          <div style={{ display: 'flex', gap: 8, alignItems: 'flex-end' }}>
+            <Input
+              label={t('coupons.code')}
+              name="code"
+              value={formData.code}
+              onChange={e => setFormData({ ...formData, code: e.target.value.toUpperCase() })}
+              placeholder="SAVE10-XXXXX"
+              required
+              style={{ fontFamily: 'monospace', flex: 1 }}
+            />
+            <Button
+              type="button"
+              variant="ghost"
+              onClick={() => setFormData(f => ({ ...f, code: genCode(f.discount_percent) }))}
+            >
+              <RefreshCw size={14} /> {t('coupons.regenerate')}
+            </Button>
+          </div>
+
+          <div>
+            <label className="form-label">{t('coupons.discount')}</label>
+            <div style={{ display: 'flex', gap: 6, marginBottom: 8, flexWrap: 'wrap' }}>
+              {DISCOUNT_PRESETS.map(p => (
+                <button
+                  key={p}
+                  type="button"
+                  onClick={() => setFormData(f => ({ ...f, discount_percent: p }))}
+                  style={{
+                    padding: '6px 14px',
+                    borderRadius: 6,
+                    border: Number(formData.discount_percent) === p
+                      ? '2px solid var(--color-accent, #3ECF8E)'
+                      : '1px solid var(--color-border)',
+                    background: Number(formData.discount_percent) === p
+                      ? 'rgba(62,207,142,0.1)'
+                      : 'transparent',
+                    cursor: 'pointer',
+                    fontWeight: 600,
+                    fontSize: '0.85rem',
+                  }}
+                >
+                  {p}%
+                </button>
+              ))}
+            </div>
+            <Input
+              type="number"
+              name="discount_percent"
+              min="1"
+              max="100"
+              value={formData.discount_percent}
+              onChange={e => setFormData({ ...formData, discount_percent: e.target.value })}
+              required
+            />
+          </div>
+
+          <Input
+            label={t('coupons.description')}
+            name="description"
+            value={formData.description}
+            onChange={e => setFormData({ ...formData, description: e.target.value })}
+            placeholder={t('coupons.descriptionPlaceholder')}
+          />
+
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+            <Input
+              label={t('coupons.maxRedemptions')}
+              type="number"
+              name="max_redemptions"
+              min="1"
+              value={formData.max_redemptions}
+              onChange={e => setFormData({ ...formData, max_redemptions: e.target.value })}
+              placeholder={t('coupons.unlimited')}
+            />
+            <Input
+              label={t('coupons.expiresAt')}
+              type="date"
+              name="expires_at"
+              value={formData.expires_at}
+              onChange={e => setFormData({ ...formData, expires_at: e.target.value })}
+            />
+          </div>
+
+          <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer' }}>
+            <input
+              type="checkbox"
+              checked={!!formData.is_active}
+              onChange={e => setFormData({ ...formData, is_active: e.target.checked })}
+            />
+            <span>{t('coupons.activeLabel')}</span>
+          </label>
+
+          {formData.code && (
+            <div style={{
+              padding: 12,
+              background: 'rgba(62,207,142,0.08)',
+              border: '1px solid rgba(62,207,142,0.25)',
+              borderRadius: 8,
+              fontSize: '0.82rem',
+            }}>
+              <div style={{ color: 'var(--color-text-secondary)', marginBottom: 4 }}>
+                {t('coupons.sharePreview')}
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                <Link2 size={12} />
+                <code style={{ wordBreak: 'break-all' }}>{buildShareLink(formData.code)}</code>
+                <button
+                  type="button"
+                  onClick={async () => {
+                    try {
+                      await navigator.clipboard.writeText(buildShareLink(formData.code));
+                    } catch { /* ignore */ }
+                  }}
+                  style={{
+                    marginLeft: 'auto',
+                    background: 'transparent',
+                    border: '1px solid var(--color-border)',
+                    borderRadius: 4,
+                    padding: '2px 8px',
+                    cursor: 'pointer',
+                    fontSize: '0.75rem',
+                  }}
+                >
+                  <Copy size={12} /> {t('common.copy')}
+                </button>
+              </div>
+            </div>
+          )}
+
+          <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end', marginTop: 8 }}>
+            <Button type="button" variant="ghost" onClick={closeModal}>
+              {t('common.cancel')}
+            </Button>
+            <Button type="submit" variant="primary" loading={saving}>
+              {editingId ? t('common.save') : t('coupons.addCoupon')}
+            </Button>
+          </div>
+        </form>
+      </Modal>
+    </div>
+  );
+}

@@ -1,6 +1,25 @@
 import { createContext, useContext, useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
-import { ROLES, getRegionFromCountry } from '../utils/roles';
+import { ROLES, getRegionFromCountryAsync, setCustomPermissionOverrides } from '../utils/roles';
+
+// Fetch role×permission overrides and install them into the roles module so
+// hasPermission() reflects runtime toggles everywhere in the app.
+async function loadPermissionOverrides() {
+  try {
+    const { data, error } = await supabase
+      .from('custom_permissions')
+      .select('role, permission, enabled');
+    if (error || !data) return;
+    const map = {};
+    for (const row of data) {
+      if (!map[row.role]) map[row.role] = {};
+      map[row.role][row.permission] = !!row.enabled;
+    }
+    setCustomPermissionOverrides(map);
+  } catch {
+    // Table may not exist yet (pre-migration) — fall back to baseline.
+  }
+}
 
 const AuthContext = createContext(null);
 
@@ -27,6 +46,14 @@ export function AuthProvider({ children }) {
         // For OAuth users (e.g. Google), ensure profile has role and approval_status
         if (profile && !profile.role && sessionUser.app_metadata?.provider === 'google') {
           const meta = sessionUser.user_metadata || {};
+          // Read pending stakeholder context set before the OAuth redirect (e.g. /register/referral)
+          let pendingType = null;
+          try {
+            pendingType = sessionStorage.getItem('pendingStakeholderType');
+          } catch { /* sessionStorage may be unavailable */ }
+          const stakeholderType = pendingType || 'client';
+          // Non-client stakeholder signups require admin approval, matching email signup
+          const approvalStatus = stakeholderType !== 'client' ? 'pending' : 'approved';
           await fetch('/api/update-profile', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -36,10 +63,11 @@ export function AuthProvider({ children }) {
               role: 'client',
               company_name: null,
               region: null,
-              stakeholder_type: 'client',
-              approval_status: 'approved',
+              stakeholder_type: stakeholderType,
+              approval_status: approvalStatus,
             }),
           });
+          try { sessionStorage.removeItem('pendingStakeholderType'); } catch { /* ignore */ }
           // Re-fetch profile after update
           const { data: updatedProfile } = await supabase
             .from("profiles")
@@ -64,8 +92,9 @@ export function AuthProvider({ children }) {
     };
 
     // 1. Initial Session Check
-    supabase.auth.getSession().then(({ data: { session: currentSession } }) => {
+    supabase.auth.getSession().then(async ({ data: { session: currentSession } }) => {
       if (mounted) setSession(currentSession);
+      await loadPermissionOverrides();
       if (currentSession?.user) {
         fetchProfile(currentSession.user);
       } else {
@@ -100,7 +129,17 @@ export function AuthProvider({ children }) {
   // Auth actions
   // ---------------------------------------------------
 
-  const signInWithGoogle = async (redirectPath = '/auth/callback') => {
+  const signInWithGoogle = async (redirectPath = '/auth/callback', stakeholderType = null) => {
+    // Persist stakeholder context so it survives the OAuth round-trip and
+    // can be applied when the new profile is provisioned on return.
+    try {
+      if (stakeholderType) {
+        sessionStorage.setItem('pendingStakeholderType', stakeholderType);
+      } else {
+        sessionStorage.removeItem('pendingStakeholderType');
+      }
+    } catch { /* sessionStorage may be unavailable */ }
+
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
@@ -166,8 +205,9 @@ export function AuthProvider({ children }) {
     number_of_locations, website, city, country,
     contact_number, contact_role, certification_types,
     referral_code, role, stakeholder_type,
+    custom_fields,
   }) => {
-    const region = getRegionFromCountry(country);
+    const region = await getRegionFromCountryAsync(country, supabase);
     const assignedRole = role || ROLES.CLIENT;
     // Stakeholder registrations (via shareable links / landing page) require admin approval
     const needsApproval = !!stakeholder_type && stakeholder_type !== 'client';
@@ -187,6 +227,7 @@ export function AuthProvider({ children }) {
         city, country, region, contact_number, contact_role,
         stakeholder_type: stakeholder_type || 'client',
         approval_status: approvalStatus,
+        custom_fields: custom_fields || null,
       }),
     });
     const signupJson = await signupRes.json().catch(() => ({}));
@@ -257,6 +298,12 @@ export function AuthProvider({ children }) {
   // ---------------------------------------------------
   // Context value
   // ---------------------------------------------------
+  const refreshPermissions = async () => {
+    await loadPermissionOverrides();
+    // Bump a state field so consumers reading hasPermission() re-render.
+    setUser(u => (u ? { ...u } : u));
+  };
+
   const value = {
     user,
     session,
@@ -269,6 +316,7 @@ export function AuthProvider({ children }) {
     resetPassword,
     updatePassword,
     getRoleDashboard,
+    refreshPermissions,
     supabase,
   };
 

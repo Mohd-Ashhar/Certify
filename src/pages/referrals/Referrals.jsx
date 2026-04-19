@@ -14,6 +14,7 @@ export default function Referrals() {
   const [referrals, setReferrals] = useState([]);
   const [loading, setLoading] = useState(true);
   const [copied, setCopied] = useState(false);
+  const [tiers, setTiers] = useState([]);
 
   // Referral code = first 8 chars of user ID (unique enough, short for sharing)
   const referralCode = user?.id?.slice(0, 8) || '';
@@ -34,6 +35,15 @@ export default function Referrals() {
 
   useEffect(() => { fetchReferrals(); }, [fetchReferrals]);
 
+  useEffect(() => {
+    supabase
+      .from('referral_commission_tiers')
+      .select('*')
+      .eq('is_active', true)
+      .order('min_conversions', { ascending: true })
+      .then(({ data }) => setTiers(data || []));
+  }, []);
+
   const handleCopy = async () => {
     try {
       await navigator.clipboard.writeText(referralLink);
@@ -47,6 +57,24 @@ export default function Referrals() {
   const signedUp = referrals.filter(r => r.status === 'signed_up' || r.status === 'converted').length;
   const converted = referrals.filter(r => r.status === 'converted').length;
   const totalEarnings = referrals.reduce((sum, r) => sum + (parseFloat(r.commission_amount) || 0), 0);
+
+  // Rolling-12-month conversion count — tier evaluation window
+  const twelveMonthsAgo = new Date();
+  twelveMonthsAgo.setMonth(twelveMonthsAgo.getMonth() - 12);
+  const convertedLast12mo = referrals.filter(r =>
+    r.status === 'converted' && r.converted_at && new Date(r.converted_at) >= twelveMonthsAgo
+  ).length;
+
+  // Pick the current tier based on conversions within the 12-month window
+  const currentTier = (() => {
+    const sorted = [...tiers].sort((a, b) => a.min_conversions - b.min_conversions);
+    const next = convertedLast12mo + 1;
+    for (const tier of sorted) {
+      const max = tier.max_conversions ?? Infinity;
+      if (next >= tier.min_conversions && next < max) return tier;
+    }
+    return sorted[sorted.length - 1] || null;
+  })();
 
   const columns = [
     {
@@ -123,6 +151,54 @@ export default function Referrals() {
           {t('referrals.shareLinkHint')}
         </p>
       </div>
+
+      {/* Commission Tier */}
+      {tiers.length > 0 && (
+        <div className="referral-section">
+          <h3 className="referral-section__title">{t('referrals.commissionTier')}</h3>
+          <div style={{
+            padding: '16px 20px',
+            background: 'linear-gradient(135deg, rgba(62,207,142,0.08), rgba(37,99,235,0.06))',
+            border: '1px solid rgba(62,207,142,0.25)',
+            borderRadius: 12,
+            marginBottom: 16,
+          }}>
+            <div style={{ fontSize: '0.82rem', color: 'var(--color-text-secondary)', marginBottom: 4 }}>
+              {t('referrals.yourTier', { count: convertedLast12mo })}
+            </div>
+            <div style={{ fontSize: '1.4rem', fontWeight: 700, color: '#059669' }}>
+              {currentTier
+                ? `${currentTier.label || `${currentTier.min_conversions}+`} — ${currentTier.commission_percent}%`
+                : t('referrals.noTierYet')}
+            </div>
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 12 }}>
+            {tiers.map(tier => {
+              const isCurrent = currentTier?.id === tier.id;
+              return (
+                <div key={tier.id} style={{
+                  padding: 14,
+                  border: isCurrent ? '2px solid #10b981' : '1px solid var(--color-border)',
+                  borderRadius: 10,
+                  background: isCurrent ? 'rgba(16,185,129,0.06)' : 'transparent',
+                }}>
+                  <div style={{ fontSize: '0.75rem', color: 'var(--color-text-secondary)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                    {tier.label || `${tier.min_conversions}+ ${t('referrals.certs')}`}
+                  </div>
+                  <div style={{ fontSize: '1.5rem', fontWeight: 700, marginTop: 4 }}>
+                    {tier.commission_percent}%
+                  </div>
+                  <div style={{ fontSize: '0.8rem', color: 'var(--color-text-secondary)', marginTop: 2 }}>
+                    {tier.max_conversions == null
+                      ? `${tier.min_conversions}+ ${t('referrals.certsIn12mo')}`
+                      : `${tier.min_conversions}–${tier.max_conversions} ${t('referrals.certsIn12mo')}`}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
 
       {/* How It Works */}
       <div className="referral-section">

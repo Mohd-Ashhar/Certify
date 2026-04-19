@@ -3,6 +3,7 @@ import { Link, useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../contexts/AuthContext';
 import { Input, Select, Button, Autocomplete } from '../../components/ui/FormElements';
+import CustomFieldRenderer, { validateCustomFields } from '../../components/CustomFieldRenderer';
 import { getStakeholderType } from '../../utils/stakeholderTypes';
 import { supabase } from '../../lib/supabase';
 import { AlertCircle, CheckCircle, Eye, EyeOff, Clock, Mail, ArrowLeft } from 'lucide-react';
@@ -219,6 +220,22 @@ const COUNTRY_DIAL_CODES = [
   { code: '+263', label: 'Zimbabwe (+263)' },
 ];
 
+// Hook: load active custom_user_fields that apply to the given role.
+function useCustomFieldsForRole(role) {
+  const [fields, setFields] = useState([]);
+  useEffect(() => {
+    if (!role) return;
+    supabase
+      .from('custom_user_fields')
+      .select('*')
+      .eq('is_active', true)
+      .contains('applies_to_roles', [role])
+      .order('display_order', { ascending: true })
+      .then(({ data }) => setFields(data || []));
+  }, [role]);
+  return fields;
+}
+
 const fetchGeoapifyOptions = async (text, type) => {
   try {
     const apiKey = import.meta.env.VITE_GEOAPIFY_API_KEY;
@@ -267,6 +284,9 @@ function SimpleClientSignUp() {
   const [googleLoading, setGoogleLoading] = useState(false);
   const [emailVerification, setEmailVerification] = useState(false);
 
+  const customFields = useCustomFieldsForRole('client');
+  const [customValues, setCustomValues] = useState({});
+
   const isValidEmail = (value) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
 
   const handleEmailContinue = (e) => {
@@ -294,6 +314,11 @@ function SimpleClientSignUp() {
       setError(t('auth.validationPasswordMatch'));
       return;
     }
+    const customCheck = validateCustomFields(customFields, customValues);
+    if (!customCheck.valid) {
+      setError(t('auth.validationCustomField', { field: customCheck.errorField }));
+      return;
+    }
 
     setLoading(true);
     const result = await signup({
@@ -303,6 +328,7 @@ function SimpleClientSignUp() {
       referral_code: referralCode,
       role: 'client',
       stakeholder_type: 'client',
+      custom_fields: customValues,
     });
 
     if (result.success) {
@@ -456,6 +482,15 @@ function SimpleClientSignUp() {
             }
           />
 
+          {customFields.map(field => (
+            <CustomFieldRenderer
+              key={field.id}
+              field={field}
+              value={customValues[field.field_key]}
+              onChange={(v) => setCustomValues(prev => ({ ...prev, [field.field_key]: v }))}
+            />
+          ))}
+
           <Button type="submit" variant="primary" size="lg" fullWidth loading={loading}>
             {t('auth.createAccount')}
           </Button>
@@ -476,6 +511,9 @@ function StakeholderSignUpWizard({ stakeholderConfig, registrationType }) {
   const referralCode = searchParams.get('ref') || '';
   const targetRole = stakeholderConfig?.role || 'client';
   const isIndividualStakeholder = targetRole === 'auditor' || registrationType === 'referral' || registrationType === 'investor';
+  // Pure individuals (referral, investor) — no company context at all. Auditors
+  // are individuals but still capture a "practice name" + professional fields.
+  const isPureIndividual = registrationType === 'referral' || registrationType === 'investor';
   const DRAFT_KEY = `signup_draft_${registrationType || 'default'}`;
   const DEFAULT_FORM = {
     company_name: '',
@@ -527,6 +565,9 @@ function StakeholderSignUpWizard({ stakeholderConfig, registrationType }) {
   const [pendingApproval, setPendingApproval] = useState(false);
   const [emailVerification, setEmailVerification] = useState(false);
 
+  const customFields = useCustomFieldsForRole(targetRole);
+  const [customValues, setCustomValues] = useState({});
+
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => {
@@ -550,7 +591,12 @@ function StakeholderSignUpWizard({ stakeholderConfig, registrationType }) {
   const validateStep = () => {
     setError('');
     if (step === 1) {
-      if (isIndividualStakeholder) {
+      if (isPureIndividual) {
+        if (!formData.location) {
+          setError(t('auth.validationCompanyFields'));
+          return false;
+        }
+      } else if (isIndividualStakeholder) {
         if (!formData.activity || !formData.location) {
           setError(t('auth.validationCompanyFields'));
           return false;
@@ -579,6 +625,11 @@ function StakeholderSignUpWizard({ stakeholderConfig, registrationType }) {
         setError(t('auth.validationAuditorDocs'));
         return false;
       }
+      const customCheck = validateCustomFields(customFields, customValues);
+      if (!customCheck.valid) {
+        setError(t('auth.validationCustomField', { field: customCheck.errorField }));
+        return false;
+      }
     }
     return true;
   };
@@ -601,18 +652,21 @@ function StakeholderSignUpWizard({ stakeholderConfig, registrationType }) {
       name: formData.contact_person_name,
       email: formData.email,
       password: formData.password,
-      company_name: formData.company_name,
-      activity: formData.activity,
-      number_of_employees: formData.number_of_employees,
-      number_of_locations: formData.number_of_locations,
-      website: formData.website,
+      // Pure individuals (referral / investor) have no company context — omit
+      // all company-specific fields so admins don't see misleading data.
+      company_name: isPureIndividual ? null : formData.company_name,
+      activity: isPureIndividual ? null : formData.activity,
+      number_of_employees: isPureIndividual ? null : formData.number_of_employees,
+      number_of_locations: isPureIndividual ? null : formData.number_of_locations,
+      website: isPureIndividual ? null : formData.website,
       city: formData.city,
       country: formData.country,
       contact_number: `${formData.contact_code} ${formData.contact_number}`,
-      contact_role: formData.contact_role,
+      contact_role: isPureIndividual ? null : formData.contact_role,
       referral_code: referralCode,
       role: targetRole,
       stakeholder_type: registrationType || 'client',
+      custom_fields: customValues,
     });
 
     if (result.success) {
@@ -700,7 +754,7 @@ function StakeholderSignUpWizard({ stakeholderConfig, registrationType }) {
         onClick={async () => {
           setGoogleLoading(true);
           setError('');
-          const result = await signInWithGoogle();
+          const result = await signInWithGoogle('/auth/callback', registrationType || 'client');
           if (!result.success) {
             setError(result.error);
             setGoogleLoading(false);
@@ -721,7 +775,11 @@ function StakeholderSignUpWizard({ stakeholderConfig, registrationType }) {
       </div>
 
       <div className="signup-steps">
-        {[t('auth.companyInfo'), t('auth.contactCerts'), t('auth.createAccount')].map((label, i) => (
+        {[
+          isPureIndividual ? t('auth.personalInfo') : t('auth.companyInfo'),
+          t('auth.contactCerts'),
+          t('auth.createAccount'),
+        ].map((label, i) => (
           <div key={label} className={`signup-steps__item ${step > i + 1 ? 'signup-steps__item--done' : ''} ${step === i + 1 ? 'signup-steps__item--active' : ''}`}>
             <div className="signup-steps__circle">
               {step > i + 1 ? <CheckCircle size={16} /> : i + 1}
@@ -741,25 +799,29 @@ function StakeholderSignUpWizard({ stakeholderConfig, registrationType }) {
       <form onSubmit={handleSubmit} className="auth-form__body">
         {step === 1 && (
           <>
-            <Input
-              label={isIndividualStakeholder ? t('auth.practiceName') : t('auth.companyName')}
-              id="signup-company"
-              name="company_name"
-              placeholder={isIndividualStakeholder ? t('auth.practiceNamePlaceholder') : t('auth.companyNamePlaceholder')}
-              value={formData.company_name}
-              onChange={handleChange}
-              required={!isIndividualStakeholder}
-            />
+            {!isPureIndividual && (
+              <Input
+                label={isIndividualStakeholder ? t('auth.practiceName') : t('auth.companyName')}
+                id="signup-company"
+                name="company_name"
+                placeholder={isIndividualStakeholder ? t('auth.practiceNamePlaceholder') : t('auth.companyNamePlaceholder')}
+                value={formData.company_name}
+                onChange={handleChange}
+                required={!isIndividualStakeholder}
+              />
+            )}
 
-            <Input
-              label={targetRole === 'auditor' ? t('auth.professionalExpertise') : t('auth.businessActivity')}
-              id="signup-activity"
-              name="activity"
-              placeholder={targetRole === 'auditor' ? t('auth.professionalExpertisePlaceholder') : t('auth.businessActivityPlaceholder')}
-              value={formData.activity}
-              onChange={handleChange}
-              required
-            />
+            {!isPureIndividual && (
+              <Input
+                label={targetRole === 'auditor' ? t('auth.professionalExpertise') : t('auth.businessActivity')}
+                id="signup-activity"
+                name="activity"
+                placeholder={targetRole === 'auditor' ? t('auth.professionalExpertisePlaceholder') : t('auth.businessActivityPlaceholder')}
+                value={formData.activity}
+                onChange={handleChange}
+                required
+              />
+            )}
 
             {!isIndividualStakeholder && (
               <>
@@ -794,17 +856,23 @@ function StakeholderSignUpWizard({ stakeholderConfig, registrationType }) {
 
         {step === 2 && (
           <>
-            <Input label={t('auth.contactPersonName')} id="signup-contact-name" name="contact_person_name"
-              placeholder={t('auth.contactPersonPlaceholder')} value={formData.contact_person_name}
+            <Input
+              label={isPureIndividual ? t('auth.fullName') : t('auth.contactPersonName')}
+              id="signup-contact-name" name="contact_person_name"
+              placeholder={isPureIndividual ? t('auth.fullNamePlaceholder') : t('auth.contactPersonPlaceholder')}
+              value={formData.contact_person_name}
               onChange={handleChange} required />
 
-            <Input label={t('auth.designationRole')} id="signup-contact-role" name="contact_role"
-              placeholder={t('auth.designationPlaceholder')}
-              value={formData.contact_role}
-              onChange={handleChange} />
+            {!isPureIndividual && (
+              <Input label={t('auth.designationRole')} id="signup-contact-role" name="contact_role"
+                placeholder={t('auth.designationPlaceholder')}
+                value={formData.contact_role}
+                onChange={handleChange} />
+            )}
 
             <Input label={t('auth.emailRequired')} type="email" id="signup-email" name="email"
-              placeholder="you@company.com" value={formData.email}
+              placeholder={isPureIndividual ? 'you@example.com' : 'you@company.com'}
+              value={formData.email}
               onChange={handleChange} required />
 
             <div className="form-group">
@@ -913,6 +981,15 @@ function StakeholderSignUpWizard({ stakeholderConfig, registrationType }) {
                 </div>
               </div>
             )}
+
+            {customFields.map(field => (
+              <CustomFieldRenderer
+                key={field.id}
+                field={field}
+                value={customValues[field.field_key]}
+                onChange={(v) => setCustomValues(prev => ({ ...prev, [field.field_key]: v }))}
+              />
+            ))}
 
             <div className="auth-form__row">
               <Button type="button" variant="secondary" size="lg" fullWidth onClick={handleBack}>

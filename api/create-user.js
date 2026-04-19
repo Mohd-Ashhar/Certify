@@ -26,6 +26,7 @@ export default async function handler(req, res) {
       activity, number_of_employees, number_of_locations,
       website, city, country, contact_number, contact_role,
       stakeholder_type, approval_status,
+      custom_fields,
     } = req.body;
 
     const displayName = full_name || name;
@@ -100,6 +101,7 @@ export default async function handler(req, res) {
           region: region || null,
           stakeholder_type: stakeholder_type || 'client',
           approval_status: approval_status || 'approved',
+          ...(custom_fields && typeof custom_fields === 'object' ? { custom_fields } : {}),
         }
       : {
           id: authData.user.id,
@@ -108,6 +110,7 @@ export default async function handler(req, res) {
           role: assignedRole,
           region: region || null,
           company_name: company_name || null,
+          ...(custom_fields && typeof custom_fields === 'object' ? { custom_fields } : {}),
         };
 
     const { error: profileError } = await supabaseAdmin

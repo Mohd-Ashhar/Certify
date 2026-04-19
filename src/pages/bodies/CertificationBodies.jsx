@@ -11,7 +11,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { IAF_COUNTRIES } from '../../utils/countries';
 import { ISO_STANDARD_OPTIONS } from '../../utils/isoStandards';
 import { IAF_SECTOR_CODES } from '../../utils/iafCodes';
-import { Plus, Search, Pencil, Trash2 } from 'lucide-react';
+import { Plus, Search, Pencil, Trash2, Upload, Download, FileText } from 'lucide-react';
 
 const EMPTY_FORM = {
   name: '',
@@ -22,9 +22,8 @@ const EMPTY_FORM = {
   country_ids: [],
   iso_standards: [],
   iaf_codes: [],
-  initial_price: '',
-  surveillance_price: '',
-  recertification_price: '',
+  // Per-standard pricing: { [iso_standard]: { initial, surveillance, recertification } }
+  standard_pricing: {},
   currency: 'USD',
   status: 'active',
 };
@@ -65,7 +64,8 @@ export default function CertificationBodies() {
               accreditation_bodies ( id, name, acronym ) ),
             cb_countries ( country_id, countries ( id, name ) ),
             cb_iso_standards ( iso_standard ),
-            cb_iaf_codes ( iaf_code )
+            cb_iaf_codes ( iaf_code ),
+            cb_standard_pricing ( iso_standard, initial_price, surveillance_price, recertification_price, currency )
           `)
           .order('created_at', { ascending: false }),
         supabase.from('accreditation_bodies').select('id, name, acronym').order('name'),
@@ -122,6 +122,14 @@ export default function CertificationBodies() {
   const openEdit = (row) => {
     setEditingId(row.id);
     setError('');
+    const pricingMap = {};
+    for (const p of row.cb_standard_pricing || []) {
+      pricingMap[p.iso_standard] = {
+        initial: p.initial_price ?? '',
+        surveillance: p.surveillance_price ?? '',
+        recertification: p.recertification_price ?? '',
+      };
+    }
     setFormData({
       name: row.name || '',
       acronym: row.acronym || '',
@@ -132,9 +140,7 @@ export default function CertificationBodies() {
       country_ids: (row.cb_countries || []).map(x => x.country_id),
       iso_standards: (row.cb_iso_standards || []).map(x => x.iso_standard),
       iaf_codes: (row.cb_iaf_codes || []).map(x => x.iaf_code),
-      initial_price: row.initial_price ?? '',
-      surveillance_price: row.surveillance_price ?? '',
-      recertification_price: row.recertification_price ?? '',
+      standard_pricing: pricingMap,
       currency: row.currency || 'USD',
       status: row.status || 'active',
     });
@@ -157,6 +163,7 @@ export default function CertificationBodies() {
         supabase.from('cb_countries').delete().eq('cb_id', cbId),
         supabase.from('cb_iso_standards').delete().eq('cb_id', cbId),
         supabase.from('cb_iaf_codes').delete().eq('cb_id', cbId),
+        supabase.from('cb_standard_pricing').delete().eq('cb_id', cbId),
       ]);
     }
 
@@ -177,11 +184,32 @@ export default function CertificationBodies() {
       iaf_code: code,
     }));
 
+    // Only write pricing rows for standards actually selected AND with at least one price.
+    const pricingRows = data.iso_standards
+      .map(std => {
+        const p = data.standard_pricing[std] || {};
+        const toNum = (v) => v === '' || v == null ? null : Number(v);
+        const initial = toNum(p.initial);
+        const surveillance = toNum(p.surveillance);
+        const recertification = toNum(p.recertification);
+        if (initial == null && surveillance == null && recertification == null) return null;
+        return {
+          cb_id: cbId,
+          iso_standard: std,
+          initial_price: initial,
+          surveillance_price: surveillance,
+          recertification_price: recertification,
+          currency: data.currency || 'USD',
+        };
+      })
+      .filter(Boolean);
+
     const writes = [];
     if (abRows.length) writes.push(supabase.from('cb_accreditation_bodies').insert(abRows));
     if (countryRows.length) writes.push(supabase.from('cb_countries').insert(countryRows));
     if (isoRows.length) writes.push(supabase.from('cb_iso_standards').insert(isoRows));
     if (iafRows.length) writes.push(supabase.from('cb_iaf_codes').insert(iafRows));
+    if (pricingRows.length) writes.push(supabase.from('cb_standard_pricing').insert(pricingRows));
 
     const results = await Promise.all(writes);
     for (const r of results) {
@@ -210,9 +238,6 @@ export default function CertificationBodies() {
         website: formData.website.trim() || null,
         country: formData.country || null,
         status: formData.status || 'active',
-        initial_price: formData.initial_price ? Number(formData.initial_price) : null,
-        surveillance_price: formData.surveillance_price ? Number(formData.surveillance_price) : null,
-        recertification_price: formData.recertification_price ? Number(formData.recertification_price) : null,
         currency: formData.currency || 'USD',
       };
 
@@ -516,51 +541,63 @@ export default function CertificationBodies() {
             paddingTop: 12,
             marginTop: 4,
           }}>
-            <h4 style={{ fontSize: '0.85rem', fontWeight: 600, marginBottom: 8, color: 'var(--color-text-secondary)' }}>
-              {t('certBody.pricing')}
-            </h4>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 100px', gap: 10 }}>
-              <Input
-                label={t('certBody.initialPrice')}
-                name="initial_price"
-                type="number"
-                min="0"
-                step="0.01"
-                value={formData.initial_price}
-                onChange={e => setFormData({ ...formData, initial_price: e.target.value })}
-              />
-              <Input
-                label={t('certBody.surveillancePrice')}
-                name="surveillance_price"
-                type="number"
-                min="0"
-                step="0.01"
-                value={formData.surveillance_price}
-                onChange={e => setFormData({ ...formData, surveillance_price: e.target.value })}
-              />
-              <Input
-                label={t('certBody.recertPrice')}
-                name="recertification_price"
-                type="number"
-                min="0"
-                step="0.01"
-                value={formData.recertification_price}
-                onChange={e => setFormData({ ...formData, recertification_price: e.target.value })}
-              />
-              <Select
-                label={t('certBody.currency')}
-                name="currency"
-                value={formData.currency}
-                onChange={e => setFormData({ ...formData, currency: e.target.value })}
-              >
-                <option value="USD">USD</option>
-                <option value="EUR">EUR</option>
-                <option value="GBP">GBP</option>
-                <option value="AED">AED</option>
-                <option value="INR">INR</option>
-              </Select>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
+              <h4 style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--color-text-secondary)', margin: 0 }}>
+                {t('certBody.pricingPerStandard')}
+              </h4>
+              <div style={{ width: 110 }}>
+                <Select
+                  label=""
+                  name="currency"
+                  value={formData.currency}
+                  onChange={e => setFormData({ ...formData, currency: e.target.value })}
+                >
+                  <option value="USD">USD</option>
+                  <option value="EUR">EUR</option>
+                  <option value="GBP">GBP</option>
+                  <option value="AED">AED</option>
+                  <option value="INR">INR</option>
+                </Select>
+              </div>
             </div>
+
+            {formData.iso_standards.length === 0 ? (
+              <p style={{ fontSize: '0.8rem', color: 'var(--color-text-tertiary)', padding: '8px 0' }}>
+                {t('certBody.pricingSelectStandardsFirst')}
+              </p>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                <div style={{ display: 'grid', gridTemplateColumns: '1.4fr 1fr 1fr 1fr', gap: 10, fontSize: '0.72rem', fontWeight: 600, color: 'var(--color-text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.04em', paddingLeft: 4 }}>
+                  <span>{t('certBody.standard')}</span>
+                  <span>{t('certBody.initial')}</span>
+                  <span>{t('certBody.surveillance')}</span>
+                  <span>{t('certBody.recertification')}</span>
+                </div>
+                {formData.iso_standards.map(std => {
+                  const p = formData.standard_pricing[std] || {};
+                  const setPrice = (key, value) => setFormData(prev => ({
+                    ...prev,
+                    standard_pricing: {
+                      ...prev.standard_pricing,
+                      [std]: { ...(prev.standard_pricing[std] || {}), [key]: value },
+                    },
+                  }));
+                  return (
+                    <div key={std} style={{ display: 'grid', gridTemplateColumns: '1.4fr 1fr 1fr 1fr', gap: 10, alignItems: 'center' }}>
+                      <span style={{ fontSize: '0.85rem', fontWeight: 500, color: 'var(--color-text-primary)', padding: '0 4px' }}>{std}</span>
+                      <input className="form-input" type="number" min="0" step="0.01" placeholder="0.00" value={p.initial ?? ''} onChange={e => setPrice('initial', e.target.value)} />
+                      <input className="form-input" type="number" min="0" step="0.01" placeholder="0.00" value={p.surveillance ?? ''} onChange={e => setPrice('surveillance', e.target.value)} />
+                      <input className="form-input" type="number" min="0" step="0.01" placeholder="0.00" value={p.recertification ?? ''} onChange={e => setPrice('recertification', e.target.value)} />
+                    </div>
+                  );
+                })}
+              </div>
+            )}
           </div>
+
+          {editingId && (
+            <CbDocumentsSection cbId={editingId} canWrite={canEditOrDelete} t={t} user={user} />
+          )}
 
           <Select
             label={t('dashboard.status')}
@@ -582,6 +619,141 @@ export default function CertificationBodies() {
           </div>
         </form>
       </Modal>
+    </div>
+  );
+}
+
+// --- CB Accreditation Schedule Documents (per-CB) ---
+function CbDocumentsSection({ cbId, canWrite, t, user }) {
+  const [docs, setDocs] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const [err, setErr] = useState('');
+
+  const load = async () => {
+    setLoading(true);
+    const { data, error } = await supabase
+      .from('cb_documents')
+      .select('*')
+      .eq('cb_id', cbId)
+      .order('uploaded_at', { ascending: false });
+    if (!error && data) setDocs(data);
+    setLoading(false);
+  };
+
+  useEffect(() => { if (cbId) load(); }, [cbId]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const handleUpload = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setErr('');
+    setUploading(true);
+    try {
+      const { data: row, error: insErr } = await supabase
+        .from('cb_documents')
+        .insert([{
+          cb_id: cbId,
+          file_name: file.name,
+          file_size: `${(file.size / 1024 / 1024).toFixed(2)}MB`,
+          document_type: 'accreditation_schedule',
+          uploaded_by: user?.id || null,
+        }])
+        .select()
+        .single();
+      if (insErr) throw insErr;
+
+      const path = `${cbId}/${row.id}`;
+      const { error: upErr } = await supabase.storage
+        .from('cb-documents')
+        .upload(path, file, { upsert: true });
+      if (upErr) {
+        await supabase.from('cb_documents').delete().eq('id', row.id);
+        throw upErr;
+      }
+      setDocs(prev => [row, ...prev]);
+    } catch (ex) {
+      console.error('CB doc upload error:', ex);
+      setErr(ex.message || t('certBody.docUploadFailed'));
+    } finally {
+      setUploading(false);
+      e.target.value = '';
+    }
+  };
+
+  const handleDownload = async (doc) => {
+    try {
+      const path = `${cbId}/${doc.id}`;
+      const { data, error } = await supabase.storage.from('cb-documents').download(path);
+      if (error) throw error;
+      const url = URL.createObjectURL(data);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = doc.file_name || 'document';
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch (ex) {
+      console.error('CB doc download error:', ex);
+      alert(t('certBody.docDownloadFailed') + ': ' + ex.message);
+    }
+  };
+
+  const handleDelete = async (doc) => {
+    if (!window.confirm(t('certBody.confirmDeleteDoc', { name: doc.file_name }))) return;
+    try {
+      await supabase.storage.from('cb-documents').remove([`${cbId}/${doc.id}`]);
+      const { error } = await supabase.from('cb_documents').delete().eq('id', doc.id);
+      if (error) throw error;
+      setDocs(prev => prev.filter(d => d.id !== doc.id));
+    } catch (ex) {
+      console.error('CB doc delete error:', ex);
+      alert(t('certBody.docDeleteFailed') + ': ' + ex.message);
+    }
+  };
+
+  return (
+    <div style={{ borderTop: '1px solid var(--color-border)', paddingTop: 12 }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+        <h4 style={{ fontSize: '0.85rem', fontWeight: 600, margin: 0, color: 'var(--color-text-secondary)' }}>
+          {t('certBody.accreditationSchedule')}
+        </h4>
+        {canWrite && (
+          <label style={{ display: 'inline-flex', alignItems: 'center', gap: 6, cursor: uploading ? 'wait' : 'pointer', padding: '6px 12px', borderRadius: 6, background: 'var(--color-accent, #3ECF8E)', color: '#fff', fontSize: '0.8rem', fontWeight: 500, opacity: uploading ? 0.7 : 1 }}>
+            <Upload size={12} />
+            {uploading ? t('common.uploading') : t('certBody.uploadDoc')}
+            <input type="file" onChange={handleUpload} disabled={uploading} style={{ display: 'none' }} />
+          </label>
+        )}
+      </div>
+
+      {err && (
+        <div style={{ padding: '8px 10px', background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.3)', color: '#ef4444', borderRadius: 6, fontSize: '0.8rem', marginBottom: 8 }}>
+          {err}
+        </div>
+      )}
+
+      {loading ? (
+        <p style={{ fontSize: '0.8rem', color: 'var(--color-text-tertiary)' }}>{t('common.loading')}</p>
+      ) : docs.length === 0 ? (
+        <p style={{ fontSize: '0.8rem', color: 'var(--color-text-tertiary)', margin: 0 }}>{t('certBody.noDocs')}</p>
+      ) : (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+          {docs.map(d => (
+            <div key={d.id} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 10px', border: '1px solid var(--color-border)', borderRadius: 6, fontSize: '0.85rem' }}>
+              <FileText size={14} style={{ color: 'var(--color-text-tertiary)' }} />
+              <span style={{ flex: 1 }}>{d.file_name}</span>
+              <span style={{ fontSize: '0.75rem', color: 'var(--color-text-tertiary)' }}>{d.file_size || '—'}</span>
+              <button type="button" onClick={() => handleDownload(d)} title={t('common.download')} style={{ background: 'transparent', border: '1px solid var(--color-border)', borderRadius: 4, padding: 4, cursor: 'pointer', color: 'var(--color-text-secondary)' }}>
+                <Download size={12} />
+              </button>
+              {canWrite && (
+                <button type="button" onClick={() => handleDelete(d)} title={t('common.delete')} style={{ background: 'transparent', border: '1px solid rgba(239,68,68,0.4)', borderRadius: 4, padding: 4, cursor: 'pointer', color: '#ef4444' }}>
+                  <Trash2 size={12} />
+                </button>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

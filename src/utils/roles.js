@@ -250,6 +250,32 @@ export function getRegionFromCountry(country) {
   return COUNTRY_REGION_MAP[country.toLowerCase().trim()] || null;
 }
 
+/**
+ * Async version — checks the `countries` DB table first (so admin-managed
+ * country→region links win), then falls back to the static map.
+ *
+ * Pass a configured Supabase client. Returns null if no match found anywhere.
+ */
+export async function getRegionFromCountryAsync(country, supabase) {
+  if (!country) return null;
+  const name = country.trim();
+
+  if (supabase) {
+    try {
+      const { data } = await supabase
+        .from('countries')
+        .select('region_id')
+        .ilike('name', name)
+        .maybeSingle();
+      if (data?.region_id) return data.region_id;
+    } catch {
+      // fall through to static map
+    }
+  }
+
+  return COUNTRY_REGION_MAP[name.toLowerCase()] || null;
+}
+
 // ---------------------------------------------------
 // Certification Lifecycle Statuses
 // ---------------------------------------------------
@@ -416,13 +442,36 @@ export const ROUTE_PERMISSIONS = {
 };
 
 // ---------------------------------------------------
+// Custom Permission Overrides (runtime, set by super admin)
+// ---------------------------------------------------
+// Shape: { [role]: { [permission]: boolean } }
+// - `true`  = grant (overrides a baseline deny)
+// - `false` = revoke (overrides a baseline grant)
+// - missing = fall through to baseline ROLE_PERMISSIONS
+let CUSTOM_PERMISSION_OVERRIDES = {};
+
+/**
+ * Set the full override map. Called by AuthContext after fetching from DB.
+ */
+export function setCustomPermissionOverrides(overrides) {
+  CUSTOM_PERMISSION_OVERRIDES = overrides || {};
+}
+
+export function getCustomPermissionOverrides() {
+  return CUSTOM_PERMISSION_OVERRIDES;
+}
+
+// ---------------------------------------------------
 // Helper Functions
 // ---------------------------------------------------
 
 /**
  * Check if a role has a specific permission.
+ * Applies runtime overrides on top of the baseline ROLE_PERMISSIONS map.
  */
 export function hasPermission(role, permission) {
+  const override = CUSTOM_PERMISSION_OVERRIDES[role]?.[permission];
+  if (typeof override === 'boolean') return override;
   const perms = ROLE_PERMISSIONS[role];
   return perms ? perms.includes(permission) : false;
 }
@@ -442,9 +491,23 @@ export function hasAllPermissions(role, permissions) {
 }
 
 /**
- * Get all permissions for a role.
+ * Get all effective permissions for a role (baseline ± overrides).
  */
 export function getRolePermissions(role) {
+  const baseline = new Set(ROLE_PERMISSIONS[role] || []);
+  const overrides = CUSTOM_PERMISSION_OVERRIDES[role] || {};
+  for (const [perm, enabled] of Object.entries(overrides)) {
+    if (enabled) baseline.add(perm);
+    else baseline.delete(perm);
+  }
+  return Array.from(baseline);
+}
+
+/**
+ * Baseline (pre-override) permissions for a role. Used by the admin
+ * override UI to show what's "default on" before any toggles.
+ */
+export function getBaselineRolePermissions(role) {
   return ROLE_PERMISSIONS[role] || [];
 }
 

@@ -26,11 +26,17 @@ import AdminRegionalAdmins from './pages/admin/AdminRegionalAdmins';
 import AdminAuditors from './pages/admin/AdminAuditors';
 import AdminCertBodies from './pages/admin/AdminCertBodies';
 import AdminAccreditationBodies from './pages/admin/AdminAccreditationBodies';
+import AdminCountries from './pages/admin/AdminCountries';
+import AdminCoupons from './pages/admin/AdminCoupons';
+import AdminCommissionTiers from './pages/admin/AdminCommissionTiers';
 import CertificationBodiesRegistry from './pages/bodies/CertificationBodies';
 import AdminCompanies from './pages/admin/AdminCompanies';
 import ApplicationDetails from './pages/admin/ApplicationDetails';
 import ShareableLinks from './pages/admin/ShareableLinks';
 import RegistrationRequests from './pages/admin/RegistrationRequests';
+import AdminPermissions from './pages/admin/AdminPermissions';
+import AdminUserFields from './pages/admin/AdminUserFields';
+import AdminApplicationFields from './pages/admin/AdminApplicationFields';
 
 // Public Registration Landing
 import RegisterLanding from './pages/register/RegisterLanding';
@@ -178,6 +184,27 @@ function AppRoutes() {
               </ProtectedRoute>
             } />
 
+            {/* Admin — Countries (linked to regions) */}
+            <Route path="/admin/countries" element={
+              <ProtectedRoute allowedRoles={[ROLES.SUPER_ADMIN]}>
+                <AdminCountries />
+              </ProtectedRoute>
+            } />
+
+            {/* Admin — Discount Coupons */}
+            <Route path="/admin/coupons" element={
+              <ProtectedRoute allowedRoles={[ROLES.SUPER_ADMIN]}>
+                <AdminCoupons />
+              </ProtectedRoute>
+            } />
+
+            {/* Admin — Referral Commission Tiers */}
+            <Route path="/admin/commission-tiers" element={
+              <ProtectedRoute allowedRoles={[ROLES.SUPER_ADMIN]}>
+                <AdminCommissionTiers />
+              </ProtectedRoute>
+            } />
+
             {/* Admin — Shareable Links */}
             <Route path="/admin/shareable-links" element={
               <ProtectedRoute requiredPermission={PERMISSIONS.MANAGE_USERS}>
@@ -189,6 +216,27 @@ function AppRoutes() {
             <Route path="/admin/registrations" element={
               <ProtectedRoute requiredPermission={PERMISSIONS.MANAGE_USERS}>
                 <RegistrationRequests />
+              </ProtectedRoute>
+            } />
+
+            {/* Admin — Roles & Permissions (super admin only) */}
+            <Route path="/admin/permissions" element={
+              <ProtectedRoute allowedRoles={[ROLES.SUPER_ADMIN]}>
+                <AdminPermissions />
+              </ProtectedRoute>
+            } />
+
+            {/* Admin — Custom User Fields (super admin only) */}
+            <Route path="/admin/user-fields" element={
+              <ProtectedRoute allowedRoles={[ROLES.SUPER_ADMIN]}>
+                <AdminUserFields />
+              </ProtectedRoute>
+            } />
+
+            {/* Admin — Custom Application Fields (super admin only) */}
+            <Route path="/admin/application-fields" element={
+              <ProtectedRoute allowedRoles={[ROLES.SUPER_ADMIN]}>
+                <AdminApplicationFields />
               </ProtectedRoute>
             } />
 

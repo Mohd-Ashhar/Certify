@@ -2,7 +2,8 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Building2, X } from 'lucide-react';
 import { Input, Select, Button, Autocomplete } from './ui/FormElements';
-import { getRegionFromCountry } from '../utils/roles';
+import { getRegionFromCountryAsync } from '../utils/roles';
+import { supabase } from '../lib/supabase';
 import './ProfileCompletionModal.css';
 
 const EMPLOYEE_RANGES = ['1-10', '11-50', '51-200', '201-500', '501-1000', '1000+'];
@@ -46,7 +47,7 @@ export default function ProfileCompletionModal({ user, onComplete, onSkip }) {
     }
     setSaving(true);
     try {
-      const region = getRegionFromCountry(formData.country);
+      const region = await getRegionFromCountryAsync(formData.country, supabase);
       const res = await fetch('/api/update-profile', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },

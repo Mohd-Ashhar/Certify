@@ -17,6 +17,7 @@ export default async function handler(req, res) {
       // Extended onboarding fields (stored on auth user_metadata since the
       // profiles table does not have columns for them)
       activity, number_of_employees, country, contact_number,
+      custom_fields,
     } = req.body;
 
     if (!userId) {
@@ -32,6 +33,7 @@ export default async function handler(req, res) {
     if (email !== undefined) updates.email = email;
     if (stakeholder_type !== undefined) updates.stakeholder_type = stakeholder_type;
     if (approval_status !== undefined) updates.approval_status = approval_status;
+    if (custom_fields && typeof custom_fields === 'object') updates.custom_fields = custom_fields;
 
     const { error } = await supabaseAdmin
       .from('profiles')

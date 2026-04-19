@@ -4,7 +4,9 @@ import { useTranslation } from 'react-i18next';
 import { supabase } from '../../lib/supabase';
 import StatusBadge from '../../components/ui/StatusBadge';
 import { Button, Select } from '../../components/ui/FormElements';
-import { ArrowLeft, CheckCircle, FileText, Download, Building, Users, Target, Activity, Globe, ClipboardCheck, XCircle, CheckCircle2, AlertCircle, Award, ShieldCheck } from 'lucide-react';
+import Modal from '../../components/ui/Modal';
+import CustomFieldRenderer, { validateCustomFields } from '../../components/CustomFieldRenderer';
+import { ArrowLeft, CheckCircle, FileText, Download, Building, Users, Target, Activity, Globe, ClipboardCheck, XCircle, CheckCircle2, AlertCircle, Award, ShieldCheck, Upload, Trash2 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { ROLES, REGIONS } from '../../utils/roles';
 import './ApplicationDetails.css';
@@ -77,6 +79,7 @@ export default function ApplicationDetails() {
   const isRegionalAdmin = user?.role === ROLES.REGIONAL_ADMIN;
   const isAuditor = user?.role === ROLES.AUDITOR;
   const isCB = user?.role === ROLES.CERTIFICATION_BODY;
+  const canUploadDocs = canAssign;
 
   const [application, setApplication] = useState(null);
   const [auditors, setAuditors] = useState([]);
@@ -103,6 +106,14 @@ export default function ApplicationDetails() {
   // CB form states
   const [cbComment, setCbComment] = useState('');
   const [submittingCbDecision, setSubmittingCbDecision] = useState(false);
+  const [decisionModal, setDecisionModal] = useState(null); // 'approved' | 'rejected' | null
+  const [decisionFields, setDecisionFields] = useState([]);
+  const [decisionValues, setDecisionValues] = useState({});
+  const [decisionError, setDecisionError] = useState('');
+
+  // Admin upload state
+  const [uploading, setUploading] = useState(false);
+  const [uploadError, setUploadError] = useState('');
 
   useEffect(() => {
     const fetchData = async () => {
@@ -242,19 +253,55 @@ export default function ApplicationDetails() {
     } finally { setSubmittingAudit(false); }
   };
 
+  // --- CB: Open Decision Modal (fetches custom fields for this trigger) ---
+  const openDecisionModal = async (decision) => {
+    setDecisionError('');
+    setDecisionValues({});
+    setDecisionModal(decision);
+    const { data } = await supabase
+      .from('custom_application_fields')
+      .select('*')
+      .eq('is_active', true)
+      .contains('trigger_on', [decision])
+      .order('display_order', { ascending: true });
+    setDecisionFields(data || []);
+  };
+
+  const closeDecisionModal = () => {
+    setDecisionModal(null);
+    setDecisionFields([]);
+    setDecisionValues({});
+    setDecisionError('');
+  };
+
   // --- CB: Certification Decision ---
-  const handleCbDecision = async (decision) => {
+  const handleCbDecision = async () => {
+    const decision = decisionModal;
+    if (!decision) return;
+
+    const { valid, errorField } = validateCustomFields(decisionFields, decisionValues);
+    if (!valid) {
+      setDecisionError(t('auth.validationCustomField', { field: errorField }));
+      return;
+    }
+
     setSubmittingCbDecision(true);
     try {
+      const payload = {
+        status: decision,
+        ...(cbComment ? { internal_notes: `[CB Decision] ${cbComment}` } : {}),
+        ...(decision === 'approved' ? { approval_data: decisionValues } : { rejection_data: decisionValues }),
+      };
       const { error } = await supabase
         .from('applications')
-        .update({ status: decision, internal_notes: cbComment ? `[CB Decision] ${cbComment}` : undefined })
+        .update(payload)
         .eq('id', id);
 
       if (error) throw error;
 
       setApplication(prev => ({ ...prev, status: decision }));
       setStatus(decision);
+      closeDecisionModal();
       showToast(decision === 'approved' ? t('admin.certApprovedSuccess') : t('admin.certRejectedSuccess'));
     } catch (err) {
       console.error('Error submitting CB decision:', err);
@@ -277,6 +324,58 @@ export default function ApplicationDetails() {
     } catch (err) {
       console.error('Error downloading document', err);
       alert(t('admin.noFileContent'));
+    }
+  };
+
+  const handleAdminUpload = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploadError('');
+    setUploading(true);
+    try {
+      const { data: docRow, error: insErr } = await supabase.from('documents').insert([{
+        application_id: id,
+        client_id: application?.client_id || null,
+        file_name: file.name,
+        file_size: `${(file.size / 1024 / 1024).toFixed(2)}MB`,
+        document_type: 'admin_upload',
+        uploaded_by: user.id,
+        uploader_role: user.role,
+      }]).select().single();
+      if (insErr) throw insErr;
+
+      const storagePath = `${id}/${docRow.id}`;
+      const { error: upErr } = await supabase.storage
+        .from('application-documents')
+        .upload(storagePath, file, { upsert: true });
+
+      if (upErr) {
+        await supabase.from('documents').delete().eq('id', docRow.id);
+        throw upErr;
+      }
+      setDocuments(prev => [docRow, ...prev]);
+      showToast(t('admin.docUploaded'));
+    } catch (err) {
+      console.error('Admin upload error:', err);
+      setUploadError(err.message || t('admin.failedDocUpload'));
+    } finally {
+      setUploading(false);
+      e.target.value = '';
+    }
+  };
+
+  const handleAdminDeleteDoc = async (doc) => {
+    if (!window.confirm(t('admin.confirmDeleteDoc', { name: doc.file_name }))) return;
+    try {
+      const storagePath = `${id}/${doc.id}`;
+      await supabase.storage.from('application-documents').remove([storagePath]);
+      const { error: delErr } = await supabase.from('documents').delete().eq('id', doc.id);
+      if (delErr) throw delErr;
+      setDocuments(prev => prev.filter(d => d.id !== doc.id));
+      showToast(t('admin.docDeleted'));
+    } catch (err) {
+      console.error('Delete doc error:', err);
+      alert(t('admin.failedDocDelete') + ': ' + err.message);
     }
   };
 
@@ -450,7 +549,7 @@ export default function ApplicationDetails() {
                   <div style={{ display: 'flex', gap: '12px' }}>
                     <Button
                       variant="primary"
-                      onClick={() => handleCbDecision('approved')}
+                      onClick={() => openDecisionModal('approved')}
                       disabled={submittingCbDecision}
                       style={{ flex: 1, justifyContent: 'center' }}
                     >
@@ -458,7 +557,7 @@ export default function ApplicationDetails() {
                     </Button>
                     <Button
                       variant="outline"
-                      onClick={() => handleCbDecision('rejected')}
+                      onClick={() => openDecisionModal('rejected')}
                       disabled={submittingCbDecision}
                       style={{ flex: 1, justifyContent: 'center', color: '#ef4444', borderColor: '#ef4444' }}
                     >
@@ -576,7 +675,21 @@ export default function ApplicationDetails() {
 
       {/* DOCUMENTS SECTION */}
       <div className="app-card" style={{ marginTop: '1.5rem' }}>
-        <h3 className="app-card-title">{isAuditor ? t('admin.documentReview') : t('dashboard.uploadedDocs')}</h3>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, flexWrap: 'wrap', marginBottom: '0.75rem' }}>
+          <h3 className="app-card-title" style={{ margin: 0 }}>{isAuditor ? t('admin.documentReview') : t('dashboard.uploadedDocs')}</h3>
+          {canUploadDocs && (
+            <label style={{ display: 'inline-flex', alignItems: 'center', gap: 6, cursor: uploading ? 'wait' : 'pointer', padding: '8px 14px', borderRadius: 8, background: 'var(--color-accent, #3ECF8E)', color: '#fff', fontSize: '0.85rem', fontWeight: 500, opacity: uploading ? 0.7 : 1 }}>
+              <Upload size={14} />
+              {uploading ? t('common.uploading') : t('admin.uploadDocument')}
+              <input type="file" onChange={handleAdminUpload} disabled={uploading} style={{ display: 'none' }} />
+            </label>
+          )}
+        </div>
+        {uploadError && (
+          <div style={{ padding: '10px 12px', background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.3)', color: '#ef4444', borderRadius: 6, fontSize: '0.85rem', marginBottom: '0.75rem' }}>
+            {uploadError}
+          </div>
+        )}
         {documents.length === 0 ? (
           <p className="no-docs">{t('admin.noDocsAttached')}</p>
         ) : (
@@ -601,6 +714,11 @@ export default function ApplicationDetails() {
                       </span>
                     )}
                     <Button variant="outline" size="sm" onClick={() => handleDownload(doc)}><Download size={14} /> Download</Button>
+                    {canUploadDocs && (
+                      <Button variant="outline" size="sm" onClick={() => handleAdminDeleteDoc(doc)} style={{ color: '#ef4444', borderColor: 'rgba(239,68,68,0.4)' }}>
+                        <Trash2 size={14} />
+                      </Button>
+                    )}
                   </div>
                 </div>
 
@@ -627,6 +745,49 @@ export default function ApplicationDetails() {
           </div>
         )}
       </div>
+
+      <Modal
+        isOpen={!!decisionModal}
+        onClose={closeDecisionModal}
+        title={decisionModal === 'approved' ? t('admin.approveCert') : t('common.reject')}
+        size="md"
+      >
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+          {decisionError && (
+            <div style={{ padding: '10px 12px', background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.3)', color: '#ef4444', borderRadius: 6, fontSize: '0.85rem' }}>
+              {decisionError}
+            </div>
+          )}
+          {decisionFields.length === 0 ? (
+            <p style={{ margin: 0, fontSize: '0.9rem', color: 'var(--color-text-secondary)' }}>
+              {decisionModal === 'approved' ? t('admin.confirmApproveCert') : t('admin.confirmRejectCert')}
+            </p>
+          ) : (
+            decisionFields.map(f => (
+              <CustomFieldRenderer
+                key={f.id}
+                field={f}
+                value={decisionValues[f.field_key]}
+                onChange={(v) => setDecisionValues(prev => ({ ...prev, [f.field_key]: v }))}
+              />
+            ))
+          )}
+          <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end', marginTop: 8 }}>
+            <Button type="button" variant="ghost" onClick={closeDecisionModal} disabled={submittingCbDecision}>
+              {t('common.cancel')}
+            </Button>
+            <Button
+              type="button"
+              variant="primary"
+              onClick={handleCbDecision}
+              loading={submittingCbDecision}
+              style={decisionModal === 'rejected' ? { background: '#ef4444', borderColor: '#ef4444' } : {}}
+            >
+              {decisionModal === 'approved' ? t('admin.approveCert') : t('common.reject')}
+            </Button>
+          </div>
+        </div>
+      </Modal>
     </div>
   );
 }

@@ -24,6 +24,12 @@ import {
   Gift,
   Link2,
   UserPlus,
+  Globe,
+  Ticket,
+  TrendingUp,
+  KeyRound,
+  FormInput,
+  ClipboardList,
 } from 'lucide-react';
 import './Sidebar.css';
 
@@ -42,9 +48,15 @@ export default function Sidebar({ isOpen, onClose, collapsed, onToggleCollapse }
     { path: '/admin/cert-bodies', labelKey: 'nav.certBodies', icon: Award, permissions: [PERMISSIONS.MANAGE_BODIES] },
     { path: '/admin/cb-registry', labelKey: 'nav.cbRegistry', icon: Building, permissions: [PERMISSIONS.MANAGE_BODIES] },
     { path: '/admin/accreditation-bodies', labelKey: 'nav.accreditationBodies', icon: Stamp, permissions: [PERMISSIONS.MANAGE_BODIES] },
+    { path: '/admin/countries', labelKey: 'nav.countries', icon: Globe, permissions: [PERMISSIONS.MANAGE_REGIONS] },
+    { path: '/admin/coupons', labelKey: 'nav.coupons', icon: Ticket, permissions: [PERMISSIONS.VIEW_DASHBOARD], allowedRoles: [ROLES.SUPER_ADMIN] },
+    { path: '/admin/commission-tiers', labelKey: 'nav.commissionTiers', icon: TrendingUp, permissions: [PERMISSIONS.VIEW_DASHBOARD], allowedRoles: [ROLES.SUPER_ADMIN] },
     { path: '/admin/users', labelKey: 'nav.users', icon: Users, permissions: [PERMISSIONS.CREATE_ADMINS, PERMISSIONS.MANAGE_AUDITORS] },
     { path: '/admin/shareable-links', labelKey: 'nav.shareableLinks', icon: Link2, permissions: [PERMISSIONS.MANAGE_USERS] },
     { path: '/admin/registrations', labelKey: 'nav.registrations', icon: UserPlus, permissions: [PERMISSIONS.MANAGE_USERS] },
+    { path: '/admin/permissions', labelKey: 'nav.permissions', icon: KeyRound, permissions: [PERMISSIONS.VIEW_DASHBOARD], allowedRoles: [ROLES.SUPER_ADMIN] },
+    { path: '/admin/user-fields', labelKey: 'nav.userFields', icon: FormInput, permissions: [PERMISSIONS.VIEW_DASHBOARD], allowedRoles: [ROLES.SUPER_ADMIN] },
+    { path: '/admin/application-fields', labelKey: 'nav.applicationFields', icon: ClipboardList, permissions: [PERMISSIONS.VIEW_DASHBOARD], allowedRoles: [ROLES.SUPER_ADMIN] },
     { path: '/referrals', labelKey: 'nav.referrals', icon: Gift, permissions: [PERMISSIONS.VIEW_DASHBOARD], excludeRoles: [ROLES.SUPER_ADMIN, ROLES.REGIONAL_ADMIN] },
     { path: '/profile', labelKey: 'nav.myProfile', icon: User, permissions: [PERMISSIONS.MANAGE_SETTINGS] },
     { path: '/notifications', labelKey: 'nav.notifications', icon: Bell, permissions: [PERMISSIONS.VIEW_DASHBOARD] },
@@ -53,7 +65,8 @@ export default function Sidebar({ isOpen, onClose, collapsed, onToggleCollapse }
 
   const filteredNav = navItems.filter(item =>
     hasAnyPermission(user?.role, item.permissions) &&
-    !(item.excludeRoles && item.excludeRoles.includes(user?.role))
+    !(item.excludeRoles && item.excludeRoles.includes(user?.role)) &&
+    (!item.allowedRoles || item.allowedRoles.includes(user?.role))
   );
 
   return (
