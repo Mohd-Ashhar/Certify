@@ -16,7 +16,23 @@ export default async function handler(req, res) {
       return res.status(400).json({ valid: false, error: 'Missing code' });
     }
 
-    const normalized = code.trim().toUpperCase();
+    // Accept either a raw code ("SAVE10-06CER") or a full share URL
+    // ("https://certify.cx/signup?coupon=SAVE10-06CER"). When a URL is pasted,
+    // pull the coupon out of the query string so admins can share/paste links
+    // directly without users having to strip them manually.
+    let extracted = code.trim();
+    if (/^https?:\/\//i.test(extracted) || extracted.includes('?') || extracted.includes('=')) {
+      try {
+        const url = new URL(extracted, 'https://placeholder.local');
+        const fromQuery = url.searchParams.get('coupon') || url.searchParams.get('code');
+        if (fromQuery) extracted = fromQuery;
+      } catch {
+        const m = extracted.match(/[?&](?:coupon|code)=([^&\s]+)/i);
+        if (m) extracted = decodeURIComponent(m[1]);
+      }
+    }
+
+    const normalized = extracted.trim().toUpperCase();
 
     const { data: coupon, error } = await supabaseAdmin
       .from('discount_coupons')

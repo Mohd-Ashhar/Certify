@@ -71,8 +71,24 @@ export default function PaymentPlaceholder() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  const extractCouponCode = (raw) => {
+    const trimmed = (raw || '').trim();
+    if (!trimmed) return '';
+    if (/^https?:\/\//i.test(trimmed) || trimmed.includes('?') || trimmed.includes('=')) {
+      try {
+        const url = new URL(trimmed, 'https://placeholder.local');
+        const fromQuery = url.searchParams.get('coupon') || url.searchParams.get('code');
+        if (fromQuery) return fromQuery.trim();
+      } catch {
+        const m = trimmed.match(/[?&](?:coupon|code)=([^&\s]+)/i);
+        if (m) return decodeURIComponent(m[1]).trim();
+      }
+    }
+    return trimmed;
+  };
+
   const validateCoupon = async (codeOverride) => {
-    const code = (codeOverride ?? couponInput).trim();
+    const code = extractCouponCode(codeOverride ?? couponInput);
     if (!code) return;
     setValidatingCoupon(true);
     setCouponError('');
