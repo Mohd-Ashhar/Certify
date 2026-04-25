@@ -328,6 +328,9 @@
     "locationsCount": "Number of Locations",
     "submitApplication": "Submit Application",
     "fillAllFields": "Please fill in all fields.",
+    "selectClient": "Submit on behalf of",
+    "selectClientPlaceholder": "Select a client",
+    "selectClientRequired": "Please select a client to submit this application for.",
     "industries": {
       "manufacturing": "Manufacturing",
       "itSoftware": "IT & Software",
@@ -734,7 +737,11 @@
     "confirmDelete": "Are you sure you want to delete \"{{name}}\"?",
     "deleteFailed": "Failed to delete country",
     "loading": "Loading countries...",
-    "empty": "No countries found."
+    "empty": "No countries found.",
+    "autoAssignRegions": "Auto-assign regions",
+    "autoAssignNoMatches": "No unassigned countries match the built-in country→region mapping. Edit countries individually to set their region.",
+    "autoAssignConfirm": "Auto-assign regions to {{count}} unassigned countries? Existing assignments will not be overwritten.",
+    "autoAssignDone": "Auto-assign complete. Updated: {{success}}. Failed: {{failed}}."
   },
   "accBody": {
     "title": "Accreditation Bodies",
@@ -813,6 +820,8 @@
     "shareLink": "Share Link",
     "sharePreview": "Share link:",
     "regenerate": "Regenerate",
+    "custom": "Custom",
+    "customPercentPlaceholder": "Enter custom % (e.g. 12.5)",
     "loading": "Loading coupons...",
     "empty": "No coupons yet. Create your first discount coupon.",
     "codeRequired": "Please enter a code.",

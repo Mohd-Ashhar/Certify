@@ -113,7 +113,7 @@ function AppRoutes() {
               </ProtectedRoute>
             } />
             <Route path="/client/apply" element={
-              <ProtectedRoute allowedRoles={[ROLES.CLIENT]}>
+              <ProtectedRoute requiredPermission={PERMISSIONS.CREATE_CERTIFICATION}>
                 <ApplicationForm />
               </ProtectedRoute>
             } />

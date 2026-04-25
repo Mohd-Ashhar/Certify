@@ -1,10 +1,11 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { CheckCircle2 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { supabase } from '../../lib/supabase';
 import { Input, Select, Textarea, Button } from '../../components/ui/FormElements';
+import { ROLES } from '../../utils/roles';
 import './ApplicationForm.css';
 
 const INDUSTRIES = [
@@ -34,9 +35,12 @@ export default function ApplicationForm() {
   const location = useLocation();
   const selectedPackage = location.state?.package || null;
 
+  const isClient = user?.role === ROLES.CLIENT;
+  const isAdmin = user?.role === ROLES.SUPER_ADMIN || user?.role === ROLES.REGIONAL_ADMIN;
+
   const meta = user?.user_metadata || {};
-  const prefilledEmployees = parseEmployeeRange(meta.number_of_employees);
-  const prefilledLocations = meta.number_of_locations ? String(meta.number_of_locations) : '';
+  const prefilledEmployees = isClient ? parseEmployeeRange(meta.number_of_employees) : '';
+  const prefilledLocations = isClient && meta.number_of_locations ? String(meta.number_of_locations) : '';
   const hasPrefilledEmployees = Boolean(prefilledEmployees);
   const hasPrefilledLocations = Boolean(prefilledLocations);
 
@@ -45,11 +49,34 @@ export default function ApplicationForm() {
     industry: '',
     scope: '',
     employeeCount: prefilledEmployees || '',
-    locationsCount: prefilledLocations || ''
+    locationsCount: prefilledLocations || '',
+    clientId: '',
   });
-  
+
+  const [clients, setClients] = useState([]);
+  const [loadingClients, setLoadingClients] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+
+  useEffect(() => {
+    if (!isAdmin) return;
+    let cancelled = false;
+    (async () => {
+      setLoadingClients(true);
+      let query = supabase
+        .from('profiles')
+        .select('id, name, email, company_name, region')
+        .eq('role', 'client')
+        .order('company_name', { ascending: true });
+      if (user?.role === ROLES.REGIONAL_ADMIN && user?.region) {
+        query = query.eq('region', user.region);
+      }
+      const { data } = await query;
+      if (!cancelled && data) setClients(data);
+      setLoadingClients(false);
+    })();
+    return () => { cancelled = true; };
+  }, [isAdmin, user?.role, user?.region]);
   
   const handleChange = (e) => {
     const { id, value } = e.target;
@@ -64,9 +91,24 @@ export default function ApplicationForm() {
     setLoading(true);
     setError(null);
 
-    const submittedCompanyName = user?.company_name || formData.companyName;
+    let clientIdForRow;
+    let companyNameForRow;
 
-    if (!submittedCompanyName || !formData.industry || !formData.scope || !formData.employeeCount || !formData.locationsCount) {
+    if (isAdmin) {
+      if (!formData.clientId) {
+        setError(t('application.selectClientRequired'));
+        setLoading(false);
+        return;
+      }
+      const selectedClient = clients.find(c => c.id === formData.clientId);
+      clientIdForRow = formData.clientId;
+      companyNameForRow = selectedClient?.company_name || formData.companyName;
+    } else {
+      clientIdForRow = user.id;
+      companyNameForRow = user?.company_name || formData.companyName;
+    }
+
+    if (!companyNameForRow || !formData.industry || !formData.scope || !formData.employeeCount || !formData.locationsCount) {
       setError(t('application.fillAllFields'));
       setLoading(false);
       return;
@@ -76,8 +118,8 @@ export default function ApplicationForm() {
       const { error: submitError } = await supabase
         .from('applications')
         .insert({
-          client_id: user.id,
-          company_name: submittedCompanyName,
+          client_id: clientIdForRow,
+          company_name: companyNameForRow,
           industry: formData.industry,
           scope: formData.scope,
           employee_count: parseInt(formData.employeeCount, 10),
@@ -88,16 +130,21 @@ export default function ApplicationForm() {
 
       if (submitError) throw submitError;
 
+      if (isAdmin) {
+        navigate('/admin/applications');
+        return;
+      }
+
       if (!user?.company_name) {
         const { error: profileError } = await supabase
           .from('profiles')
           .update({ company_name: formData.companyName })
           .eq('id', user.id);
-          
+
         if (profileError) {
           console.error('Failed to update profile company name:', profileError);
         }
-        
+
         // Force reload to update context and navigate
         window.location.href = getRoleDashboard(user?.role);
         return;
@@ -140,9 +187,30 @@ export default function ApplicationForm() {
             </div>
           )}
           {error && <div className="application-form__error">{error}</div>}
-          
+
+          {isAdmin && (
+            <Select
+              id="clientId"
+              label={t('application.selectClient')}
+              value={formData.clientId}
+              onChange={handleChange}
+              required
+              disabled={loading || loadingClients}
+            >
+              <option value="" disabled>
+                {loadingClients ? t('common.loading') : t('application.selectClientPlaceholder')}
+              </option>
+              {clients.map(c => (
+                <option key={c.id} value={c.id}>
+                  {c.company_name || c.name || c.email}
+                  {c.email ? ` — ${c.email}` : ''}
+                </option>
+              ))}
+            </Select>
+          )}
+
           <div className="application-form__row">
-            {!user?.company_name && (
+            {!isAdmin && !user?.company_name && (
               <Input
                 id="companyName"
                 label={t('application.companyName')}
@@ -154,7 +222,7 @@ export default function ApplicationForm() {
               />
             )}
 
-            <div style={user?.company_name ? { gridColumn: '1 / -1' } : {}}>
+            <div style={(isAdmin || user?.company_name) ? { gridColumn: '1 / -1' } : {}}>
               <Select
                 id="industry"
                 label={t('application.industry')}

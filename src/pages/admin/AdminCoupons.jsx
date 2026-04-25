@@ -40,6 +40,7 @@ export default function AdminCoupons() {
   const [showModal, setShowModal] = useState(false);
   const [editingId, setEditingId] = useState(null);
   const [formData, setFormData] = useState(EMPTY);
+  const [customDiscount, setCustomDiscount] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
   const [copiedId, setCopiedId] = useState(null);
@@ -60,6 +61,7 @@ export default function AdminCoupons() {
     if (!canWrite) return;
     setEditingId(null);
     setFormData({ ...EMPTY, code: genCode(10) });
+    setCustomDiscount(false);
     setError('');
     setShowModal(true);
   };
@@ -67,14 +69,16 @@ export default function AdminCoupons() {
   const openEdit = (row) => {
     if (!canWrite) return;
     setEditingId(row.id);
+    const pct = Number(row.discount_percent) || 10;
     setFormData({
       code: row.code || '',
       description: row.description || '',
-      discount_percent: row.discount_percent || 10,
+      discount_percent: pct,
       max_redemptions: row.max_redemptions ?? '',
       expires_at: row.expires_at ? row.expires_at.slice(0, 10) : '',
       is_active: !!row.is_active,
     });
+    setCustomDiscount(!DISCOUNT_PRESETS.includes(pct));
     setError('');
     setShowModal(true);
   };
@@ -83,6 +87,7 @@ export default function AdminCoupons() {
     setShowModal(false);
     setEditingId(null);
     setFormData(EMPTY);
+    setCustomDiscount(false);
     setError('');
   };
 
@@ -412,38 +417,67 @@ export default function AdminCoupons() {
           <div>
             <label className="form-label">{t('coupons.discount')}</label>
             <div style={{ display: 'flex', gap: 6, marginBottom: 8, flexWrap: 'wrap' }}>
-              {DISCOUNT_PRESETS.map(p => (
-                <button
-                  key={p}
-                  type="button"
-                  onClick={() => setFormData(f => ({ ...f, discount_percent: p }))}
-                  style={{
-                    padding: '6px 14px',
-                    borderRadius: 6,
-                    border: Number(formData.discount_percent) === p
-                      ? '2px solid var(--color-accent, #3ECF8E)'
-                      : '1px solid var(--color-border)',
-                    background: Number(formData.discount_percent) === p
-                      ? 'rgba(62,207,142,0.1)'
-                      : 'transparent',
-                    cursor: 'pointer',
-                    fontWeight: 600,
-                    fontSize: '0.85rem',
-                  }}
-                >
-                  {p}%
-                </button>
-              ))}
+              {DISCOUNT_PRESETS.map(p => {
+                const isSelected = !customDiscount && Number(formData.discount_percent) === p;
+                return (
+                  <button
+                    key={p}
+                    type="button"
+                    onClick={() => {
+                      setCustomDiscount(false);
+                      setFormData(f => ({ ...f, discount_percent: p }));
+                    }}
+                    style={{
+                      padding: '6px 14px',
+                      borderRadius: 6,
+                      border: isSelected
+                        ? '2px solid var(--color-accent, #3ECF8E)'
+                        : '1px solid var(--color-border)',
+                      background: isSelected
+                        ? 'rgba(62,207,142,0.1)'
+                        : 'transparent',
+                      cursor: 'pointer',
+                      fontWeight: 600,
+                      fontSize: '0.85rem',
+                    }}
+                  >
+                    {p}%
+                  </button>
+                );
+              })}
+              <button
+                type="button"
+                onClick={() => setCustomDiscount(true)}
+                style={{
+                  padding: '6px 14px',
+                  borderRadius: 6,
+                  border: customDiscount
+                    ? '2px solid var(--color-accent, #3ECF8E)'
+                    : '1px solid var(--color-border)',
+                  background: customDiscount
+                    ? 'rgba(62,207,142,0.1)'
+                    : 'transparent',
+                  cursor: 'pointer',
+                  fontWeight: 600,
+                  fontSize: '0.85rem',
+                }}
+              >
+                {t('coupons.custom')}
+              </button>
             </div>
-            <Input
-              type="number"
-              name="discount_percent"
-              min="1"
-              max="100"
-              value={formData.discount_percent}
-              onChange={e => setFormData({ ...formData, discount_percent: e.target.value })}
-              required
-            />
+            {customDiscount && (
+              <Input
+                type="number"
+                name="discount_percent"
+                min="1"
+                max="100"
+                step="0.01"
+                value={formData.discount_percent}
+                onChange={e => setFormData({ ...formData, discount_percent: e.target.value })}
+                placeholder={t('coupons.customPercentPlaceholder')}
+                required
+              />
+            )}
           </div>
 
           <Input

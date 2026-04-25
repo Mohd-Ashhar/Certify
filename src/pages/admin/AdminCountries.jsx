@@ -5,10 +5,10 @@ import Modal from '../../components/ui/Modal';
 import { Button, Input, Select } from '../../components/ui/FormElements';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
-import { ROLES, REGIONS, getRegionLabel } from '../../utils/roles';
-import { Plus, Search, Pencil, Trash2 } from 'lucide-react';
+import { ROLES, REGIONS, getRegionLabel, getRegionFromCountry } from '../../utils/roles';
+import { Plus, Search, Pencil, Trash2, Wand2 } from 'lucide-react';
 
-const EMPTY = { name: '', iso_code: '', region_id: '' };
+const EMPTY = { name: '', region_id: '' };
 
 export default function AdminCountries() {
   const { t } = useTranslation();
@@ -27,12 +27,13 @@ export default function AdminCountries() {
   const [formData, setFormData] = useState(EMPTY);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
+  const [autoAssigning, setAutoAssigning] = useState(false);
 
   const fetchData = async () => {
     setFetching(true);
     const { data, error: err } = await supabase
       .from('countries')
-      .select('id, name, iso_code, region_id')
+      .select('id, name, region_id')
       .order('name');
     if (!err && data) setItems(data);
     setFetching(false);
@@ -53,7 +54,6 @@ export default function AdminCountries() {
     setEditingId(row.id);
     setFormData({
       name: row.name || '',
-      iso_code: row.iso_code || '',
       region_id: row.region_id || '',
     });
     setError('');
@@ -83,7 +83,6 @@ export default function AdminCountries() {
     try {
       const payload = {
         name: formData.name.trim(),
-        iso_code: formData.iso_code.trim() || null,
         region_id: formData.region_id,
       };
 
@@ -110,6 +109,34 @@ export default function AdminCountries() {
     }
   };
 
+  const handleAutoAssign = async () => {
+    if (!canWrite) return;
+    const candidates = items
+      .map(c => ({ ...c, _suggested: getRegionFromCountry(c.name) }))
+      .filter(c => !c.region_id && c._suggested);
+
+    if (candidates.length === 0) {
+      alert(t('countries.autoAssignNoMatches'));
+      return;
+    }
+
+    if (!window.confirm(t('countries.autoAssignConfirm', { count: candidates.length }))) return;
+
+    setAutoAssigning(true);
+    let success = 0;
+    let failed = 0;
+    for (const c of candidates) {
+      const { error: upErr } = await supabase
+        .from('countries')
+        .update({ region_id: c._suggested, updated_at: new Date().toISOString() })
+        .eq('id', c.id);
+      if (upErr) failed += 1; else success += 1;
+    }
+    setAutoAssigning(false);
+    await fetchData();
+    alert(t('countries.autoAssignDone', { success, failed }));
+  };
+
   const handleDelete = async (row) => {
     if (!canWrite) return;
     if (!window.confirm(t('countries.confirmDelete', { name: row.name }))) return;
@@ -129,9 +156,7 @@ export default function AdminCountries() {
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
     return items.filter(c => {
-      const matchSearch = !q ||
-        c.name?.toLowerCase().includes(q) ||
-        c.iso_code?.toLowerCase().includes(q);
+      const matchSearch = !q || c.name?.toLowerCase().includes(q);
       const matchRegion = !regionFilter || c.region_id === regionFilter;
       return matchSearch && matchRegion;
     });
@@ -139,7 +164,6 @@ export default function AdminCountries() {
 
   const columns = [
     { key: 'name', label: t('countries.country'), render: (v) => v || '—' },
-    { key: 'iso_code', label: t('countries.isoCode'), render: (v) => v || '—' },
     {
       key: 'region_id',
       label: t('admin.region'),
@@ -200,9 +224,14 @@ export default function AdminCountries() {
           <p className="page-subtitle">{t('countries.subtitle', { count: filtered.length })}</p>
         </div>
         {canWrite && (
-          <Button variant="primary" size="md" onClick={openCreate}>
-            <Plus size={16} /> {t('countries.addCountry')}
-          </Button>
+          <div style={{ display: 'flex', gap: 8 }}>
+            <Button variant="ghost" size="md" onClick={handleAutoAssign} loading={autoAssigning}>
+              <Wand2 size={16} /> {t('countries.autoAssignRegions')}
+            </Button>
+            <Button variant="primary" size="md" onClick={openCreate}>
+              <Plus size={16} /> {t('countries.addCountry')}
+            </Button>
+          </div>
         )}
       </div>
 
@@ -265,15 +294,6 @@ export default function AdminCountries() {
             value={formData.name}
             onChange={e => setFormData({ ...formData, name: e.target.value })}
             required
-          />
-
-          <Input
-            label={t('countries.isoCode')}
-            name="iso_code"
-            placeholder="e.g. IN, US, GB"
-            maxLength={3}
-            value={formData.iso_code}
-            onChange={e => setFormData({ ...formData, iso_code: e.target.value.toUpperCase() })}
           />
 
           <Select

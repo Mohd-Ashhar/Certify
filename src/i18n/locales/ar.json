@@ -328,6 +328,9 @@
     "locationsCount": "عدد المواقع",
     "submitApplication": "تقديم الطلب",
     "fillAllFields": "يرجى ملء جميع الحقول.",
+    "selectClient": "تقديم نيابة عن",
+    "selectClientPlaceholder": "اختر عميلاً",
+    "selectClientRequired": "يرجى اختيار عميل لتقديم هذا الطلب.",
     "industries": {
       "manufacturing": "التصنيع",
       "itSoftware": "تكنولوجيا المعلومات والبرمجيات",
@@ -734,7 +737,11 @@
     "confirmDelete": "هل أنت متأكد أنك تريد حذف \"{{name}}\"؟",
     "deleteFailed": "فشل حذف الدولة",
     "loading": "جارٍ تحميل الدول...",
-    "empty": "لم يتم العثور على دول."
+    "empty": "لم يتم العثور على دول.",
+    "autoAssignRegions": "تعيين المناطق تلقائيًا",
+    "autoAssignNoMatches": "لا توجد دول غير مخصصة تطابق التعيين المدمج بين الدول والمناطق. عدّل كل دولة على حدة لتعيين منطقتها.",
+    "autoAssignConfirm": "تعيين المناطق تلقائيًا لـ {{count}} دولة غير مخصصة؟ لن يتم استبدال التعيينات الحالية.",
+    "autoAssignDone": "اكتمل التعيين. تم تحديث: {{success}}. فشل: {{failed}}."
   },
   "accBody": {
     "title": "هيئات الاعتماد",
@@ -813,6 +820,8 @@
     "shareLink": "رابط المشاركة",
     "sharePreview": "رابط للمشاركة:",
     "regenerate": "إنشاء جديد",
+    "custom": "مخصص",
+    "customPercentPlaceholder": "أدخل نسبة مخصصة (مثال 12.5)",
     "loading": "جاري تحميل الكوبونات...",
     "empty": "لا توجد كوبونات بعد. أنشئ أول كوبون خصم.",
     "codeRequired": "الرجاء إدخال رمز.",

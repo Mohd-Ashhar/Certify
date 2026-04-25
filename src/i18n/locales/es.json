@@ -328,6 +328,9 @@
     "locationsCount": "Número de ubicaciones",
     "submitApplication": "Enviar solicitud",
     "fillAllFields": "Por favor completa todos los campos.",
+    "selectClient": "Enviar en nombre de",
+    "selectClientPlaceholder": "Selecciona un cliente",
+    "selectClientRequired": "Por favor selecciona un cliente para enviar esta solicitud.",
     "industries": {
       "manufacturing": "Manufactura",
       "itSoftware": "TI y Software",
@@ -734,7 +737,11 @@
     "confirmDelete": "¿Está seguro de que desea eliminar \"{{name}}\"?",
     "deleteFailed": "Error al eliminar el país",
     "loading": "Cargando países...",
-    "empty": "No se encontraron países."
+    "empty": "No se encontraron países.",
+    "autoAssignRegions": "Asignar regiones automáticamente",
+    "autoAssignNoMatches": "Ningún país sin asignar coincide con el mapeo país→región integrado. Edite los países individualmente para asignar su región.",
+    "autoAssignConfirm": "¿Asignar regiones automáticamente a {{count}} países sin asignar? Las asignaciones existentes no se sobrescribirán.",
+    "autoAssignDone": "Asignación completada. Actualizados: {{success}}. Fallidos: {{failed}}."
   },
   "accBody": {
     "title": "Organismos de Acreditación",
@@ -813,6 +820,8 @@
     "shareLink": "Enlace",
     "sharePreview": "Enlace para compartir:",
     "regenerate": "Regenerar",
+    "custom": "Personalizado",
+    "customPercentPlaceholder": "Introduce % personalizado (ej. 12,5)",
     "loading": "Cargando cupones...",
     "empty": "Aún no hay cupones. Crea tu primer cupón de descuento.",
     "codeRequired": "Por favor introduce un código.",
