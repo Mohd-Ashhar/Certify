@@ -75,6 +75,11 @@ export default async function handler(req, res) {
           role: assignedRole,
           company_name: company_name || null,
           region: region || null,
+          // Admin-created clients may be a stakeholder variant (referral /
+          // investor / consultancy). Only attach when creating a client.
+          ...(assignedRole === 'client' && stakeholder_type
+            ? { stakeholder_type }
+            : {}),
         };
 
     // Let Supabase send a confirmation email via the configured SMTP.
@@ -110,6 +115,9 @@ export default async function handler(req, res) {
           role: assignedRole,
           region: region || null,
           company_name: company_name || null,
+          ...(assignedRole === 'client' && stakeholder_type
+            ? { stakeholder_type }
+            : {}),
           ...(custom_fields && typeof custom_fields === 'object' ? { custom_fields } : {}),
         };
 
@@ -135,6 +143,7 @@ export default async function handler(req, res) {
         role: assignedRole,
         region: region || null,
         company_name: company_name || null,
+        ...(assignedRole === 'client' && stakeholder_type ? { stakeholder_type } : {}),
       },
     });
   } catch (error) {

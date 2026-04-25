@@ -558,7 +558,7 @@ export function getAccessibleRoutes(role) {
  */
 export function getCreatableRoles(role) {
   const map = {
-    [ROLES.SUPER_ADMIN]: [ROLES.REGIONAL_ADMIN, ROLES.AUDITOR, ROLES.CERTIFICATION_BODY],
+    [ROLES.SUPER_ADMIN]: [ROLES.REGIONAL_ADMIN, ROLES.AUDITOR, ROLES.CERTIFICATION_BODY, ROLES.CLIENT],
     [ROLES.REGIONAL_ADMIN]: [ROLES.AUDITOR, ROLES.CERTIFICATION_BODY],
   };
   return map[role] || [];

@@ -509,6 +509,8 @@
     "passwordPlaceholder": "6 أحرف على الأقل",
     "roleRequired": "الدور *",
     "selectRole": "اختر دوراً",
+    "stakeholderTypeOptional": "نوع المشارك (اختياري)",
+    "selectStakeholderType": "عميل عادي",
     "regionOptional": "المنطقة (اختياري)",
     "selectRegion": "اختر منطقة",
     "createUser": "إنشاء مستخدم",

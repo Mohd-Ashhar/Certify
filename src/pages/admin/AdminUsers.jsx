@@ -6,7 +6,15 @@ import Modal from '../../components/ui/Modal';
 import DataTable from '../../components/ui/DataTable';
 import StatusBadge from '../../components/ui/StatusBadge';
 import { ROLES, ROLE_LABELS, REGIONS, hasPermission, PERMISSIONS, getCreatableRoles } from '../../utils/roles';
+import { STAKEHOLDER_TYPES } from '../../utils/stakeholderTypes';
 import { supabase } from '../../lib/supabase';
+
+// Client-role stakeholder variants an admin can pick when creating a client.
+// 'client' is the default (regular company client). The rest reuse the `client`
+// role but carry a distinguishing `stakeholder_type` on the profile.
+const CLIENT_STAKEHOLDER_OPTIONS = Object.values(STAKEHOLDER_TYPES)
+  .filter(st => st.role === 'client')
+  .map(st => ({ value: st.id, label: st.singularTitle }));
 import { UserPlus, AlertCircle, CheckCircle, Shield, Trash2 } from 'lucide-react';
 import './AdminUsers.css';
 
@@ -33,6 +41,7 @@ export default function AdminUsers() {
     password: '',
     role: '',
     region: '',
+    stakeholder_type: '',
   });
 
   const [loading, setLoading] = useState(false);
@@ -60,7 +69,13 @@ export default function AdminUsers() {
 
   // --- Create User ---
   const handleCreateChange = (e) => {
-    setCreateForm(prev => ({ ...prev, [e.target.name]: e.target.value }));
+    const { name, value } = e.target;
+    setCreateForm(prev => {
+      const next = { ...prev, [name]: value };
+      // Clear stakeholder variant when switching away from client role.
+      if (name === 'role' && value !== ROLES.CLIENT) next.stakeholder_type = '';
+      return next;
+    });
   };
 
   const handleCreateUser = async (e) => {
@@ -68,7 +83,7 @@ export default function AdminUsers() {
     setError('');
     setSuccess('');
 
-    const { full_name, email, password, role } = createForm;
+    const { full_name, email, password, role, stakeholder_type } = createForm;
     const region = isRegionalAdmin ? (user?.region || createForm.region) : createForm.region;
 
     if (!full_name || !email || !password || !role) {
@@ -86,13 +101,26 @@ export default function AdminUsers() {
       return;
     }
 
+    // Only send stakeholder_type for client role. Default to 'client' if
+    // admin didn't pick a variant.
+    const resolvedStakeholderType = role === ROLES.CLIENT
+      ? (stakeholder_type || 'client')
+      : undefined;
+
     setLoading(true);
 
     try {
       const response = await fetch('/api/create-user', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password, full_name, role, region }),
+        body: JSON.stringify({
+          email,
+          password,
+          full_name,
+          role,
+          region,
+          ...(resolvedStakeholderType ? { stakeholder_type: resolvedStakeholderType } : {}),
+        }),
       });
 
       const data = await response.json();
@@ -103,7 +131,7 @@ export default function AdminUsers() {
 
       setSuccess(`${t('admin.successCreated')} ${ROLE_LABELS[role]}: ${full_name}`);
       setShowCreateModal(false);
-      setCreateForm({ full_name: '', email: '', password: '', role: '', region: '' });
+      setCreateForm({ full_name: '', email: '', password: '', role: '', region: '', stakeholder_type: '' });
       fetchUsers();
     } catch (err) {
       setError(err.message);
@@ -230,7 +258,7 @@ export default function AdminUsers() {
         </div>
         <Button variant="primary" size="md" onClick={() => {
           setError('');
-          setCreateForm({ full_name: '', email: '', password: '', role: '', region: '' });
+          setCreateForm({ full_name: '', email: '', password: '', role: '', region: '', stakeholder_type: '' });
           setShowCreateModal(true);
         }}>
           <UserPlus size={18} /> {t('admin.createUser')}
@@ -322,6 +350,21 @@ export default function AdminUsers() {
               <option key={r} value={r}>{ROLE_LABELS[r]}</option>
             ))}
           </Select>
+
+          {createForm.role === ROLES.CLIENT && (
+            <Select
+              label={t('admin.stakeholderTypeOptional')}
+              id="create-user-stakeholder-type"
+              name="stakeholder_type"
+              value={createForm.stakeholder_type}
+              onChange={handleCreateChange}
+            >
+              <option value="">{t('admin.selectStakeholderType')}</option>
+              {CLIENT_STAKEHOLDER_OPTIONS.map(opt => (
+                <option key={opt.value} value={opt.value}>{opt.label}</option>
+              ))}
+            </Select>
+          )}
 
           <Select
             label={isRegionalAdmin ? t('admin.region') : t('admin.regionOptional')}

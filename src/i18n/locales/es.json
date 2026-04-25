@@ -509,6 +509,8 @@
     "passwordPlaceholder": "Mínimo 6 caracteres",
     "roleRequired": "Rol *",
     "selectRole": "Seleccionar un rol",
+    "stakeholderTypeOptional": "Tipo de Participante (opcional)",
+    "selectStakeholderType": "Cliente Regular",
     "regionOptional": "Región (opcional)",
     "selectRegion": "Seleccionar una región",
     "createUser": "Crear usuario",
