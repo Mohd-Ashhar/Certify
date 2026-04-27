@@ -1,52 +1,8 @@
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Globe, X } from 'lucide-react';
+import { detectLanguageFromRegion, applyDocumentDirection } from '../utils/regionLanguage.js';
 import './LanguageSuggestionPopup.css';
-
-// Countries where Arabic is the primary language
-const ARABIC_COUNTRIES = [
-  'SA', 'AE', 'QA', 'KW', 'BH', 'OM', 'JO', 'LB', 'IQ', 'SY', 'YE', 'PS',
-  'EG', 'LY', 'TN', 'DZ', 'MA', 'SD', 'SO', 'DJ', 'MR',
-];
-
-// Countries where Spanish is the primary language
-const SPANISH_COUNTRIES = [
-  'ES', 'MX', 'AR', 'CO', 'CL', 'PE', 'VE', 'EC', 'BO', 'PY', 'UY',
-  'GT', 'HN', 'SV', 'NI', 'CR', 'PA', 'CU', 'DO', 'PR',
-];
-
-function detectSuggestedLanguage() {
-  // Check browser language preferences first
-  const browserLangs = navigator.languages || [navigator.language];
-  for (const lang of browserLangs) {
-    const code = lang.toLowerCase().split('-')[0];
-    if (code === 'ar') return 'ar';
-    if (code === 'es') return 'es';
-  }
-
-  // Check timezone as a region hint
-  const tz = Intl.DateTimeFormat().resolvedOptions().timeZone || '';
-  const tzLower = tz.toLowerCase();
-
-  // Arabic timezone regions
-  if (['asia/riyadh', 'asia/dubai', 'asia/qatar', 'asia/kuwait', 'asia/bahrain',
-       'asia/muscat', 'asia/amman', 'asia/beirut', 'asia/baghdad', 'asia/damascus',
-       'asia/aden', 'asia/gaza', 'africa/cairo', 'africa/tripoli', 'africa/tunis',
-       'africa/algiers', 'africa/casablanca', 'africa/khartoum'].some(t => tzLower.includes(t.split('/')[1]))) {
-    return 'ar';
-  }
-
-  // Spanish timezone regions
-  if (['europe/madrid', 'america/mexico_city', 'america/bogota', 'america/lima',
-       'america/santiago', 'america/buenos_aires', 'america/caracas', 'america/guayaquil',
-       'america/la_paz', 'america/asuncion', 'america/montevideo', 'america/guatemala',
-       'america/tegucigalpa', 'america/el_salvador', 'america/managua', 'america/costa_rica',
-       'america/panama', 'america/havana', 'america/santo_domingo'].some(t => tzLower.includes(t.split('/')[1]))) {
-    return 'es';
-  }
-
-  return null;
-}
 
 export default function LanguageSuggestionPopup() {
   const { t, i18n } = useTranslation();
@@ -62,22 +18,25 @@ export default function LanguageSuggestionPopup() {
       return;
     }
 
-    const detected = detectSuggestedLanguage();
-    if (detected && detected !== currentLang) {
+    let cancelled = false;
+    let timer;
+    detectLanguageFromRegion().then((detected) => {
+      if (cancelled) return;
+      if (!detected || detected === 'en' || detected === currentLang) return;
       setSuggestedLang(detected);
-      // Small delay so it doesn't flash on load
-      const timer = setTimeout(() => setShow(true), 1500);
-      return () => clearTimeout(timer);
-    }
+      timer = setTimeout(() => setShow(true), 1500);
+    });
+    return () => {
+      cancelled = true;
+      if (timer) clearTimeout(timer);
+    };
   }, [i18n.language]);
 
   const handleSwitch = () => {
     i18n.changeLanguage(suggestedLang);
     localStorage.setItem('certifycx-lang', suggestedLang);
     localStorage.setItem('certifycx-lang-popup-dismissed', 'true');
-    // Set document direction for Arabic
-    document.documentElement.dir = suggestedLang === 'ar' ? 'rtl' : 'ltr';
-    document.documentElement.lang = suggestedLang;
+    applyDocumentDirection(suggestedLang);
     setShow(false);
   };
 
