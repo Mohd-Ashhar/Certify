@@ -8,6 +8,7 @@ import {
   Link2, Copy, Check, MessageCircle, Mail, ExternalLink,
   Award, Briefcase, Gift, Building2, UserCheck, TrendingUp,
   Globe2, Shield, Lock, Apple, GraduationCap, Zap, Scale, Activity, Stethoscope,
+  ShieldCheck, BrainCircuit,
   ToggleLeft, ToggleRight,
 } from 'lucide-react';
 import './ShareableLinks.css';
@@ -15,6 +16,7 @@ import './ShareableLinks.css';
 const ICON_MAP = {
   Award, Briefcase, Gift, Building2, UserCheck, TrendingUp,
   Globe2, Shield, Lock, Apple, GraduationCap, Zap, Scale, Activity, Stethoscope,
+  ShieldCheck, BrainCircuit,
 };
 
 export default function ShareableLinks() {

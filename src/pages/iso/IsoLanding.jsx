@@ -3,7 +3,8 @@ import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import {
   Shield, Award, Globe2, Lock, Apple, GraduationCap, Zap, Scale,
-  Activity, Stethoscope, ArrowRight, CheckCircle2, CreditCard, AlertCircle,
+  Activity, Stethoscope, ShieldCheck, BrainCircuit,
+  ArrowRight, CheckCircle2, CreditCard, AlertCircle,
 } from 'lucide-react';
 import { getIsoBySlug } from '../../utils/isoCatalog';
 import { supabase } from '../../lib/supabase';
@@ -13,6 +14,7 @@ import './IsoLanding.css';
 
 const ICON_MAP = {
   Award, Globe2, Shield, Lock, Apple, GraduationCap, Zap, Scale, Activity, Stethoscope,
+  ShieldCheck, BrainCircuit,
 };
 
 export default function IsoLanding() {

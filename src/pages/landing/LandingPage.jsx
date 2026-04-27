@@ -4,6 +4,7 @@ import {
   Shield, ArrowRight, CheckCircle2, Award, Globe2,
   FileCheck2, Users, Building2, ChevronRight, Star,
   Zap, Lock, BarChart3, Apple, GraduationCap, Scale, Activity, Stethoscope,
+  ShieldCheck, BrainCircuit,
 } from 'lucide-react';
 import { STAKEHOLDER_TYPES } from '../../utils/stakeholderTypes';
 import { ISO_CATALOG_LIST } from '../../utils/isoCatalog';
@@ -13,6 +14,7 @@ import './LandingPage.css';
 
 const ICON_MAP = {
   Award, Globe2, Shield, Lock, Apple, GraduationCap, Zap, Scale, Activity, Stethoscope,
+  ShieldCheck, BrainCircuit,
 };
 
 export default function LandingPage() {

@@ -49,13 +49,29 @@ export const ISO_CATALOG = {
     icon: 'GraduationCap',
     color: '#EC4899',
   },
-  'iso-27001': {
-    slug: 'iso-27001',
-    code: 'ISO 27001',
+  'iso-iec-27001': {
+    slug: 'iso-iec-27001',
+    code: 'ISO/IEC 27001',
     titleKey: 'iso.iso27001Title',
     descKey: 'iso.iso27001Desc',
     icon: 'Lock',
     color: '#6366F1',
+  },
+  'iso-iec-27701': {
+    slug: 'iso-iec-27701',
+    code: 'ISO/IEC 27701',
+    titleKey: 'iso.iso27701Title',
+    descKey: 'iso.iso27701Desc',
+    icon: 'ShieldCheck',
+    color: '#0891B2',
+  },
+  'iso-iec-42001': {
+    slug: 'iso-iec-42001',
+    code: 'ISO/IEC 42001',
+    titleKey: 'iso.iso42001Title',
+    descKey: 'iso.iso42001Desc',
+    icon: 'BrainCircuit',
+    color: '#D946EF',
   },
   'iso-50001': {
     slug: 'iso-50001',
