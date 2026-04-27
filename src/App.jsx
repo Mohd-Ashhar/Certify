@@ -41,6 +41,9 @@ import AdminApplicationFields from './pages/admin/AdminApplicationFields';
 // Public Registration Landing
 import RegisterLanding from './pages/register/RegisterLanding';
 
+// Public ISO Certification Landing (Shareable ISO Links)
+import IsoLanding from './pages/iso/IsoLanding';
+
 // Dashboard Pages
 import Dashboard from './pages/dashboard/Dashboard';
 import Settings from './pages/settings/Settings';
@@ -67,6 +70,9 @@ function AppRoutes() {
 
           {/* ---- Public Registration Landing ---- */}
           <Route path="/register/:type" element={<RegisterLanding />} />
+
+          {/* ---- Public ISO Certification Landing (per-ISO shareable links) ---- */}
+          <Route path="/iso/:slug" element={<IsoLanding />} />
 
           {/* ---- Auth Routes ---- */}
           <Route element={<AuthLayout />}>

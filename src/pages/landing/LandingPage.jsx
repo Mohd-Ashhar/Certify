@@ -3,22 +3,29 @@ import { useTranslation } from 'react-i18next';
 import {
   Shield, ArrowRight, CheckCircle2, Award, Globe2,
   FileCheck2, Users, Building2, ChevronRight, Star,
-  Zap, Lock, BarChart3,
+  Zap, Lock, BarChart3, Apple, GraduationCap, Scale, Activity, Stethoscope,
 } from 'lucide-react';
 import { STAKEHOLDER_TYPES } from '../../utils/stakeholderTypes';
+import { ISO_CATALOG_LIST } from '../../utils/isoCatalog';
 import SaraChatWidget from '../../components/sara/SaraChatWidget';
 import LanguageSwitcher from '../../components/LanguageSwitcher';
 import './LandingPage.css';
 
+const ICON_MAP = {
+  Award, Globe2, Shield, Lock, Apple, GraduationCap, Zap, Scale, Activity, Stethoscope,
+};
+
 export default function LandingPage() {
   const { t } = useTranslation();
 
-  const ISO_STANDARDS = [
-    { code: 'ISO 9001', title: t('landing.iso9001Title'), desc: t('landing.iso9001Desc'), icon: Award, color: '#3ECF8E' },
-    { code: 'ISO 14001', title: t('landing.iso14001Title'), desc: t('landing.iso14001Desc'), icon: Globe2, color: '#00C2FF' },
-    { code: 'ISO 45001', title: t('landing.iso45001Title'), desc: t('landing.iso45001Desc'), icon: Shield, color: '#A78BFA' },
-    { code: 'ISO 22000', title: t('landing.iso22000Title'), desc: t('landing.iso22000Desc'), icon: CheckCircle2, color: '#F59E0B' },
-  ];
+  const ISO_STANDARDS = ISO_CATALOG_LIST.map(iso => ({
+    slug: iso.slug,
+    code: iso.code,
+    title: t(iso.titleKey),
+    desc: t(iso.descKey),
+    icon: ICON_MAP[iso.icon] || Award,
+    color: iso.color,
+  }));
 
   const STEPS = [
     { step: '01', title: t('landing.step1Title'), desc: t('landing.step1Desc'), icon: Building2 },
@@ -132,12 +139,20 @@ export default function LandingPage() {
           </div>
           <div className="landing__standards">
             {ISO_STANDARDS.map((std) => (
-              <div key={std.code} className="landing__standard-card" style={{ '--card-accent': std.color }}>
+              <Link
+                key={std.code}
+                to={`/iso/${std.slug}`}
+                className="landing__standard-card landing__standard-card--clickable"
+                style={{ '--card-accent': std.color }}
+              >
                 <div className="landing__standard-icon"><std.icon size={28} /></div>
                 <div className="landing__standard-code">{std.code}</div>
                 <h3 className="landing__standard-title">{std.title}</h3>
                 <p className="landing__standard-desc">{std.desc}</p>
-              </div>
+                <span className="landing__standard-cta">
+                  {t('iso.applyNow')} <ArrowRight size={14} />
+                </span>
+              </Link>
             ))}
           </div>
         </div>

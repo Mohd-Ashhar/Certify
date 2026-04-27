@@ -339,7 +339,7 @@
 /* ---- Standards ---- */
 .landing__standards {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
   gap: var(--spacing-lg);
 }
 
@@ -392,6 +392,26 @@
   font-size: var(--font-size-sm);
   color: var(--color-text-secondary);
   line-height: 1.7;
+}
+
+.landing__standard-card--clickable {
+  display: flex;
+  flex-direction: column;
+  text-decoration: none;
+  color: inherit;
+  cursor: pointer;
+}
+
+.landing__standard-cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: var(--spacing-base);
+  font-size: var(--font-size-xs);
+  font-weight: 700;
+  color: var(--card-accent);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
 }
 
 /* ---- Benefits ---- */
