@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../contexts/AuthContext';
 import { ShieldX, ArrowLeft } from 'lucide-react';
 import { Button } from '../../components/ui/FormElements';
-import { ROLE_LABELS } from '../../utils/roles';
+import { getDisplayRoleLabel } from '../../utils/roles';
 import './Unauthorized.css';
 
 export default function Unauthorized() {
@@ -22,7 +22,7 @@ export default function Unauthorized() {
         <p className="unauthorized__text">{t('unauthorized.noPermission')}</p>
         {user && (
           <p className="unauthorized__role">
-            {t('unauthorized.yourRole')} <strong>{ROLE_LABELS[user.role] || user.role}</strong>
+            {t('unauthorized.yourRole')} <strong>{getDisplayRoleLabel(user.role, user.stakeholder_type) || user.role}</strong>
           </p>
         )}
         <div className="unauthorized__actions">

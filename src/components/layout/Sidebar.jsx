@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../contexts/AuthContext';
-import { hasAnyPermission, PERMISSIONS, ROLE_LABELS, ROLES } from '../../utils/roles';
+import { hasAnyPermission, PERMISSIONS, ROLES, getDisplayRoleLabel } from '../../utils/roles';
 import {
   LayoutDashboard,
   Building2,
@@ -120,9 +120,9 @@ export default function Sidebar({ isOpen, onClose, collapsed, onToggleCollapse }
               <div className="sidebar__user-info">
                 <span className="sidebar__user-name">{user?.name || t('common.user')}</span>
                 <span className="sidebar__user-role">
-                  {user?.role === 'client' && user?.company_name
+                  {user?.role === 'client' && !user?.stakeholder_type?.match(/^(referral|consultancy|investor)$/) && user?.company_name
                     ? user.company_name
-                    : ROLE_LABELS[user?.role] || t('common.unknown')}
+                    : getDisplayRoleLabel(user?.role, user?.stakeholder_type) || t('common.unknown')}
                 </span>
               </div>
             )}

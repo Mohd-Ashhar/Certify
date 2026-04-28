@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../contexts/AuthContext';
-import { REGIONS, ROLES, ROLE_LABELS, hasPermission, PERMISSIONS } from '../../utils/roles';
+import { REGIONS, ROLES, hasPermission, PERMISSIONS, getDisplayRoleLabel } from '../../utils/roles';
 import {
   Menu,
   Bell,
@@ -109,7 +109,7 @@ export default function TopBar({ pageTitle, onMenuClick, collapsed }) {
             <div className="topbar__dropdown-menu topbar__dropdown-menu--profile">
               <div className="topbar__profile-info">
                 <span className="topbar__profile-name">{user?.name}</span>
-                <span className="topbar__profile-role">{ROLE_LABELS[user?.role]}</span>
+                <span className="topbar__profile-role">{getDisplayRoleLabel(user?.role, user?.stakeholder_type)}</span>
               </div>
               <div className="topbar__dropdown-divider" />
               <button className="topbar__dropdown-item" onClick={() => { setProfileOpen(false); navigate('/profile'); }}>

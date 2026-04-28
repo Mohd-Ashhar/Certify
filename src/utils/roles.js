@@ -563,3 +563,31 @@ export function getCreatableRoles(role) {
   };
   return map[role] || [];
 }
+
+// ---------------------------------------------------
+// Display labels for client-role stakeholder variants
+// ---------------------------------------------------
+// Referral, Consultancy, and Investor users share the underlying `client` role
+// but should NOT be shown as "Client" in user-facing surfaces (Profile/Settings,
+// admin user list, etc). Map each stakeholder_type to its display label here.
+export const STAKEHOLDER_DISPLAY_LABELS = {
+  referral: 'Referral Partner',
+  consultancy: 'Consultancy',
+  investor: 'Investor',
+};
+
+/**
+ * Returns the label to display for a user's role.
+ * If the user is a `client` with a stakeholder_type that overrides the label
+ * (referral / consultancy / investor), that label is used instead of "Client".
+ *
+ * @param {string} role - profiles.role (e.g. 'client', 'auditor')
+ * @param {string} [stakeholderType] - profiles.stakeholder_type
+ * @returns {string} the human-readable label
+ */
+export function getDisplayRoleLabel(role, stakeholderType) {
+  if (role === ROLES.CLIENT && stakeholderType && STAKEHOLDER_DISPLAY_LABELS[stakeholderType]) {
+    return STAKEHOLDER_DISPLAY_LABELS[stakeholderType];
+  }
+  return ROLE_LABELS[role] || role || '';
+}

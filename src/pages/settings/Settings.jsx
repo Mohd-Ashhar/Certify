@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../contexts/AuthContext';
 import { Input, Button, Select } from '../../components/ui/FormElements';
-import { REGIONS, ROLES, ROLE_LABELS, PERMISSIONS, getRolePermissions, hasPermission } from '../../utils/roles';
+import { REGIONS, ROLES, ROLE_LABELS, PERMISSIONS, getRolePermissions, hasPermission, getDisplayRoleLabel } from '../../utils/roles';
 import DataTable from '../../components/ui/DataTable';
 import StatusBadge from '../../components/ui/StatusBadge';
 import CustomFieldRenderer from '../../components/CustomFieldRenderer';
@@ -172,7 +172,7 @@ function ProfileTab({ user }) {
           </div>
           <div style={{ display: 'flex', flexDirection: 'column' }}>
             <span style={{ fontWeight: 600, fontSize: '1.2rem', marginBottom: '4px' }}>{user?.full_name || user?.name || 'User'}</span>
-            <span style={{ color: 'var(--color-text-secondary)', fontSize: '0.9rem' }}>{ROLE_LABELS[user?.role] || 'Role'}</span>
+            <span style={{ color: 'var(--color-text-secondary)', fontSize: '0.9rem' }}>{getDisplayRoleLabel(user?.role, user?.stakeholder_type) || 'Role'}</span>
           </div>
         </div>
         <div className="settings__form-grid">
@@ -199,7 +199,7 @@ function ProfileTab({ user }) {
           <Input
             label="Role"
             id="settings-role"
-            value={ROLE_LABELS[user?.role] || 'Role'}
+            value={getDisplayRoleLabel(user?.role, user?.stakeholder_type) || 'Role'}
             disabled
           />
         </div>

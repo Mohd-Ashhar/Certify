@@ -5,7 +5,7 @@ import { Input, Select, Button } from '../../components/ui/FormElements';
 import Modal from '../../components/ui/Modal';
 import DataTable from '../../components/ui/DataTable';
 import StatusBadge from '../../components/ui/StatusBadge';
-import { ROLES, ROLE_LABELS, REGIONS, hasPermission, PERMISSIONS, getCreatableRoles } from '../../utils/roles';
+import { ROLES, ROLE_LABELS, REGIONS, hasPermission, PERMISSIONS, getCreatableRoles, getDisplayRoleLabel } from '../../utils/roles';
 import { STAKEHOLDER_TYPES } from '../../utils/stakeholderTypes';
 import { supabase } from '../../lib/supabase';
 
@@ -209,13 +209,7 @@ export default function AdminUsers() {
       // For partner stakeholder types (referral/investor/consultancy), show the
       // stakeholder label instead of the generic "Client" role so admins can
       // distinguish them.
-      const STAKEHOLDER_LABEL = {
-        referral: 'Referral Partner',
-        investor: 'Investor',
-        consultancy: 'Consultancy',
-      };
-      const stakeholderLabel = row?.stakeholder_type && STAKEHOLDER_LABEL[row.stakeholder_type];
-      const label = stakeholderLabel || ROLE_LABELS[val] || val;
+      const label = getDisplayRoleLabel(val, row?.stakeholder_type);
       return <StatusBadge status={val} label={label} />;
     }},
     { key: 'region', label: t('admin.region'), render: (val) => {
