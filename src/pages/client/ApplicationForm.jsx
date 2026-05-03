@@ -1,11 +1,12 @@
 import { useState, useEffect } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate, useLocation, useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { CheckCircle2 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { supabase } from '../../lib/supabase';
 import { Input, Select, Textarea, Button } from '../../components/ui/FormElements';
 import { ROLES } from '../../utils/roles';
+import { getIsoBySlug } from '../../utils/isoCatalog';
 import './ApplicationForm.css';
 
 const INDUSTRIES = [
@@ -33,7 +34,18 @@ export default function ApplicationForm() {
   const navigate = useNavigate();
   const { t } = useTranslation();
   const location = useLocation();
-  const selectedPackage = location.state?.package || null;
+  const [searchParams] = useSearchParams();
+
+  // Tier + ISO can arrive from either router state (in-app navigation) or
+  // query params (after the OAuth round-trip from /start-checkout).
+  const queryTier = searchParams.get('tier');
+  const queryIso = searchParams.get('iso');
+  const selectedPackage = location.state?.package
+    || (queryTier === 'standard' ? 'Standard' : queryTier)
+    || null;
+  const recommendedIso = location.state?.recommendedIso
+    || (queryIso ? getIsoBySlug(queryIso)?.code : null)
+    || null;
 
   const isClient = user?.role === ROLES.CLIENT;
   const isAdmin = user?.role === ROLES.SUPER_ADMIN || user?.role === ROLES.REGIONAL_ADMIN;
@@ -115,18 +127,22 @@ export default function ApplicationForm() {
     }
 
     try {
+      const insertPayload = {
+        client_id: clientIdForRow,
+        company_name: companyNameForRow,
+        industry: formData.industry,
+        scope: formData.scope,
+        employee_count: parseInt(formData.employeeCount, 10),
+        locations_count: parseInt(formData.locationsCount, 10),
+        status: 'pending',
+        selected_package: selectedPackage || 'Standard',
+      };
+      if (recommendedIso) {
+        insertPayload.recommended_iso = recommendedIso;
+      }
       const { error: submitError } = await supabase
         .from('applications')
-        .insert({
-          client_id: clientIdForRow,
-          company_name: companyNameForRow,
-          industry: formData.industry,
-          scope: formData.scope,
-          employee_count: parseInt(formData.employeeCount, 10),
-          locations_count: parseInt(formData.locationsCount, 10),
-          status: 'pending',
-          selected_package: selectedPackage || 'Standard'
-        });
+        .insert(insertPayload);
 
       if (submitError) throw submitError;
 
@@ -170,20 +186,23 @@ export default function ApplicationForm() {
 
       <div className="application-form__container">
         <form className="application-form" onSubmit={handleSubmit}>
-          {selectedPackage && (
-            <div className="alert alert-info" style={{ 
-              marginBottom: '20px', 
-              display: 'flex', 
-              gap: '8px', 
-              alignItems: 'center', 
-              background: 'rgba(59, 130, 246, 0.1)', 
-              color: 'var(--color-accent)', 
-              padding: '12px 16px', 
+          {(selectedPackage || recommendedIso) && (
+            <div className="alert alert-info" style={{
+              marginBottom: '20px',
+              display: 'flex',
+              gap: '8px',
+              alignItems: 'center',
+              background: 'rgba(59, 130, 246, 0.1)',
+              color: 'var(--color-accent)',
+              padding: '12px 16px',
               borderRadius: 'var(--radius-md)',
               border: '1px solid rgba(59, 130, 246, 0.2)'
             }}>
               <CheckCircle2 size={18}/>
-              <span>{t('application.applyingFor', { package: selectedPackage })}</span>
+              <span>
+                {t('application.applyingFor', { package: selectedPackage || 'Standard' })}
+                {recommendedIso ? ` — ${recommendedIso}` : ''}
+              </span>
             </div>
           )}
           {error && <div className="application-form__error">{error}</div>}

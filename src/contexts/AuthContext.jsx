@@ -34,47 +34,91 @@ export function AuthProvider({ children }) {
   useEffect(() => {
     let mounted = true;
 
+    // If the visitor took the anonymous gap analysis before signing up, the
+    // score is sitting in localStorage. Persist it into their profile the first
+    // time we see them as a client without a saved score.
+    const hydrateAnonGapScore = async (sessionUser, profile) => {
+      if (!profile || profile.role !== 'client') return profile;
+      if (profile.gap_analysis_score != null) return profile;
+      let raw = null;
+      try { raw = localStorage.getItem('gap_analysis_score_anon'); } catch { /* ignore */ }
+      if (raw == null) return profile;
+      const score = Number(raw);
+      if (Number.isNaN(score)) return profile;
+      const { error } = await supabase
+        .from('profiles')
+        .update({ gap_analysis_score: score })
+        .eq('id', sessionUser.id);
+      if (error) return profile;
+      try { localStorage.removeItem('gap_analysis_score_anon'); } catch { /* ignore */ }
+      // Mirror to the per-user cache key the dashboard reads as a fallback.
+      try { localStorage.setItem(`gap_analysis_score_${sessionUser.id}`, String(score)); } catch { /* ignore */ }
+      return { ...profile, gap_analysis_score: score };
+    };
+
     // Helper to fetch profile
     const fetchProfile = async (sessionUser) => {
       try {
-        const { data: profile } = await supabase
+        let { data: profile } = await supabase
           .from("profiles")
           .select("*")
           .eq("id", sessionUser.id)
           .maybeSingle();
+        profile = await hydrateAnonGapScore(sessionUser, profile);
 
-        // For OAuth users (e.g. Google), ensure profile has role and approval_status
-        if (profile && !profile.role && sessionUser.app_metadata?.provider === 'google') {
-          const meta = sessionUser.user_metadata || {};
+        // For OAuth users (e.g. Google), ensure profile has role and approval_status.
+        // Also backfill full_name for existing Google users whose profile was
+        // created with a missing or email-as-name value (the previous bug that
+        // displayed "user@example.com" in place of the Google account name).
+        const isGoogleOAuth = sessionUser.app_metadata?.provider === 'google';
+        const meta = sessionUser.user_metadata || {};
+        const googleName = meta.name || meta.full_name || '';
+        const profileNameLooksBroken =
+          !!profile &&
+          (!profile.full_name ||
+            profile.full_name.trim() === '' ||
+            profile.full_name === sessionUser.email);
+        const needsRoleBootstrap = profile && !profile.role && isGoogleOAuth;
+        const needsNameBackfill = profile && isGoogleOAuth && profileNameLooksBroken && !!googleName;
+
+        if (needsRoleBootstrap || needsNameBackfill) {
           // Read pending stakeholder context set before the OAuth redirect (e.g. /register/referral)
           let pendingType = null;
           try {
             pendingType = sessionStorage.getItem('pendingStakeholderType');
           } catch { /* sessionStorage may be unavailable */ }
-          const stakeholderType = pendingType || 'client';
+          const stakeholderType = pendingType || profile.stakeholder_type || 'client';
           // Non-client stakeholder signups require admin approval, matching email signup
-          const approvalStatus = stakeholderType !== 'client' ? 'pending' : 'approved';
+          const approvalStatus = needsRoleBootstrap
+            ? (stakeholderType !== 'client' ? 'pending' : 'approved')
+            : profile.approval_status;
+          const payload = {
+            action: 'update-profile',
+            userId: sessionUser.id,
+            full_name: googleName || profile.full_name || '',
+          };
+          if (needsRoleBootstrap) {
+            payload.role = 'client';
+            payload.company_name = null;
+            payload.region = null;
+            payload.stakeholder_type = stakeholderType;
+            payload.approval_status = approvalStatus;
+          }
           await fetch('/api/user', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              action: 'update-profile',
-              userId: sessionUser.id,
-              full_name: meta.full_name || meta.name || '',
-              role: 'client',
-              company_name: null,
-              region: null,
-              stakeholder_type: stakeholderType,
-              approval_status: approvalStatus,
-            }),
+            body: JSON.stringify(payload),
           });
           try { sessionStorage.removeItem('pendingStakeholderType'); } catch { /* ignore */ }
           // Re-fetch profile after update
-          const { data: updatedProfile } = await supabase
+          let { data: updatedProfile } = await supabase
             .from("profiles")
             .select("*")
             .eq("id", sessionUser.id)
             .maybeSingle();
+          // Now that the role is set, the anon gap-analysis score (if any)
+          // can finally be hydrated into the profile.
+          updatedProfile = await hydrateAnonGapScore(sessionUser, updatedProfile);
           if (updatedProfile && mounted) {
             setUser({ ...sessionUser, ...updatedProfile });
           } else if (mounted) {

@@ -227,7 +227,10 @@
     "completeProfileTitle": "أخبرنا عن مؤسستك",
     "completeProfileSubtitle": "بضع تفاصيل سريعة حتى نتمكن من تخصيص رحلة الشهادة لك.",
     "completeProfileSkip": "تخطّي في الوقت الحالي",
-    "completeProfileSave": "حفظ ومتابعة"
+    "completeProfileSave": "حفظ ومتابعة",
+    "almostThereTitle": "اقتربت من الانتهاء",
+    "almostThereSubtitle": "سجّل الدخول أو أنشئ حسابك لإكمال شهادة ISO 9001 الخاصة بك. تستغرق أقل من دقيقة.",
+    "continueWithEmail": "المتابعة بالبريد الإلكتروني"
   },
   "unauthorized": {
     "accessDenied": "الوصول مرفوض",
@@ -355,7 +358,14 @@
     "q2": "هل الإدارة العليا مشاركة بفعالية وملتزمة بمعايير الجودة/الامتثال؟",
     "q3": "هل لديك نظام لتتبع ملاحظات العملاء والتعامل مع الشكاوى؟",
     "q4": "هل تجري مراجعات أو تدقيقات داخلية منتظمة لعملياتك؟",
-    "q5": "هل لديك مسؤول/فريق امتثال أو جودة مخصص؟"
+    "q5": "هل لديك مسؤول/فريق امتثال أو جودة مخصص؟",
+    "publicHeroTitle": "تحليل فجوات ISO 9001 المجاني",
+    "publicHeroSubtitle": "خمسة أسئلة سريعة. دون تسجيل. اكتشف خلال 60 ثانية ما إذا كانت مؤسستك جاهزة للحصول على الشهادة.",
+    "publicResultsTitle": "إليك نتائجك",
+    "startCertNow": "ابدأ شهادتك الآن",
+    "browsePackages": "تصفّح باقات الشهادة",
+    "lowScoreUpsell": "لا يزال بإمكانك الحصول على الشهادة — سيرشدك فريقنا عبر الأساسيات أولاً.",
+    "highScoreUpsell": "أخبار رائعة — أنت جاهز لبدء الشهادة. اختر باقة من الأسفل للبدء."
   },
   "payment": {
     "loadingOrder": "جاري تحميل طلبك...",
@@ -973,5 +983,36 @@
     "invitationSubject": "احصل على شهادة",
     "invitationBody": "أودّ مشاركة رابط مباشر للحصول على شهادة {{code}} عبر CertifyCX.",
     "publicTagline": "طريقك المباشر للحصول على شهادة {{code}}"
+  },
+  "pricing": {
+    "sectionTag": "اختر مسارك",
+    "sectionTitle": "اختر الباقة التي تناسب مرحلتك",
+    "sectionDesc": "ابدأ مجانًا بتحليل الفجوات، أو انتقل مباشرةً إلى الشهادة. لا رسوم خفية.",
+    "mostPopular": "الأكثر شيوعًا",
+    "tierFreeTitle": "تحليل فجوات مجاني",
+    "tierFreePrice": "$0",
+    "tierFreePriceNote": "بدون بطاقة ائتمان",
+    "tierFreeDesc": "اعرف موقع مؤسستك خلال 60 ثانية. خمسة أسئلة، نتائج فورية.",
+    "tierFreeFeature1": "اختبار جاهزية من 5 أسئلة",
+    "tierFreeFeature2": "نتيجة جاهزية ISO 9001 فورية",
+    "tierFreeFeature3": "إرشادات مخصصة للخطوات التالية",
+    "tierFreeCta": "ابدأ التحليل المجاني",
+    "tierStandardTitle": "شهادة ISO 9001",
+    "tierStandardPriceNote": "دفعة واحدة، شاملة لكل شيء",
+    "tierStandardDesc": "كل ما تحتاجه للحصول على شهادة ISO 9001 من البداية إلى النهاية.",
+    "tierStandardFeature1": "تدقيق كامل لشهادة ISO 9001",
+    "tierStandardFeature2": "مدقق خبير يتناسب مع قطاعك",
+    "tierStandardFeature3": "مراجعة الوثائق والإرشاد",
+    "tierStandardFeature4": "شهادة معترف بها دولياً",
+    "tierStandardCta": "احصل على الشهادة",
+    "tierPremiumTitle": "شهادة + دعم",
+    "tierPremiumPrice": "تواصل معنا",
+    "tierPremiumPriceNote": "تسعير مخصص",
+    "tierPremiumDesc": "شهادة بالإضافة إلى صيانة النظام وتدريب المدققين الداخليين.",
+    "tierPremiumFeature1": "كل ما في شهادة ISO 9001",
+    "tierPremiumFeature2": "صيانة النظام لمدة 12 شهرًا",
+    "tierPremiumFeature3": "برنامج تدريب المدققين الداخليين",
+    "tierPremiumFeature4": "مدير نجاح مخصص",
+    "tierPremiumCta": "تواصل مع المبيعات"
   }
 }

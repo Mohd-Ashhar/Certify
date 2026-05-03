@@ -10,6 +10,8 @@ import { ROLES, PERMISSIONS } from './utils/roles';
 
 // Public Pages
 import LandingPage from './pages/landing/LandingPage';
+import PublicGapAnalysis from './pages/public/PublicGapAnalysis';
+import StartCheckout from './pages/public/StartCheckout';
 
 // Auth Pages
 import Login from './pages/auth/Login';
@@ -73,6 +75,12 @@ function AppRoutes() {
 
           {/* ---- Public ISO Certification Landing (per-ISO shareable links) ---- */}
           <Route path="/iso/:slug" element={<IsoLanding />} />
+
+          {/* ---- Public anonymous Gap Analysis quiz ---- */}
+          <Route path="/gap-analysis" element={<PublicGapAnalysis />} />
+
+          {/* ---- Auth gate before paid checkout (Google or email) ---- */}
+          <Route path="/start-checkout" element={<StartCheckout />} />
 
           {/* ---- Auth Routes ---- */}
           <Route element={<AuthLayout />}>

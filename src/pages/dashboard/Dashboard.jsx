@@ -12,6 +12,10 @@ import { useAuth } from '../../contexts/AuthContext';
 import { getPriceForISO, getCountryTier } from '../../utils/pricing';
 import './Dashboard.css';
 
+// Phase 1: hide the assigned Certification Body card from clients until we
+// re-introduce CB visibility post-MVP. Flip to false to restore.
+const PHASE_1_HIDE_CB = true;
+
 const STEP_KEYS = [
   { id: 1, labelKey: 'dashboard.submitted', statuses: ['pending', 'awaiting_payment'] },
   { id: 2, labelKey: 'dashboard.underReview', statuses: ['in_review'] },
@@ -464,7 +468,7 @@ export default function Dashboard() {
                   </div>
 
                   {/* Assigned Certification Body — revealed only after payment */}
-                  {isPaid && assignedCbRegistry && (
+                  {!PHASE_1_HIDE_CB && isPaid && assignedCbRegistry && (
                     <div className="dashboard__section" style={{ marginTop: '2rem' }}>
                       <div className="section-subtitle-container">
                         <Award size={18} /> <h3 className="section-subtitle" style={{ margin: 0 }}>{t('dashboard.yourCertBody')}</h3>

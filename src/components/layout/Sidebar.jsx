@@ -57,7 +57,8 @@ export default function Sidebar({ isOpen, onClose, collapsed, onToggleCollapse }
     { path: '/admin/permissions', labelKey: 'nav.permissions', icon: KeyRound, permissions: [PERMISSIONS.VIEW_DASHBOARD], allowedRoles: [ROLES.SUPER_ADMIN] },
     { path: '/admin/user-fields', labelKey: 'nav.userFields', icon: FormInput, permissions: [PERMISSIONS.VIEW_DASHBOARD], allowedRoles: [ROLES.SUPER_ADMIN] },
     { path: '/admin/application-fields', labelKey: 'nav.applicationFields', icon: ClipboardList, permissions: [PERMISSIONS.VIEW_DASHBOARD], allowedRoles: [ROLES.SUPER_ADMIN] },
-    { path: '/referrals', labelKey: 'nav.referrals', icon: Gift, permissions: [PERMISSIONS.VIEW_DASHBOARD], excludeRoles: [ROLES.SUPER_ADMIN, ROLES.REGIONAL_ADMIN] },
+    // Phase 1: Referrals hidden for clients (and remains hidden for admins). Re-enable by removing CLIENT here.
+    { path: '/referrals', labelKey: 'nav.referrals', icon: Gift, permissions: [PERMISSIONS.VIEW_DASHBOARD], excludeRoles: [ROLES.SUPER_ADMIN, ROLES.REGIONAL_ADMIN, ROLES.CLIENT] },
     { path: '/profile', labelKey: 'nav.myProfile', icon: User, permissions: [PERMISSIONS.MANAGE_SETTINGS] },
     { path: '/notifications', labelKey: 'nav.notifications', icon: Bell, permissions: [PERMISSIONS.VIEW_DASHBOARD] },
     { path: '/settings', labelKey: 'nav.settings', icon: Settings, permissions: [PERMISSIONS.MANAGE_USERS] },
@@ -114,11 +115,11 @@ export default function Sidebar({ isOpen, onClose, collapsed, onToggleCollapse }
         <div className="sidebar__footer">
           <div className="sidebar__user">
             <div className="sidebar__avatar">
-              {user?.name?.charAt(0) || 'U'}
+              {(user?.full_name || user?.name || user?.email || 'U').charAt(0).toUpperCase()}
             </div>
             {!collapsed && (
               <div className="sidebar__user-info">
-                <span className="sidebar__user-name">{user?.name || t('common.user')}</span>
+                <span className="sidebar__user-name">{user?.full_name || user?.name || user?.email?.split('@')[0] || t('common.user')}</span>
                 <span className="sidebar__user-role">
                   {user?.role === 'client' && !user?.stakeholder_type?.match(/^(referral|consultancy|investor)$/) && user?.company_name
                     ? user.company_name

@@ -4,7 +4,29 @@ import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../contexts/AuthContext';
 import { Input, Button } from '../../components/ui/FormElements';
 import { AlertCircle, Eye, EyeOff } from 'lucide-react';
+import { ROLES } from '../../utils/roles';
+import { getIsoBySlug } from '../../utils/isoCatalog';
+import { PENDING_CHECKOUT_KEY } from '../public/StartCheckout';
 import './Auth.css';
+
+function consumePendingCheckout() {
+  try {
+    const raw = sessionStorage.getItem(PENDING_CHECKOUT_KEY);
+    if (!raw) return null;
+    sessionStorage.removeItem(PENDING_CHECKOUT_KEY);
+    const { tier, iso } = JSON.parse(raw);
+    const isoConfig = iso ? getIsoBySlug(iso) : null;
+    return {
+      path: '/client/apply',
+      state: {
+        package: tier === 'standard' ? 'Standard' : (tier || 'Standard'),
+        recommendedIso: isoConfig?.code || 'ISO 9001:2015',
+      },
+    };
+  } catch {
+    return null;
+  }
+}
 
 export default function Login() {
   const { login, signInWithGoogle, getRoleDashboard, user, loading: authLoading } = useAuth();
@@ -20,6 +42,15 @@ export default function Login() {
 
   useEffect(() => {
     if (!authLoading && user) {
+      // If the user came from /start-checkout, route them to /client/apply with
+      // the chosen tier+iso preselected instead of dropping them on the dashboard.
+      if (user.role === ROLES.CLIENT) {
+        const pending = consumePendingCheckout();
+        if (pending) {
+          navigate(pending.path, { state: pending.state });
+          return;
+        }
+      }
       navigate(getRoleDashboard(user.role));
     }
   }, [authLoading, user, navigate, getRoleDashboard]);

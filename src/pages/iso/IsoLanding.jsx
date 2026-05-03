@@ -10,6 +10,7 @@ import { getIsoBySlug } from '../../utils/isoCatalog';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
 import { ROLES } from '../../utils/roles';
+import PricingTiers from '../../components/pricing/PricingTiers';
 import './IsoLanding.css';
 
 const ICON_MAP = {
@@ -68,14 +69,13 @@ export default function IsoLanding() {
 
   const handleApply = () => {
     // Logged-in client: jump straight into application form with ISO preselected.
-    // Anyone else (not logged in, or wrong role): send to client signup with the
-    // ISO encoded; we also stash the chosen ISO in localStorage so the
-    // application form can read it after the auth round-trip.
+    // Anyone else: send through the lightweight /start-checkout auth gate so
+    // they can pick Google/email at the moment they decide to pay — not before.
     if (user?.role === ROLES.CLIENT) {
-      navigate('/client/apply', { state: { recommendedIso: config.code } });
+      navigate('/client/apply', { state: { recommendedIso: config.code, package: 'Standard' } });
     } else {
       try { localStorage.setItem('certifycx.preselectedIso', config.code); } catch { /* ignore */ }
-      navigate(`/signup?type=client&iso=${encodeURIComponent(config.slug)}`);
+      navigate(`/start-checkout?tier=standard&iso=${encodeURIComponent(config.slug)}`);
     }
   };
 
@@ -161,6 +161,11 @@ export default function IsoLanding() {
               </div>
             ))}
           </div>
+        </section>
+
+        {/* Pricing Tiers — Free / Standard ($799) / Premium */}
+        <section className="iso-landing__section">
+          <PricingTiers />
         </section>
 
         {/* Payment Info */}

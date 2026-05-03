@@ -1,16 +1,20 @@
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import {
-  Shield, ArrowRight, CheckCircle2, Award, Globe2,
+  Shield, ArrowRight, Award, Globe2,
   FileCheck2, Users, Building2, ChevronRight, Star,
   Zap, Lock, BarChart3, Apple, GraduationCap, Scale, Activity, Stethoscope,
   ShieldCheck, BrainCircuit,
 } from 'lucide-react';
-import { STAKEHOLDER_TYPES } from '../../utils/stakeholderTypes';
 import { ISO_CATALOG_LIST } from '../../utils/isoCatalog';
 import SaraChatWidget from '../../components/sara/SaraChatWidget';
 import LanguageSwitcher from '../../components/LanguageSwitcher';
 import './LandingPage.css';
+
+// Phase 1: feature ISO 9001 prominently and hide other standards from the
+// public funnel (the owner asked us to start with one ISO and add the rest
+// back later). To re-enable, set this to false.
+const PHASE_1_ISO_9001_ONLY = true;
 
 const ICON_MAP = {
   Award, Globe2, Shield, Lock, Apple, GraduationCap, Zap, Scale, Activity, Stethoscope,
@@ -20,7 +24,11 @@ const ICON_MAP = {
 export default function LandingPage() {
   const { t } = useTranslation();
 
-  const ISO_STANDARDS = ISO_CATALOG_LIST.map(iso => ({
+  const visibleIsos = PHASE_1_ISO_9001_ONLY
+    ? ISO_CATALOG_LIST.filter(iso => iso.slug === 'iso-9001')
+    : ISO_CATALOG_LIST;
+
+  const ISO_STANDARDS = visibleIsos.map(iso => ({
     slug: iso.slug,
     code: iso.code,
     title: t(iso.titleKey),
@@ -44,8 +52,6 @@ export default function LandingPage() {
     { icon: Globe2, title: t('landing.benefitRegionTitle'), desc: t('landing.benefitRegionDesc') },
   ];
 
-  const STAKEHOLDER_LIST = Object.values(STAKEHOLDER_TYPES);
-
   return (
     <div className="landing">
       {/* ---- Navbar ---- */}
@@ -61,7 +67,7 @@ export default function LandingPage() {
             <a href="#benefits" className="landing__nav-link">{t('nav.benefits')}</a>
             <LanguageSwitcher variant="landing" />
             <Link to="/login" className="landing__nav-link landing__nav-link--login">{t('nav.login')}</Link>
-            <Link to="/signup" className="landing__nav-btn">{t('nav.startGapAnalysis')}</Link>
+            <Link to="/iso/iso-9001" className="landing__nav-btn">{t('nav.startGapAnalysis')}</Link>
           </div>
         </div>
       </nav>
@@ -81,7 +87,7 @@ export default function LandingPage() {
             {t('landing.heroSubtitle')}
           </p>
           <div className="landing__hero-actions">
-            <Link to="/signup" className="landing__btn landing__btn--primary">
+            <Link to="/iso/iso-9001" className="landing__btn landing__btn--primary">
               {t('nav.startGapAnalysis')} <ArrowRight size={18} />
             </Link>
             <Link to="/login" className="landing__btn landing__btn--secondary">
@@ -139,7 +145,7 @@ export default function LandingPage() {
             <h2 className="landing__section-title">{t('landing.supportedStandards')}</h2>
             <p className="landing__section-desc">{t('landing.supportedStandardsDesc')}</p>
           </div>
-          <div className="landing__standards">
+          <div className={`landing__standards ${ISO_STANDARDS.length === 1 ? 'landing__standards--single' : ''}`}>
             {ISO_STANDARDS.map((std) => (
               <Link
                 key={std.code}
@@ -185,7 +191,7 @@ export default function LandingPage() {
         <div className="landing__cta-inner">
           <h2 className="landing__cta-title">{t('landing.ctaTitle')}</h2>
           <p className="landing__cta-desc">{t('landing.ctaDesc')}</p>
-          <Link to="/signup" className="landing__btn landing__btn--primary landing__btn--lg">
+          <Link to="/iso/iso-9001" className="landing__btn landing__btn--primary landing__btn--lg">
             {t('nav.startGapAnalysis')} <ArrowRight size={18} />
           </Link>
         </div>
@@ -207,7 +213,7 @@ export default function LandingPage() {
               <a href="#how-it-works" className="landing__footer-link">{t('nav.howItWorks')}</a>
               <a href="#standards" className="landing__footer-link">{t('landing.footerISOStandards')}</a>
               <a href="#benefits" className="landing__footer-link">{t('nav.benefits')}</a>
-              <Link to="/signup" className="landing__footer-link">{t('landing.footerGetCertified')}</Link>
+              <Link to="/iso/iso-9001" className="landing__footer-link">{t('landing.footerGetCertified')}</Link>
             </div>
             <div className="landing__footer-col">
               <h4 className="landing__footer-heading">{t('landing.footerAccount')}</h4>
@@ -215,14 +221,9 @@ export default function LandingPage() {
               <Link to="/signup" className="landing__footer-link">{t('landing.footerSignUp')}</Link>
               <Link to="/forgot-password" className="landing__footer-link">{t('landing.footerResetPassword')}</Link>
             </div>
-            <div className="landing__footer-col">
-              <h4 className="landing__footer-heading">{t('landing.footerJoinNetwork')}</h4>
-              {STAKEHOLDER_LIST.map((type) => (
-                <Link key={type.id} to={`/register/${type.id}`} className="landing__footer-link">
-                  {type.singularTitle}
-                </Link>
-              ))}
-            </div>
+            {/* Phase 1: stakeholder registration links (auditor/CB/referral/etc.) hidden
+                until customer onboarding is perfected. The /register/:type routes still
+                resolve when accessed directly. */}
           </div>
           <div className="landing__footer-bottom">
             <p className="landing__footer-text">{t('common.allRightsReserved')}</p>

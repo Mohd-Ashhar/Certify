@@ -101,14 +101,14 @@ export default function TopBar({ pageTitle, onMenuClick, collapsed }) {
             onClick={() => { setProfileOpen(!profileOpen); setRegionOpen(false); }}
           >
             <div className="topbar__avatar">
-              {user?.name?.charAt(0) || 'U'}
+              {(user?.full_name || user?.name || user?.email || 'U').charAt(0).toUpperCase()}
             </div>
             <ChevronDown size={14} className={`topbar__chevron ${profileOpen ? 'topbar__chevron--open' : ''}`} />
           </button>
           {profileOpen && (
             <div className="topbar__dropdown-menu topbar__dropdown-menu--profile">
               <div className="topbar__profile-info">
-                <span className="topbar__profile-name">{user?.name}</span>
+                <span className="topbar__profile-name">{user?.full_name || user?.name || user?.email?.split('@')[0]}</span>
                 <span className="topbar__profile-role">{getDisplayRoleLabel(user?.role, user?.stakeholder_type)}</span>
               </div>
               <div className="topbar__dropdown-divider" />

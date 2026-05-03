@@ -227,7 +227,10 @@
     "completeProfileTitle": "Cuéntanos sobre tu organización",
     "completeProfileSubtitle": "Solo unos datos rápidos para adaptar tu proceso de certificación.",
     "completeProfileSkip": "Omitir por ahora",
-    "completeProfileSave": "Guardar y continuar"
+    "completeProfileSave": "Guardar y continuar",
+    "almostThereTitle": "Ya casi terminas",
+    "almostThereSubtitle": "Inicia sesión o crea tu cuenta para completar tu certificación ISO 9001. Toma menos de un minuto.",
+    "continueWithEmail": "Continuar con correo electrónico"
   },
   "unauthorized": {
     "accessDenied": "Acceso denegado",
@@ -355,7 +358,14 @@
     "q2": "¿La alta dirección está activamente involucrada y comprometida con los estándares de calidad/cumplimiento?",
     "q3": "¿Tienes un sistema para rastrear la retroalimentación de clientes y manejar quejas?",
     "q4": "¿Realizas revisiones internas o auditorías regulares de tus procesos?",
-    "q5": "¿Tienes un oficial/equipo dedicado de cumplimiento o calidad?"
+    "q5": "¿Tienes un oficial/equipo dedicado de cumplimiento o calidad?",
+    "publicHeroTitle": "Análisis gratuito de brechas ISO 9001",
+    "publicHeroSubtitle": "Cinco preguntas rápidas. Sin registro. Descubre en 60 segundos si tu organización está lista para certificarse.",
+    "publicResultsTitle": "Aquí están tus resultados",
+    "startCertNow": "Comienza tu certificación ahora",
+    "browsePackages": "Ver paquetes de certificación",
+    "lowScoreUpsell": "Aún puedes certificarte: nuestro equipo te guiará primero por las bases.",
+    "highScoreUpsell": "Buenas noticias: estás listo para empezar la certificación. Elige un paquete a continuación."
   },
   "payment": {
     "loadingOrder": "Cargando tu pedido...",
@@ -973,5 +983,36 @@
     "invitationSubject": "Certifícate con",
     "invitationBody": "Quería compartir un enlace directo para la certificación {{code}} en CertifyCX.",
     "publicTagline": "Tu camino directo a la certificación {{code}}"
+  },
+  "pricing": {
+    "sectionTag": "Elige tu camino",
+    "sectionTitle": "Elige el paquete que se adapta a tu etapa",
+    "sectionDesc": "Empieza gratis con un análisis de brechas, o ve directo a la certificación. Sin tarifas ocultas.",
+    "mostPopular": "Más popular",
+    "tierFreeTitle": "Análisis de brechas gratuito",
+    "tierFreePrice": "$0",
+    "tierFreePriceNote": "Sin tarjeta de crédito",
+    "tierFreeDesc": "Descubre dónde está tu organización en 60 segundos. Cinco preguntas, resultados al instante.",
+    "tierFreeFeature1": "Evaluación de preparación de 5 preguntas",
+    "tierFreeFeature2": "Puntuación instantánea de preparación ISO 9001",
+    "tierFreeFeature3": "Orientación personalizada para los próximos pasos",
+    "tierFreeCta": "Hacer análisis gratuito",
+    "tierStandardTitle": "Certificación ISO 9001",
+    "tierStandardPriceNote": "Pago único, todo incluido",
+    "tierStandardDesc": "Todo lo que necesitas para obtener la certificación ISO 9001, de principio a fin.",
+    "tierStandardFeature1": "Auditoría completa de certificación ISO 9001",
+    "tierStandardFeature2": "Auditor experto adaptado a tu sector",
+    "tierStandardFeature3": "Revisión y orientación documental",
+    "tierStandardFeature4": "Certificado reconocido internacionalmente",
+    "tierStandardCta": "Obtener certificación",
+    "tierPremiumTitle": "Certificación + Soporte",
+    "tierPremiumPrice": "Contáctanos",
+    "tierPremiumPriceNote": "Precio personalizado",
+    "tierPremiumDesc": "Certificación más mantenimiento del sistema y formación para auditores internos.",
+    "tierPremiumFeature1": "Todo lo de Certificación ISO 9001",
+    "tierPremiumFeature2": "Mantenimiento del sistema durante 12 meses",
+    "tierPremiumFeature3": "Programa de formación de auditores internos",
+    "tierPremiumFeature4": "Gerente de éxito dedicado",
+    "tierPremiumCta": "Contactar a ventas"
   }
 }

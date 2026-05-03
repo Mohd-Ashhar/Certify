@@ -227,7 +227,10 @@
     "completeProfileTitle": "Tell us about your organization",
     "completeProfileSubtitle": "Just a few quick details so we can tailor your certification journey.",
     "completeProfileSkip": "Skip for now",
-    "completeProfileSave": "Save and continue"
+    "completeProfileSave": "Save and continue",
+    "almostThereTitle": "Almost there",
+    "almostThereSubtitle": "Sign in or create your account to complete your ISO 9001 certification. Takes less than a minute.",
+    "continueWithEmail": "Continue with Email"
   },
   "unauthorized": {
     "accessDenied": "Access Denied",
@@ -355,7 +358,14 @@
     "q2": "Is top management actively involved in and committed to quality/compliance standards?",
     "q3": "Do you have a system in place to track customer feedback and handle complaints?",
     "q4": "Do you conduct regular internal reviews or audits of your processes?",
-    "q5": "Do you have a dedicated compliance or quality officer/team?"
+    "q5": "Do you have a dedicated compliance or quality officer/team?",
+    "publicHeroTitle": "Free ISO 9001 Gap Analysis",
+    "publicHeroSubtitle": "Five quick questions. No signup required. See in 60 seconds whether your organization is ready to certify.",
+    "publicResultsTitle": "Here are your results",
+    "startCertNow": "Start Your Certification Now",
+    "browsePackages": "Browse Certification Packages",
+    "lowScoreUpsell": "You can still get certified — our team will guide you through the foundations first.",
+    "highScoreUpsell": "Great news — you're ready to begin certification. Pick a package below to get started."
   },
   "payment": {
     "loadingOrder": "Loading your order...",
@@ -973,5 +983,36 @@
     "invitationSubject": "Get certified with",
     "invitationBody": "I'd like to share a direct link for {{code}} certification on CertifyCX.",
     "publicTagline": "Your direct path to {{code}} certification"
+  },
+  "pricing": {
+    "sectionTag": "Choose your path",
+    "sectionTitle": "Pick the package that fits your stage",
+    "sectionDesc": "Start free with a gap analysis, or jump straight to certification. No hidden fees.",
+    "mostPopular": "Most Popular",
+    "tierFreeTitle": "Free Gap Analysis",
+    "tierFreePrice": "$0",
+    "tierFreePriceNote": "No credit card required",
+    "tierFreeDesc": "See where your organization stands in 60 seconds. Five questions, instant results.",
+    "tierFreeFeature1": "5-question readiness check",
+    "tierFreeFeature2": "Instant ISO 9001 readiness score",
+    "tierFreeFeature3": "Personalized next-step guidance",
+    "tierFreeCta": "Take Free Gap Analysis",
+    "tierStandardTitle": "ISO 9001 Certification",
+    "tierStandardPriceNote": "One-time, all-inclusive",
+    "tierStandardDesc": "Everything you need to become ISO 9001 certified, end-to-end.",
+    "tierStandardFeature1": "Full ISO 9001 certification audit",
+    "tierStandardFeature2": "Expert auditor matched to your industry",
+    "tierStandardFeature3": "Document review and guidance",
+    "tierStandardFeature4": "Internationally recognized certificate",
+    "tierStandardCta": "Get Certified",
+    "tierPremiumTitle": "Certification + Support",
+    "tierPremiumPrice": "Contact us",
+    "tierPremiumPriceNote": "Custom pricing",
+    "tierPremiumDesc": "Certification plus ongoing system maintenance and internal auditor training.",
+    "tierPremiumFeature1": "Everything in ISO 9001 Certification",
+    "tierPremiumFeature2": "12-month system maintenance",
+    "tierPremiumFeature3": "Internal auditor training program",
+    "tierPremiumFeature4": "Dedicated success manager",
+    "tierPremiumCta": "Contact Sales"
   }
 }
