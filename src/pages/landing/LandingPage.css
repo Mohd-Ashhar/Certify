@@ -41,11 +41,9 @@
 }
 
 .landing__logo-icon {
-  width: 36px; height: 36px;
-  background: linear-gradient(135deg, var(--color-accent), #2EB87A);
-  border-radius: var(--radius-md);
   display: flex; align-items: center; justify-content: center;
-  color: white;
+  color: var(--color-accent);
+  filter: drop-shadow(0 0 10px rgba(62, 207, 142, 0.25));
 }
 
 .landing__nav-links {
@@ -532,9 +530,7 @@
 }
 
 .landing__logo-icon--sm {
-  width: 28px;
-  height: 28px;
-  border-radius: var(--radius-sm);
+  filter: drop-shadow(0 0 6px rgba(62, 207, 142, 0.2));
 }
 
 .landing__footer-tagline {

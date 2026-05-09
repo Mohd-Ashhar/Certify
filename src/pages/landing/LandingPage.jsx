@@ -9,6 +9,7 @@ import {
 import { ISO_CATALOG_LIST } from '../../utils/isoCatalog';
 import SaraChatWidget from '../../components/sara/SaraChatWidget';
 import LanguageSwitcher from '../../components/LanguageSwitcher';
+import BrandShield from '../../components/ui/BrandShield';
 import './LandingPage.css';
 
 // Phase 1: feature ISO 9001 prominently and hide other standards from the
@@ -58,8 +59,8 @@ export default function LandingPage() {
       <nav className="landing__nav">
         <div className="landing__nav-inner">
           <Link to="/" className="landing__logo">
-            <div className="landing__logo-icon"><Shield size={22} /></div>
-            <span>Certify.cx<sup className="brand-tm">™</sup></span>
+            <div className="landing__logo-icon"><BrandShield size={28} /></div>
+            <span><span className="brand-c">C</span>ertify<span className="brand-cx">.cx</span><sup className="brand-tm">™</sup></span>
           </Link>
           <div className="landing__nav-links">
             <a href="#how-it-works" className="landing__nav-link">{t('nav.howItWorks')}</a>
@@ -203,8 +204,8 @@ export default function LandingPage() {
           <div className="landing__footer-cols">
             <div className="landing__footer-col landing__footer-col--brand">
               <div className="landing__footer-logo">
-                <div className="landing__logo-icon landing__logo-icon--sm"><Shield size={16} /></div>
-                <span>Certify.cx<sup className="brand-tm">™</sup></span>
+                <div className="landing__logo-icon landing__logo-icon--sm"><BrandShield size={20} /></div>
+                <span><span className="brand-c">C</span>ertify<span className="brand-cx">.cx</span><sup className="brand-tm">™</sup></span>
               </div>
               <p className="landing__footer-tagline">{t('landing.footerTagline')}</p>
             </div>

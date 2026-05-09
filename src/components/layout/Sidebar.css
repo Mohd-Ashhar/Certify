@@ -42,15 +42,12 @@
 }
 
 .sidebar__logo-icon {
-  width: 34px;
-  height: 34px;
-  background: linear-gradient(135deg, var(--color-accent), #2EB87A);
-  border-radius: var(--radius-md);
   display: flex;
   align-items: center;
   justify-content: center;
-  color: var(--color-text-inverse);
+  color: var(--color-accent);
   flex-shrink: 0;
+  filter: drop-shadow(0 0 8px rgba(62, 207, 142, 0.22));
 }
 
 .sidebar__logo-text {

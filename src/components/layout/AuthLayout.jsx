@@ -1,6 +1,6 @@
 import { Outlet, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { Shield } from 'lucide-react';
+import BrandShield from '../ui/BrandShield';
 import './AuthLayout.css';
 
 export default function AuthLayout() {
@@ -15,9 +15,11 @@ export default function AuthLayout() {
       <div className={`auth-layout__container ${isWide ? 'auth-layout__container--wide' : ''} ${isExtraWide ? 'auth-layout__container--extra-wide' : ''}`}>
         <div className="auth-layout__logo">
           <div className="auth-layout__logo-icon">
-            <Shield size={28} />
+            <BrandShield size={36} />
           </div>
-          <span className="auth-layout__logo-text">Certify.cx<sup className="brand-tm">™</sup></span>
+          <span className="auth-layout__logo-text">
+            <span className="brand-c">C</span>ertify<span className="brand-cx">.cx</span><sup className="brand-tm">™</sup>
+          </span>
         </div>
         <div className="auth-layout__card">
           <Outlet />

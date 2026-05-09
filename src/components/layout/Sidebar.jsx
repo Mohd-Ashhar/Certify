@@ -16,7 +16,6 @@ import {
   Users,
   LogOut,
   ChevronLeft,
-  Shield,
   X,
   PlusCircle,
   User,
@@ -31,6 +30,7 @@ import {
   FormInput,
   ClipboardList,
 } from 'lucide-react';
+import BrandShield from '../ui/BrandShield';
 import './Sidebar.css';
 
 export default function Sidebar({ isOpen, onClose, collapsed, onToggleCollapse }) {
@@ -78,9 +78,13 @@ export default function Sidebar({ isOpen, onClose, collapsed, onToggleCollapse }
         <div className="sidebar__header">
           <div className="sidebar__logo">
             <div className="sidebar__logo-icon">
-              <Shield size={22} />
+              <BrandShield size={28} />
             </div>
-            {!collapsed && <span className="sidebar__logo-text">Certify.cx<sup className="brand-tm">™</sup></span>}
+            {!collapsed && (
+              <span className="sidebar__logo-text">
+                <span className="brand-c">C</span>ertify<span className="brand-cx">.cx</span><sup className="brand-tm">™</sup>
+              </span>
+            )}
           </div>
           <button className="sidebar__close-mobile" onClick={onClose}>
             <X size={20} />

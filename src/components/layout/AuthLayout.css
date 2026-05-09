@@ -32,14 +32,11 @@
 }
 
 .auth-layout__logo-icon {
-  width: 44px;
-  height: 44px;
-  background: linear-gradient(135deg, var(--color-accent), #2EB87A);
-  border-radius: var(--radius-lg);
   display: flex;
   align-items: center;
   justify-content: center;
-  color: var(--color-text-inverse);
+  color: var(--color-accent);
+  filter: drop-shadow(0 0 10px rgba(62, 207, 142, 0.25));
 }
 
 .auth-layout__logo-text {

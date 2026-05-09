@@ -262,6 +262,13 @@ sup.brand-tm {
   vertical-align: super;
   margin-left: 1px;
   font-weight: 500;
+  color: var(--color-accent);
+  opacity: 0.75;
+}
+
+.brand-c,
+.brand-cx {
+  color: var(--color-accent);
 }
 
 /* ============================================
