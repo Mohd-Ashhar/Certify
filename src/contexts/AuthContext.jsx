@@ -299,7 +299,15 @@ export function AuthProvider({ children }) {
 
     // User must verify their email before they can log in.
     // Return emailVerification flag so the UI shows "check your email".
-    return { success: true, data: { user: createdUser }, needsApproval, emailVerification: true };
+    // emailSendFailed=true means user is created but the verification email
+    // didn't ship (Resend issue, etc.) — UI should offer a "resend" button.
+    return {
+      success: true,
+      data: { user: createdUser },
+      needsApproval,
+      emailVerification: true,
+      emailSendFailed: !!signupJson.emailSendFailed,
+    };
   };
 
   const logout = async () => {

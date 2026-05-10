@@ -283,6 +283,8 @@ function SimpleClientSignUp() {
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
   const [emailVerification, setEmailVerification] = useState(false);
+  const [emailSendFailed, setEmailSendFailed] = useState(false);
+  const [resendStatus, setResendStatus] = useState(''); // '', 'sending', 'sent', 'error'
 
   const customFields = useCustomFieldsForRole('client');
   const [customValues, setCustomValues] = useState({});
@@ -333,11 +335,31 @@ function SimpleClientSignUp() {
 
     if (result.success) {
       setEmailVerification(true);
+      setEmailSendFailed(!!result.emailSendFailed);
       setLoading(false);
       return;
     }
     setError(result.error);
     setLoading(false);
+  };
+
+  const handleResendVerification = async () => {
+    setResendStatus('sending');
+    try {
+      const resp = await fetch('/api/resend-verification', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email }),
+      });
+      if (resp.ok) {
+        setResendStatus('sent');
+        setEmailSendFailed(false);
+      } else {
+        setResendStatus('error');
+      }
+    } catch {
+      setResendStatus('error');
+    }
   };
 
   if (emailVerification) {
@@ -346,12 +368,35 @@ function SimpleClientSignUp() {
         <div className="auth-form__pending">
           <Mail size={48} className="auth-form__pending-icon" />
           <h2 className="auth-form__title">{t('auth.verifyYourEmail')}</h2>
-          <p className="auth-form__subtitle" style={{ marginBottom: '12px' }}>
-            {t('auth.verificationEmailSent', { email })}
-          </p>
-          <p style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-text-secondary)', lineHeight: 1.6, marginBottom: '24px' }}>
-            {t('auth.checkInboxMessage')}
-          </p>
+          {emailSendFailed && resendStatus !== 'sent' ? (
+            <>
+              <p className="auth-form__subtitle" style={{ marginBottom: '12px' }}>
+                {t('auth.verificationEmailFailed', { email })}
+              </p>
+              <Button
+                type="button"
+                onClick={handleResendVerification}
+                disabled={resendStatus === 'sending'}
+                style={{ marginBottom: '16px' }}
+              >
+                {resendStatus === 'sending' ? t('auth.resending') : t('auth.resendVerification')}
+              </Button>
+              {resendStatus === 'error' && (
+                <p style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-error, #c00)', marginBottom: '16px' }}>
+                  {t('auth.resendError')}
+                </p>
+              )}
+            </>
+          ) : (
+            <>
+              <p className="auth-form__subtitle" style={{ marginBottom: '12px' }}>
+                {t('auth.verificationEmailSent', { email })}
+              </p>
+              <p style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-text-secondary)', lineHeight: 1.6, marginBottom: '24px' }}>
+                {t('auth.checkInboxMessage')}
+              </p>
+            </>
+          )}
           <Link to="/login" className="auth-form__link" style={{ fontSize: 'var(--font-size-sm)' }}>{t('auth.goToLogin')}</Link>
         </div>
       </div>
@@ -564,6 +609,8 @@ function StakeholderSignUpWizard({ stakeholderConfig, registrationType }) {
   const [googleLoading, setGoogleLoading] = useState(false);
   const [pendingApproval, setPendingApproval] = useState(false);
   const [emailVerification, setEmailVerification] = useState(false);
+  const [emailSendFailed, setEmailSendFailed] = useState(false);
+  const [resendStatus, setResendStatus] = useState('');
 
   const customFields = useCustomFieldsForRole(targetRole);
   const [customValues, setCustomValues] = useState({});
@@ -694,6 +741,7 @@ function StakeholderSignUpWizard({ stakeholderConfig, registrationType }) {
         return;
       }
       setEmailVerification(true);
+      setEmailSendFailed(!!result.emailSendFailed);
       setLoading(false);
       return;
     } else {
@@ -702,18 +750,60 @@ function StakeholderSignUpWizard({ stakeholderConfig, registrationType }) {
     setLoading(false);
   };
 
+  const handleResendVerification = async () => {
+    setResendStatus('sending');
+    try {
+      const resp = await fetch('/api/resend-verification', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: formData.email }),
+      });
+      if (resp.ok) {
+        setResendStatus('sent');
+        setEmailSendFailed(false);
+      } else {
+        setResendStatus('error');
+      }
+    } catch {
+      setResendStatus('error');
+    }
+  };
+
   if (emailVerification) {
     return (
       <div className="auth-form">
         <div className="auth-form__pending">
           <Mail size={48} className="auth-form__pending-icon" />
           <h2 className="auth-form__title">{t('auth.verifyYourEmail')}</h2>
-          <p className="auth-form__subtitle" style={{ marginBottom: '12px' }}>
-            {t('auth.verificationEmailSent', { email: formData.email })}
-          </p>
-          <p style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-text-secondary)', lineHeight: 1.6, marginBottom: '24px' }}>
-            {t('auth.checkInboxMessage')}
-          </p>
+          {emailSendFailed && resendStatus !== 'sent' ? (
+            <>
+              <p className="auth-form__subtitle" style={{ marginBottom: '12px' }}>
+                {t('auth.verificationEmailFailed', { email: formData.email })}
+              </p>
+              <Button
+                type="button"
+                onClick={handleResendVerification}
+                disabled={resendStatus === 'sending'}
+                style={{ marginBottom: '16px' }}
+              >
+                {resendStatus === 'sending' ? t('auth.resending') : t('auth.resendVerification')}
+              </Button>
+              {resendStatus === 'error' && (
+                <p style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-error, #c00)', marginBottom: '16px' }}>
+                  {t('auth.resendError')}
+                </p>
+              )}
+            </>
+          ) : (
+            <>
+              <p className="auth-form__subtitle" style={{ marginBottom: '12px' }}>
+                {t('auth.verificationEmailSent', { email: formData.email })}
+              </p>
+              <p style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-text-secondary)', lineHeight: 1.6, marginBottom: '24px' }}>
+                {t('auth.checkInboxMessage')}
+              </p>
+            </>
+          )}
           <Link to="/login" className="auth-form__link" style={{ fontSize: 'var(--font-size-sm)' }}>{t('auth.goToLogin')}</Link>
         </div>
       </div>

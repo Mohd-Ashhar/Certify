@@ -1,4 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
+import { sendVerificationEmail } from './_sendVerificationEmail.js';
 
 const supabaseAdmin = createClient(
   process.env.VITE_SUPABASE_URL,
@@ -135,8 +136,27 @@ export default async function handler(req, res) {
       }
     }
 
+    // Send the verification email ourselves via Resend.
+    // We don't rely on Supabase's built-in email path because this project's
+    // GoTrue email rate limit was throttled to 2/h after a historical bounce
+    // spike — see plan Phase 6. generateLink + Resend bypasses that limit.
+    let emailSendFailed = false;
+    if (isSelfSignup) {
+      const sendResult = await sendVerificationEmail({
+        supabaseAdmin,
+        email,
+        password,
+        name: displayName,
+      });
+      if (!sendResult.ok) {
+        emailSendFailed = true;
+        console.error('create-user: verification email send failed', sendResult);
+      }
+    }
+
     return res.status(200).json({
       success: true,
+      emailSendFailed,
       user: {
         id: authData.user.id,
         email,
