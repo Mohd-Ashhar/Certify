@@ -18,6 +18,10 @@ Copy `.env.example` to `.env`. Required vars:
 - `SUPABASE_SERVICE_ROLE_KEY` — server-only, used by `seed.js` and every file in `api/`. Never import from `src/`.
 - `VITE_STRIPE_PUBLISHABLE_KEY` + `STRIPE_SECRET_KEY` — Stripe checkout.
 - `VITE_GEOAPIFY_API_KEY` — country/address autocomplete.
+- `RESEND_API_KEY`, `RESEND_FROM_EMAIL` — transactional email via Resend.
+- `SUPABASE_AUTH_HOOK_SECRET` — signing secret for the Supabase Send Email Hook.
+- `INTERNAL_WEBHOOK_SECRET` — shared secret used by the welcome-email Postgres trigger.
+- `APP_PUBLIC_URL` — public site URL embedded in transactional email links.
 
 ## Architecture
 
@@ -50,6 +54,8 @@ Route-level enforcement is done in [src/App.jsx](src/App.jsx) via `<ProtectedRou
 **Supabase schema.** The canonical schema is [supabase/schema.sql](supabase/schema.sql). The root-level `supabase_*.sql` files are historical setup scripts for incremental features (accreditation bodies, documents). Key tables: `profiles`, `applications`, `documents`, `referrals`, plus the accreditation/CB registry tables.
 
 **Seed accounts.** [seed.js](seed.js) creates one test user per role (super_admin, regional_admin, auditor, certification_body, client) using the Supabase admin API. It runs automatically before `vite` on `npm run dev`. Test credentials are hardcoded in that file.
+
+**Transactional email (verification + welcome).** All auth emails route through Resend, not Supabase's default SMTP. [api/auth-email-hook.js](api/auth-email-hook.js) is the Supabase Send Email Hook receiver — it verifies the standard-webhooks signature with `SUPABASE_AUTH_HOOK_SECRET`, picks a template from [api/_emailTemplates.js](api/_emailTemplates.js), and ships via Resend. The welcome email is fired separately by a Postgres trigger on `auth.users.email_confirmed_at` (see [supabase/phase5_email_migration.sql](supabase/phase5_email_migration.sql)) which `pg_net.http_post`s to [api/send-welcome.js](api/send-welcome.js); idempotency is gated by `profiles.welcome_sent_at`. Do not debug Zoho SMTP — it is no longer the email path.
 
 ## Claude tooling
 

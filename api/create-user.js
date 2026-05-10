@@ -82,8 +82,9 @@ export default async function handler(req, res) {
             : {}),
         };
 
-    // Let Supabase send a confirmation email via the configured SMTP.
-    // Users must verify their email before they can log in.
+    // email_confirm: false makes Supabase Auth fire its Send Email Hook,
+    // which we route to /api/auth-email-hook → Resend. Users must verify
+    // their email before they can log in.
     const { data: authData, error: authError } = await supabaseAdmin.auth.admin.createUser({
       email,
       password,
