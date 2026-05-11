@@ -1,0 +1,112 @@
+.start-payment {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 24px;
+}
+
+.start-payment__header {
+  width: 100%;
+  max-width: 480px;
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
+  padding: 0 0 32px;
+}
+
+.start-payment__logo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--color-text-primary, #ededed);
+  text-decoration: none;
+  font-weight: 700;
+  font-size: 1.05rem;
+}
+
+.start-payment__logo-icon {
+  width: 36px;
+  height: 36px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 10px;
+  background: rgba(62, 207, 142, 0.15);
+  color: #3ECF8E;
+}
+
+.start-payment__card {
+  width: 100%;
+  max-width: 480px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 16px;
+  padding: 40px 32px;
+  text-align: center;
+  color: var(--color-text-primary, #ededed);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+
+.start-payment__spinner {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  border: 3px solid rgba(62, 207, 142, 0.2);
+  border-top-color: #3ECF8E;
+  animation: startPaymentSpin 0.8s linear infinite;
+  margin-bottom: 8px;
+}
+
+@keyframes startPaymentSpin {
+  to { transform: rotate(360deg); }
+}
+
+.start-payment__error-icon {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: rgba(239, 68, 68, 0.12);
+  color: #ef4444;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 8px;
+}
+
+.start-payment__title {
+  margin: 0;
+  font-size: 1.4rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+.start-payment__subtitle {
+  margin: 0;
+  color: var(--color-text-secondary, #a0a0a0);
+  font-size: 0.95rem;
+  line-height: 1.5;
+}
+
+.start-payment__btn {
+  margin-top: 16px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 10px 20px;
+  border-radius: 10px;
+  background: #3ECF8E;
+  color: #0f172a;
+  font-weight: 600;
+  text-decoration: none;
+  transition: opacity 150ms ease;
+}
+
+.start-payment__btn:hover {
+  opacity: 0.9;
+}

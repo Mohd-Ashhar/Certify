@@ -52,6 +52,7 @@ import Settings from './pages/settings/Settings';
 import Notifications from './pages/notifications/Notifications';
 import ApplicationForm from './pages/client/ApplicationForm';
 import PaymentPlaceholder from './pages/client/PaymentPlaceholder';
+import StartPayment from './pages/client/StartPayment';
 import GapAnalysis from './pages/client/GapAnalysis';
 import Referrals from './pages/referrals/Referrals';
 
@@ -129,6 +130,16 @@ function AppRoutes() {
             <Route path="/client/apply" element={
               <ProtectedRoute requiredPermission={PERMISSIONS.CREATE_CERTIFICATION}>
                 <ApplicationForm />
+              </ProtectedRoute>
+            } />
+            <Route path="/client/apply/:applicationId" element={
+              <ProtectedRoute allowedRoles={[ROLES.CLIENT]}>
+                <ApplicationForm />
+              </ProtectedRoute>
+            } />
+            <Route path="/client/start-payment" element={
+              <ProtectedRoute allowedRoles={[ROLES.CLIENT]}>
+                <StartPayment />
               </ProtectedRoute>
             } />
             <Route path="/client/gap-analysis" element={

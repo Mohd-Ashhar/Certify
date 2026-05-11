@@ -35,6 +35,11 @@ const PRICES = {
   tier2: { oneTime: 499, monthly: 59 },
 };
 
+// Package 3 (Premium) is a flat global price — country tier does not apply.
+// Includes everything in Standard + Quality Manual + 12 Months Support.
+export const PREMIUM_PRICE = 999;
+export const getPremiumPrice = () => PREMIUM_PRICE;
+
 export const calculatePrice = (isoString, isMonthly = false, countryTier = 1) => {
   const base = countryTier === 2 ? PRICES.tier2 : PRICES.tier1;
   return isMonthly ? base.monthly : base.oneTime;

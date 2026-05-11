@@ -128,7 +128,7 @@ export default async function handler(req, res) {
       payment_method_types: ['card'],
       line_items: [lineItem],
       mode: isMonthly ? 'subscription' : 'payment',
-      success_url: `${baseUrl}/client/dashboard?payment=success`,
+      success_url: `${baseUrl}/client/apply/${applicationId}?payment=success`,
       cancel_url: `${baseUrl}/client/checkout/${applicationId}?payment=cancelled`,
       metadata: {
         applicationId: applicationId,

@@ -116,3 +116,12 @@
   background: var(--color-bg-primary, #171717);
   color: var(--color-text-primary, #ededed);
 }
+
+/* Mobile: hide the auto-suggest popup entirely.
+   The language switcher is also hidden on mobile (see LanguageSwitcher.css),
+   so the popup would invite users to an unreachable action. */
+@media (max-width: 768px) {
+  .lang-popup-overlay {
+    display: none;
+  }
+}

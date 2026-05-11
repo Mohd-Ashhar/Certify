@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useNavigate, useLocation, useSearchParams } from 'react-router-dom';
+import { useNavigate, useLocation, useParams, useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { CheckCircle2 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
@@ -35,15 +35,22 @@ export default function ApplicationForm() {
   const { t } = useTranslation();
   const location = useLocation();
   const [searchParams] = useSearchParams();
+  const { applicationId } = useParams();
 
-  // Tier + ISO can arrive from either router state (in-app navigation) or
-  // query params (after the OAuth round-trip from /start-checkout).
+  // UPDATE-mode = post-payment registration. The stub row was created by
+  // /client/start-payment before Stripe checkout; here we enrich it with
+  // company details and flip status from 'awaiting_registration' to 'pending'.
+  const isUpdateMode = Boolean(applicationId);
+  const paymentJustSucceeded = searchParams.get('payment') === 'success';
+
+  // Tier + ISO can arrive from either router state (in-app navigation),
+  // query params (legacy OAuth round-trip), or the stub row when in UPDATE mode.
   const queryTier = searchParams.get('tier');
   const queryIso = searchParams.get('iso');
-  const selectedPackage = location.state?.package
+  const stateSelectedPackage = location.state?.package
     || (queryTier === 'standard' ? 'Standard' : queryTier)
     || null;
-  const recommendedIso = location.state?.recommendedIso
+  const stateRecommendedIso = location.state?.recommendedIso
     || (queryIso ? getIsoBySlug(queryIso)?.code : null)
     || null;
 
@@ -65,10 +72,52 @@ export default function ApplicationForm() {
     clientId: '',
   });
 
+  // Stub row fetched in UPDATE mode (carries selected_package + recommended_iso).
+  const [stubApp, setStubApp] = useState(null);
+  const [loadingStub, setLoadingStub] = useState(isUpdateMode);
+
   const [clients, setClients] = useState([]);
   const [loadingClients, setLoadingClients] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+
+  const selectedPackage = stubApp?.selected_package || stateSelectedPackage;
+  const recommendedIso = stubApp?.recommended_iso || stateRecommendedIso;
+
+  // Fetch the stub application in UPDATE mode.
+  useEffect(() => {
+    if (!isUpdateMode || !user?.id) return;
+    let cancelled = false;
+    (async () => {
+      const { data, error: fetchError } = await supabase
+        .from('applications')
+        .select('id, client_id, selected_package, recommended_iso, status, company_name, industry, scope, employee_count, locations_count')
+        .eq('id', applicationId)
+        .maybeSingle();
+      if (cancelled) return;
+      if (fetchError || !data) {
+        setError(t('application.appNotFound') || 'Application not found.');
+        setLoadingStub(false);
+        return;
+      }
+      if (data.client_id !== user.id && !isAdmin) {
+        setError(t('common.accessDenied') || 'Access denied.');
+        setLoadingStub(false);
+        return;
+      }
+      setStubApp(data);
+      setFormData(prev => ({
+        ...prev,
+        companyName: data.company_name || prev.companyName,
+        industry: data.industry || prev.industry,
+        scope: data.scope || prev.scope,
+        employeeCount: data.employee_count != null ? String(data.employee_count) : prev.employeeCount,
+        locationsCount: data.locations_count != null ? String(data.locations_count) : prev.locationsCount,
+      }));
+      setLoadingStub(false);
+    })();
+    return () => { cancelled = true; };
+  }, [isUpdateMode, applicationId, user?.id, isAdmin, t]);
 
   useEffect(() => {
     if (!isAdmin) return;
@@ -127,24 +176,41 @@ export default function ApplicationForm() {
     }
 
     try {
-      const insertPayload = {
-        client_id: clientIdForRow,
-        company_name: companyNameForRow,
-        industry: formData.industry,
-        scope: formData.scope,
-        employee_count: parseInt(formData.employeeCount, 10),
-        locations_count: parseInt(formData.locationsCount, 10),
-        status: 'pending',
-        selected_package: selectedPackage || 'Standard',
-      };
-      if (recommendedIso) {
-        insertPayload.recommended_iso = recommendedIso;
-      }
-      const { error: submitError } = await supabase
-        .from('applications')
-        .insert(insertPayload);
+      if (isUpdateMode) {
+        // Post-payment registration: enrich the stub row and flip status.
+        const updatePayload = {
+          company_name: companyNameForRow,
+          industry: formData.industry,
+          scope: formData.scope,
+          employee_count: parseInt(formData.employeeCount, 10),
+          locations_count: parseInt(formData.locationsCount, 10),
+          status: 'pending',
+        };
+        const { error: updateError } = await supabase
+          .from('applications')
+          .update(updatePayload)
+          .eq('id', applicationId);
+        if (updateError) throw updateError;
+      } else {
+        const insertPayload = {
+          client_id: clientIdForRow,
+          company_name: companyNameForRow,
+          industry: formData.industry,
+          scope: formData.scope,
+          employee_count: parseInt(formData.employeeCount, 10),
+          locations_count: parseInt(formData.locationsCount, 10),
+          status: 'pending',
+          selected_package: selectedPackage || 'Standard',
+        };
+        if (recommendedIso) {
+          insertPayload.recommended_iso = recommendedIso;
+        }
+        const { error: submitError } = await supabase
+          .from('applications')
+          .insert(insertPayload);
 
-      if (submitError) throw submitError;
+        if (submitError) throw submitError;
+      }
 
       if (isAdmin) {
         navigate('/admin/applications');
@@ -175,6 +241,16 @@ export default function ApplicationForm() {
     }
   };
 
+  if (loadingStub) {
+    return (
+      <div className="page-container">
+        <div style={{ padding: '40px 0', textAlign: 'center', color: 'var(--color-text-secondary)' }}>
+          {t('common.loading')}
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="page-container">
       <div className="page-header">
@@ -186,6 +262,27 @@ export default function ApplicationForm() {
 
       <div className="application-form__container">
         <form className="application-form" onSubmit={handleSubmit}>
+          {paymentJustSucceeded && (
+            <div className="alert alert-success" style={{
+              marginBottom: '20px',
+              padding: '14px 16px',
+              background: 'rgba(16, 185, 129, 0.1)',
+              color: '#059669',
+              border: '1px solid rgba(16, 185, 129, 0.25)',
+              borderRadius: 'var(--radius-md)',
+              display: 'flex',
+              gap: '10px',
+              alignItems: 'flex-start',
+            }}>
+              <CheckCircle2 size={20} style={{ flexShrink: 0, marginTop: 2 }} />
+              <div>
+                <strong>{t('payment.registrationBannerTitle')}</strong>
+                <div style={{ fontSize: '0.9rem', marginTop: 2, opacity: 0.9 }}>
+                  {t('payment.registrationBannerDesc')}
+                </div>
+              </div>
+            </div>
+          )}
           {(selectedPackage || recommendedIso) && (
             <div className="alert alert-info" style={{
               marginBottom: '20px',

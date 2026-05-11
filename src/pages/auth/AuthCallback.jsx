@@ -2,26 +2,23 @@ import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { ROLES } from '../../utils/roles';
-import { getIsoBySlug } from '../../utils/isoCatalog';
 import { PENDING_CHECKOUT_KEY } from '../public/StartCheckout';
 
 // Read a pending checkout intent (set by /start-checkout) and resolve it into
-// a navigation target with package/iso state. Returns null if there's nothing
-// pending or the intent is malformed.
+// a navigation target. Returns null if there's nothing pending or malformed.
+// Post-payment-first flow: forward to /client/start-payment which creates the
+// stub application row and hands off to Stripe checkout.
 function consumePendingCheckout() {
   try {
     const raw = sessionStorage.getItem(PENDING_CHECKOUT_KEY);
     if (!raw) return null;
     sessionStorage.removeItem(PENDING_CHECKOUT_KEY);
     const { tier, iso } = JSON.parse(raw);
-    const isoConfig = iso ? getIsoBySlug(iso) : null;
-    return {
-      path: '/client/apply',
-      state: {
-        package: tier === 'standard' ? 'Standard' : (tier || 'Standard'),
-        recommendedIso: isoConfig?.code || 'ISO 9001:2015',
-      },
-    };
+    const params = new URLSearchParams({
+      tier: tier || 'standard',
+      iso: iso || 'iso-9001',
+    });
+    return { path: `/client/start-payment?${params.toString()}` };
   } catch {
     return null;
   }
@@ -53,7 +50,7 @@ export default function AuthCallback() {
       if (user.role === ROLES.CLIENT) {
         const pending = consumePendingCheckout();
         if (pending) {
-          navigate(pending.path, { replace: true, state: pending.state });
+          navigate(pending.path, { replace: true });
           return;
         }
       }

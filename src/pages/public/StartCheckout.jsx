@@ -34,21 +34,17 @@ export default function StartCheckout() {
     } catch { /* ignore */ }
   }, [tier, iso]);
 
-  // If a client is already signed in, jump straight to the application form
-  // with the chosen tier preselected. Non-client roles aren't expected here.
+  // If a client is already signed in, jump straight to the payment-bootstrap
+  // route, which creates a stub application and forwards to Stripe checkout.
+  // Detailed registration happens AFTER payment (see /client/apply/:id).
   useEffect(() => {
     if (loading) return;
     if (user?.role === ROLES.CLIENT) {
       try { sessionStorage.removeItem(PENDING_CHECKOUT_KEY); } catch { /* ignore */ }
-      navigate('/client/apply', {
-        replace: true,
-        state: {
-          package: tier === 'standard' ? 'Standard' : tier,
-          recommendedIso: isoConfig?.code || 'ISO 9001:2015',
-        },
-      });
+      const params = new URLSearchParams({ tier, iso });
+      navigate(`/client/start-payment?${params.toString()}`, { replace: true });
     }
-  }, [loading, user, navigate, tier, iso, isoConfig]);
+  }, [loading, user, navigate, tier, iso]);
 
   const handleGoogle = async () => {
     setGoogleLoading(true);

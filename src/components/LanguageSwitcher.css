@@ -100,8 +100,11 @@
   display: inline;
 }
 
+/* On mobile the entire switcher is hidden — language can still be selected
+   on desktop, and document direction (RTL) persists for users who already
+   chose Arabic via applyDocumentDirection() at startup. */
 @media (max-width: 768px) {
-  .lang-switcher__label {
+  .lang-switcher {
     display: none;
   }
 }

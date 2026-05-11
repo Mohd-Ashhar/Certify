@@ -1,9 +1,9 @@
 import { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { Link, useParams, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
-import { calculatePrice, getCountryTier, getFullPrice, getMonthlyPrice } from '../../utils/pricing';
+import { calculatePrice, getCountryTier, getFullPrice, getMonthlyPrice, PREMIUM_PRICE } from '../../utils/pricing';
 import { Lock, Shield, CreditCard, CalendarClock, CheckCircle2, Sparkles, Tag } from 'lucide-react';
 
 export default function PaymentPlaceholder() {
@@ -46,6 +46,15 @@ export default function PaymentPlaceholder() {
     if (applicationId) fetchApp();
     return () => { isMounted = false; };
   }, [applicationId]);
+
+  // Premium (Package 3) is one-time only — force the toggle off the moment
+  // we learn we're on a Premium order, so the user can't get stuck on the
+  // monthly tab.
+  useEffect(() => {
+    if (application?.selected_package === 'Premium' && isMonthly) {
+      setIsMonthly(false);
+    }
+  }, [application?.selected_package, isMonthly]);
 
   // Check if client is eligible for referral discount
   useEffect(() => {
@@ -127,7 +136,9 @@ export default function PaymentPlaceholder() {
 
   const countryTier = getCountryTier(user?.country);
   const isoName = application?.recommended_iso || 'ISO 9001:2015 (Quality Management)';
-  const fullPrice = getFullPrice(countryTier);
+  // Package 3 (Premium) is flat $999 globally and one-time only — no monthly option.
+  const isPremium = application?.selected_package === 'Premium';
+  const fullPrice = isPremium ? PREMIUM_PRICE : getFullPrice(countryTier);
   const monthlyPrice = getMonthlyPrice(countryTier);
   const originalPrice = isMonthly ? monthlyPrice : fullPrice;
 
@@ -211,6 +222,17 @@ export default function PaymentPlaceholder() {
   return (
     <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'flex-start', padding: '3vh 16px', minHeight: '85vh', background: 'linear-gradient(135deg, #f0f4ff 0%, #faf5ff 50%, #f0fdf4 100%)' }}>
       <div style={{ maxWidth: '560px', width: '100%' }}>
+
+        {/* RETURN-TO-LANDING HEADER */}
+        <div style={{ display: 'flex', justifyContent: 'flex-start', marginBottom: '20px' }}>
+          <Link
+            to="/"
+            style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', color: '#0f172a', textDecoration: 'none', fontWeight: 600, fontSize: '0.95rem' }}
+          >
+            <Shield size={18} />
+            <span>Certify.cx<sup className="brand-tm">&trade;</sup></span>
+          </Link>
+        </div>
 
         {/* HEADER */}
         <div style={{ textAlign: 'center', marginBottom: '28px' }}>
@@ -301,7 +323,7 @@ export default function PaymentPlaceholder() {
             {/* PAYMENT OPTIONS */}
             <h3 style={{ fontSize: '0.8rem', fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.1em', margin: '0 0 16px 0' }}>{t('payment.choosePayment')}</h3>
 
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px', marginBottom: '28px' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: isPremium ? '1fr' : '1fr 1fr', gap: '14px', marginBottom: '28px' }}>
 
               {/* FULL PAYMENT */}
               <button
@@ -346,7 +368,8 @@ export default function PaymentPlaceholder() {
                 )}
               </button>
 
-              {/* 12-MONTH RECURRING */}
+              {/* 12-MONTH RECURRING — hidden for Premium (one-time only) */}
+              {!isPremium && (
               <button
                 onClick={() => setIsMonthly(true)}
                 style={{
@@ -388,6 +411,7 @@ export default function PaymentPlaceholder() {
                   </div>
                 )}
               </button>
+              )}
             </div>
 
             {/* DIVIDER */}

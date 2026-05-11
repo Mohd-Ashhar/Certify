@@ -396,7 +396,13 @@
     "sslEncrypted": "مشفر بـ SSL",
     "securePayment": "دفع آمن",
     "poweredByStripe": "بواسطة Stripe",
-    "cancelReturn": "إلغاء والعودة إلى لوحة التحكم"
+    "cancelReturn": "إلغاء والعودة إلى لوحة التحكم",
+    "preparingTitle": "جارٍ تحضير عملية الدفع…",
+    "preparingSubtitle": "نقوم بإعداد طلب {{package}} الخاص بـ {{iso}}.",
+    "preparingError": "تعذّر بدء عملية الدفع",
+    "backToPricing": "العودة إلى الأسعار",
+    "registrationBannerTitle": "تم استلام الدفع — أكمل تسجيلك",
+    "registrationBannerDesc": "أخبرنا قليلاً عن شركتك لإكمال طلبك."
   },
   "settings": {
     "title": "الإعدادات",
@@ -1010,13 +1016,13 @@
     "tierStandardFeature4": "شهادة معترف بها دولياً",
     "tierStandardCta": "احصل على الشهادة",
     "tierPremiumTitle": "شهادة + دعم",
-    "tierPremiumPrice": "تواصل معنا",
-    "tierPremiumPriceNote": "تسعير مخصص",
-    "tierPremiumDesc": "شهادة بالإضافة إلى صيانة النظام وتدريب المدققين الداخليين.",
+    "tierPremiumPrice": "$999",
+    "tierPremiumPriceNote": "دفعة واحدة، تشمل 12 شهرًا من الدعم",
+    "tierPremiumDesc": "كل ما في الباقة القياسية، بالإضافة إلى دليل الجودة المعد و12 شهرًا من الدعم بعد الحصول على الشهادة.",
     "tierPremiumFeature1": "كل ما في شهادة ISO 9001",
-    "tierPremiumFeature2": "صيانة النظام لمدة 12 شهرًا",
-    "tierPremiumFeature3": "برنامج تدريب المدققين الداخليين",
-    "tierPremiumFeature4": "مدير نجاح مخصص",
-    "tierPremiumCta": "تواصل مع المبيعات"
+    "tierPremiumFeature2": "دليل الجودة (معد ومسلم)",
+    "tierPremiumFeature3": "12 شهرًا من الدعم",
+    "tierPremiumFeature4": "استجابة ذات أولوية",
+    "tierPremiumCta": "احصل على الحزمة 3"
   }
 }

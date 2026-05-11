@@ -68,11 +68,13 @@ export default function IsoLanding() {
   const IconComponent = ICON_MAP[config.icon] || Award;
 
   const handleApply = () => {
-    // Logged-in client: jump straight into application form with ISO preselected.
+    // Logged-in client: jump straight into the payment-bootstrap route
+    // (stub application + Stripe checkout). Detailed registration happens
+    // AFTER payment via /client/apply/:applicationId.
     // Anyone else: send through the lightweight /start-checkout auth gate so
-    // they can pick Google/email at the moment they decide to pay — not before.
+    // they can pick Google/email at the moment they decide to pay.
     if (user?.role === ROLES.CLIENT) {
-      navigate('/client/apply', { state: { recommendedIso: config.code, package: 'Standard' } });
+      navigate(`/client/start-payment?tier=standard&iso=${encodeURIComponent(config.slug)}`);
     } else {
       try { localStorage.setItem('certifycx.preselectedIso', config.code); } catch { /* ignore */ }
       navigate(`/start-checkout?tier=standard&iso=${encodeURIComponent(config.slug)}`);

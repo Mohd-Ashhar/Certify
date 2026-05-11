@@ -2,15 +2,14 @@ import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Check, ArrowRight, Sparkles, Award, Headphones } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
-import { getFullPrice, getCountryTier } from '../../utils/pricing';
+import { getFullPrice, getCountryTier, PREMIUM_PRICE } from '../../utils/pricing';
 import { ROLES } from '../../utils/roles';
 import './PricingTiers.css';
 
 const PHASE_1_ISO_SLUG = 'iso-9001';
 
 // Three-tier pricing: Free gap analysis, Standard ISO 9001 ($799), and Premium
-// (certification + system maintenance + internal auditor training, contact sales).
-// Premium price is intentionally not set yet — owner decides later.
+// ($999 — Standard features + Quality Manual + 12 Months Support).
 export default function PricingTiers({ variant = 'full' }) {
   const navigate = useNavigate();
   const { t } = useTranslation();
@@ -21,13 +20,17 @@ export default function PricingTiers({ variant = 'full' }) {
   const handleFree = () => navigate('/gap-analysis');
   const handleStandard = () => {
     if (user?.role === ROLES.CLIENT) {
-      navigate('/client/apply', { state: { package: 'Standard', recommendedIso: 'ISO 9001:2015' } });
+      navigate('/client/start-payment?tier=standard&iso=iso-9001');
     } else {
       navigate(`/start-checkout?tier=standard&iso=${PHASE_1_ISO_SLUG}`);
     }
   };
   const handlePremium = () => {
-    window.location.href = 'mailto:mvpcertify@gmail.com?subject=ISO%209001%20Certification%20%2B%20Support%20enquiry';
+    if (user?.role === ROLES.CLIENT) {
+      navigate('/client/start-payment?tier=premium&iso=iso-9001');
+    } else {
+      navigate(`/start-checkout?tier=premium&iso=${PHASE_1_ISO_SLUG}`);
+    }
   };
 
   return (
@@ -79,7 +82,7 @@ export default function PricingTiers({ variant = 'full' }) {
         <div className="pricing-tier pricing-tier--premium">
           <div className="pricing-tier__icon"><Headphones size={20} /></div>
           <h3 className="pricing-tier__name">{t('pricing.tierPremiumTitle')}</h3>
-          <div className="pricing-tier__price pricing-tier__price--custom">{t('pricing.tierPremiumPrice')}</div>
+          <div className="pricing-tier__price">${PREMIUM_PRICE.toLocaleString()}</div>
           <div className="pricing-tier__price-note">{t('pricing.tierPremiumPriceNote')}</div>
           <p className="pricing-tier__desc">{t('pricing.tierPremiumDesc')}</p>
           <ul className="pricing-tier__features">

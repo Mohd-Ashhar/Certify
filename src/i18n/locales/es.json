@@ -396,7 +396,13 @@
     "sslEncrypted": "Cifrado SSL",
     "securePayment": "Pago seguro",
     "poweredByStripe": "Desarrollado por Stripe",
-    "cancelReturn": "Cancelar y volver al panel"
+    "cancelReturn": "Cancelar y volver al panel",
+    "preparingTitle": "Preparando tu pago…",
+    "preparingSubtitle": "Configurando tu pedido {{package}} para {{iso}}.",
+    "preparingError": "No pudimos iniciar tu pago",
+    "backToPricing": "Volver a precios",
+    "registrationBannerTitle": "Pago recibido — completa tu registro",
+    "registrationBannerDesc": "Cuéntanos sobre tu empresa para terminar tu solicitud."
   },
   "settings": {
     "title": "Configuración",
@@ -1010,13 +1016,13 @@
     "tierStandardFeature4": "Certificado reconocido internacionalmente",
     "tierStandardCta": "Obtener certificación",
     "tierPremiumTitle": "Certificación + Soporte",
-    "tierPremiumPrice": "Contáctanos",
-    "tierPremiumPriceNote": "Precio personalizado",
-    "tierPremiumDesc": "Certificación más mantenimiento del sistema y formación para auditores internos.",
+    "tierPremiumPrice": "$999",
+    "tierPremiumPriceNote": "Pago único, incluye 12 meses de soporte",
+    "tierPremiumDesc": "Todo lo del paquete Estándar, más un Manual de Calidad redactado y 12 meses de soporte post-certificación.",
     "tierPremiumFeature1": "Todo lo de Certificación ISO 9001",
-    "tierPremiumFeature2": "Mantenimiento del sistema durante 12 meses",
-    "tierPremiumFeature3": "Programa de formación de auditores internos",
-    "tierPremiumFeature4": "Gerente de éxito dedicado",
-    "tierPremiumCta": "Contactar a ventas"
+    "tierPremiumFeature2": "Manual de Calidad (redactado y entregado)",
+    "tierPremiumFeature3": "12 meses de soporte",
+    "tierPremiumFeature4": "Respuesta prioritaria",
+    "tierPremiumCta": "Obtener Paquete 3"
   }
 }
