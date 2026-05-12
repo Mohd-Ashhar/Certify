@@ -100,11 +100,41 @@
   display: inline;
 }
 
-/* On mobile the entire switcher is hidden — language can still be selected
-   on desktop, and document direction (RTL) persists for users who already
-   chose Arabic via applyDocumentDirection() at startup. */
+/* Sidebar variant: fills width inside the mobile slide-in nav.
+   Hidden on desktop because the topbar copy already covers that breakpoint. */
+.lang-switcher--sidebar {
+  display: none;
+  width: 100%;
+}
+
+.lang-switcher--sidebar .lang-switcher__trigger {
+  width: 100%;
+  justify-content: space-between;
+  padding: 10px 12px;
+}
+
+.lang-switcher--sidebar .lang-switcher__menu {
+  right: 0;
+  left: 0;
+  top: auto;
+  bottom: calc(100% + 4px);
+  min-width: 0;
+}
+
+[dir="rtl"] .lang-switcher--sidebar .lang-switcher__menu {
+  right: 0;
+  left: 0;
+}
+
+/* On mobile: hide the default (topbar) switcher; show the sidebar copy.
+   Document direction (RTL) persists for users who already chose Arabic
+   via applyDocumentDirection() at startup. */
 @media (max-width: 768px) {
-  .lang-switcher {
+  .lang-switcher:not(.lang-switcher--sidebar):not(.lang-switcher--landing) {
     display: none;
+  }
+
+  .lang-switcher--sidebar {
+    display: block;
   }
 }

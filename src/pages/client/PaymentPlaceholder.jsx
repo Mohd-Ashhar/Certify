@@ -114,10 +114,10 @@ export default function PaymentPlaceholder() {
     setValidatingCoupon(true);
     setCouponError('');
     try {
-      const r = await fetch('/api/validate-coupon', {
+      const r = await fetch('/api/checkout', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ code }),
+        body: JSON.stringify({ action: 'validate-coupon', code }),
       });
       const data = await r.json();
       if (data.valid) {

@@ -32,8 +32,14 @@ export default function LanguageSwitcher({ variant = 'default' }) {
     setOpen(false);
   };
 
+  const variantClass = variant === 'landing'
+    ? 'lang-switcher--landing'
+    : variant === 'sidebar'
+      ? 'lang-switcher--sidebar'
+      : '';
+
   return (
-    <div className={`lang-switcher ${variant === 'landing' ? 'lang-switcher--landing' : ''}`} ref={ref}>
+    <div className={`lang-switcher ${variantClass}`} ref={ref}>
       <button
         className="lang-switcher__trigger"
         onClick={() => setOpen(!open)}

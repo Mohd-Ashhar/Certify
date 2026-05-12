@@ -31,6 +31,7 @@ import {
   ClipboardList,
 } from 'lucide-react';
 import BrandShield from '../ui/BrandShield';
+import LanguageSwitcher from '../LanguageSwitcher';
 import './Sidebar.css';
 
 export default function Sidebar({ isOpen, onClose, collapsed, onToggleCollapse }) {
@@ -118,6 +119,11 @@ export default function Sidebar({ isOpen, onClose, collapsed, onToggleCollapse }
         </nav>
 
         <div className="sidebar__footer">
+          {!collapsed && (
+            <div className="sidebar__lang-mobile">
+              <LanguageSwitcher variant="sidebar" />
+            </div>
+          )}
           <div className="sidebar__user">
             <div className="sidebar__avatar">
               {(user?.full_name || user?.name || user?.email || 'U').charAt(0).toUpperCase()}

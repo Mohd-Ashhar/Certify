@@ -54,9 +54,67 @@ async function getReferrerTier(referrerId) {
   return pickTier(tiers, count || 0);
 }
 
+// --- Validate a coupon code without creating a Stripe session ---
+// Returns { valid, reason?, coupon? }. Reasons: not_found, inactive,
+// expired, exhausted. Accepts either a raw code or a full share URL with
+// ?coupon=CODE or ?code=CODE in the query string.
+async function validateCouponHandler(req, res) {
+  const { code } = req.body || {};
+  if (!code || typeof code !== 'string') {
+    return res.status(400).json({ valid: false, error: 'Missing code' });
+  }
+
+  let extracted = code.trim();
+  if (/^https?:\/\//i.test(extracted) || extracted.includes('?') || extracted.includes('=')) {
+    try {
+      const url = new URL(extracted, 'https://placeholder.local');
+      const fromQuery = url.searchParams.get('coupon') || url.searchParams.get('code');
+      if (fromQuery) extracted = fromQuery;
+    } catch {
+      const m = extracted.match(/[?&](?:coupon|code)=([^&\s]+)/i);
+      if (m) extracted = decodeURIComponent(m[1]);
+    }
+  }
+
+  const normalized = extracted.trim().toUpperCase();
+  const { data: coupon, error } = await supabaseAdmin
+    .from('discount_coupons')
+    .select('*')
+    .ilike('code', normalized)
+    .maybeSingle();
+  if (error) {
+    console.error('Validate coupon error:', error);
+    return res.status(500).json({ valid: false, error: error.message });
+  }
+  if (!coupon)            return res.status(200).json({ valid: false, reason: 'not_found' });
+  if (!coupon.is_active)  return res.status(200).json({ valid: false, reason: 'inactive' });
+  if (coupon.expires_at && new Date(coupon.expires_at) < new Date()) {
+    return res.status(200).json({ valid: false, reason: 'expired' });
+  }
+  if (coupon.max_redemptions != null && (coupon.redemption_count || 0) >= coupon.max_redemptions) {
+    return res.status(200).json({ valid: false, reason: 'exhausted' });
+  }
+  return res.status(200).json({
+    valid: true,
+    coupon: {
+      id: coupon.id,
+      code: coupon.code,
+      discount_percent: Number(coupon.discount_percent),
+      description: coupon.description,
+    },
+  });
+}
+
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method Not Allowed' });
+  }
+
+  // Route on the `action` field. The validate-coupon path used to live in
+  // its own api/ file but was merged here to stay under the Vercel Hobby
+  // 12-function limit.
+  if (req.body?.action === 'validate-coupon') {
+    return validateCouponHandler(req, res);
   }
 
   try {

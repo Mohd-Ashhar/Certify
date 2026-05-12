@@ -138,6 +138,11 @@
   border-top: 1px solid var(--color-border);
 }
 
+.sidebar__lang-mobile {
+  padding: var(--spacing-xs) var(--spacing-sm);
+  margin-bottom: var(--spacing-xs);
+}
+
 .sidebar__user {
   display: flex;
   align-items: center;
