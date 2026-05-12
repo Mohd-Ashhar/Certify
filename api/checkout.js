@@ -1,5 +1,6 @@
 import Stripe from 'stripe';
 import { createClient } from '@supabase/supabase-js';
+import { computeTotal } from '../src/utils/pricing.js';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
   apiVersion: '2023-10-16',
@@ -59,7 +60,28 @@ export default async function handler(req, res) {
   }
 
   try {
-    const { isoName, tier, isMonthly, price, applicationId, clientId, couponCode } = req.body;
+    const {
+      isoName,
+      tier,
+      isMonthly,
+      applicationId,
+      clientId,
+      couponCode,
+      employeeBands = 0,
+      additionalLocations = 0,
+    } = req.body;
+
+    // ---- 0. Recompute the buyer's price server-side ----
+    // Never trust the client. The same helper feeds the UI total, so the
+    // displayed amount and the Stripe charge always agree.
+    const totals = computeTotal({
+      standardSlug: isoName,
+      tier,
+      isMonthly: !!isMonthly,
+      employeeBands,
+      locations: additionalLocations,
+    });
+    const price = totals.subtotal;
 
     // ---- 1. Resolve coupon (if provided) ----
     let coupon = null;
@@ -128,6 +150,9 @@ export default async function handler(req, res) {
       payment_method_types: ['card'],
       line_items: [lineItem],
       mode: isMonthly ? 'subscription' : 'payment',
+      // Allow coupons created directly in the Stripe dashboard to also work,
+      // alongside our app-managed discount_coupons table.
+      allow_promotion_codes: true,
       success_url: `${baseUrl}/client/apply/${applicationId}?payment=success`,
       cancel_url: `${baseUrl}/client/checkout/${applicationId}?payment=cancelled`,
       metadata: {
@@ -136,10 +161,30 @@ export default async function handler(req, res) {
         referralDiscount: referralRecord ? 'true' : 'false',
         couponCode: coupon?.code || '',
         discountPct: String(discountPct),
+        employeeBands: String(totals.employeeSurchargeTotal / 200 || 0),
+        additionalLocations: String(totals.locationSurchargeTotal / 200 || 0),
       },
     };
 
     const session = await stripe.checkout.sessions.create(sessionConfig);
+
+    // ---- 4b. Persist surcharge counts + total to the application row ----
+    // The applications table has additional_employee_bands /
+    // additional_locations / total_amount columns (see Phase B migration).
+    if (applicationId) {
+      try {
+        await supabaseAdmin
+          .from('applications')
+          .update({
+            additional_employee_bands: Math.max(0, Math.floor(Number(employeeBands) || 0)),
+            additional_locations: Math.max(0, Math.floor(Number(additionalLocations) || 0)),
+            total_amount: isMonthly ? totals.contractTotal : totals.subtotal,
+          })
+          .eq('id', applicationId);
+      } catch (persistErr) {
+        console.error('Surcharge persistence error (non-blocking):', persistErr);
+      }
+    }
 
     // ---- 5. Record coupon redemption ----
     if (coupon) {

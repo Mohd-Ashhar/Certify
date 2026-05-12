@@ -2,34 +2,27 @@ import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Check, ArrowRight, Sparkles, Award, Headphones } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
-import { getFullPrice, getCountryTier, PREMIUM_PRICE } from '../../utils/pricing';
+import { getPriceForStandard } from '../../utils/pricing';
 import { ROLES } from '../../utils/roles';
 import './PricingTiers.css';
 
-const PHASE_1_ISO_SLUG = 'iso-9001';
-
-// Three-tier pricing: Free gap analysis, Standard ISO 9001 ($799), and Premium
-// ($999 — Standard features + Quality Manual + 12 Months Support).
-export default function PricingTiers({ variant = 'full' }) {
+// Three-tier pricing card: Free gap analysis, Standard, and Premium.
+// The Standard/Premium prices come from the per-standard pricing map —
+// ISO 9001 / 14001 / 45001 sit at $799/$999, every other catalog standard
+// sits at $999/$1299.
+export default function PricingTiers({ variant = 'full', standardSlug = 'iso-9001' }) {
   const navigate = useNavigate();
   const { t } = useTranslation();
   const { user } = useAuth();
 
-  const standardPrice = getFullPrice(getCountryTier(user?.country));
+  const standardPrice = getPriceForStandard(standardSlug, 'standard');
+  const premiumPrice  = getPriceForStandard(standardSlug, 'premium');
 
-  const handleFree = () => navigate('/gap-analysis');
-  const handleStandard = () => {
+  const startCheckout = (tier) => {
     if (user?.role === ROLES.CLIENT) {
-      navigate('/client/start-payment?tier=standard&iso=iso-9001');
+      navigate(`/client/start-payment?tier=${tier}&iso=${standardSlug}`);
     } else {
-      navigate(`/start-checkout?tier=standard&iso=${PHASE_1_ISO_SLUG}`);
-    }
-  };
-  const handlePremium = () => {
-    if (user?.role === ROLES.CLIENT) {
-      navigate('/client/start-payment?tier=premium&iso=iso-9001');
-    } else {
-      navigate(`/start-checkout?tier=premium&iso=${PHASE_1_ISO_SLUG}`);
+      navigate(`/start-checkout?tier=${tier}&iso=${standardSlug}`);
     }
   };
 
@@ -54,12 +47,12 @@ export default function PricingTiers({ variant = 'full' }) {
             <li><Check size={16} /> {t('pricing.tierFreeFeature2')}</li>
             <li><Check size={16} /> {t('pricing.tierFreeFeature3')}</li>
           </ul>
-          <button className="pricing-tier__cta pricing-tier__cta--secondary" onClick={handleFree}>
+          <button className="pricing-tier__cta pricing-tier__cta--secondary" onClick={() => navigate('/gap-analysis')}>
             {t('pricing.tierFreeCta')} <ArrowRight size={16} />
           </button>
         </div>
 
-        {/* Standard $799 — most popular */}
+        {/* Standard — most popular */}
         <div className="pricing-tier pricing-tier--standard pricing-tier--featured">
           <span className="pricing-tier__badge">{t('pricing.mostPopular')}</span>
           <div className="pricing-tier__icon pricing-tier__icon--accent"><Award size={20} /></div>
@@ -73,16 +66,16 @@ export default function PricingTiers({ variant = 'full' }) {
             <li><Check size={16} /> {t('pricing.tierStandardFeature3')}</li>
             <li><Check size={16} /> {t('pricing.tierStandardFeature4')}</li>
           </ul>
-          <button className="pricing-tier__cta pricing-tier__cta--primary" onClick={handleStandard}>
+          <button className="pricing-tier__cta pricing-tier__cta--primary" onClick={() => startCheckout('standard')}>
             {t('pricing.tierStandardCta')} <ArrowRight size={16} />
           </button>
         </div>
 
-        {/* Premium — contact sales */}
+        {/* Premium */}
         <div className="pricing-tier pricing-tier--premium">
           <div className="pricing-tier__icon"><Headphones size={20} /></div>
           <h3 className="pricing-tier__name">{t('pricing.tierPremiumTitle')}</h3>
-          <div className="pricing-tier__price">${PREMIUM_PRICE.toLocaleString()}</div>
+          <div className="pricing-tier__price">${premiumPrice.toLocaleString()}</div>
           <div className="pricing-tier__price-note">{t('pricing.tierPremiumPriceNote')}</div>
           <p className="pricing-tier__desc">{t('pricing.tierPremiumDesc')}</p>
           <ul className="pricing-tier__features">
@@ -91,11 +84,13 @@ export default function PricingTiers({ variant = 'full' }) {
             <li><Check size={16} /> {t('pricing.tierPremiumFeature3')}</li>
             <li><Check size={16} /> {t('pricing.tierPremiumFeature4')}</li>
           </ul>
-          <button className="pricing-tier__cta pricing-tier__cta--secondary" onClick={handlePremium}>
+          <button className="pricing-tier__cta pricing-tier__cta--secondary" onClick={() => startCheckout('premium')}>
             {t('pricing.tierPremiumCta')} <ArrowRight size={16} />
           </button>
         </div>
       </div>
+
+      <p className="pricing-tiers__disclaimer">{t('pricing.disclaimer')}</p>
     </section>
   );
 }

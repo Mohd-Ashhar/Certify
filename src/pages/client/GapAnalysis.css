@@ -182,3 +182,23 @@
   margin-bottom: 2rem;
   line-height: 1.6;
 }
+
+@media (max-width: 640px) {
+  .gap-analysis-page {
+    padding: 1rem;
+    align-items: flex-start;
+  }
+
+  .gap-analysis__content {
+    padding: 1.5rem 1rem;
+    border-radius: var(--radius-md);
+  }
+
+  .gap-analysis__header h2 {
+    font-size: 1.2rem;
+  }
+
+  .gap-analysis__text {
+    font-size: 0.95rem;
+  }
+}

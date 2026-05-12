@@ -110,3 +110,23 @@
 .start-payment__btn:hover {
   opacity: 0.9;
 }
+
+@media (max-width: 640px) {
+  .start-payment__card {
+    margin: 16px;
+    padding: 24px 18px;
+  }
+
+  .start-payment__title {
+    font-size: 1.25rem;
+  }
+
+  .start-payment__subtitle {
+    font-size: 0.9rem;
+  }
+
+  .start-payment__btn {
+    width: 100%;
+    min-height: 44px;
+  }
+}

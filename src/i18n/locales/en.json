@@ -64,6 +64,7 @@
     "startGapAnalysis": "Start Your Free Gap Analysis",
     "dashboard": "Dashboard",
     "newApplication": "New Application",
+    "myCertificates": "My Certificates",
     "applications": "Applications",
     "companies": "Companies",
     "regionalAdmins": "Regional Admins",
@@ -821,6 +822,23 @@
     "northAmerica": "North America",
     "southAmerica": "South America"
   },
+  "certificates": {
+    "title": "My Certificates",
+    "subtitle": "Your issued ISO certificates, available to view and download.",
+    "loading": "Loading certificates…",
+    "emptyTitle": "No certificates yet",
+    "emptyDesc": "Once your application is approved, your certificate will appear here.",
+    "view": "View",
+    "download": "Download",
+    "issued": "Issued",
+    "expires": "Expires",
+    "fetchError": "Could not load the certificate. Please try again.",
+    "status": {
+      "active": "Active",
+      "revoked": "Revoked",
+      "expired": "Expired"
+    }
+  },
   "coupons": {
     "title": "Discount Coupons",
     "subtitle": "{{count}} coupon(s) configured",
@@ -1023,6 +1041,24 @@
     "tierPremiumFeature2": "Quality Manual (drafted & delivered)",
     "tierPremiumFeature3": "12 Months of Support",
     "tierPremiumFeature4": "Priority response",
-    "tierPremiumCta": "Get Package 3"
+    "tierPremiumCta": "Get Package 3",
+    "disclaimer": "Prices are based on organizations with up to 10 employees at 1 location. Additional employees and locations can be added below.",
+    "orgSize": "Organization size",
+    "additionalEmployees": "Additional employees",
+    "additionalLocations": "Additional locations",
+    "employeesIncluded": "Up to {{count}} employees included",
+    "locationsIncluded": "{{count}} location included",
+    "locationsExtra": "+{{count}} additional",
+    "decreaseEmployees": "Remove an employee band",
+    "increaseEmployees": "Add an employee band",
+    "decreaseLocations": "Remove a location",
+    "increaseLocations": "Add a location",
+    "lineItem": {
+      "base": "Base certification",
+      "employees": "Additional employees ({{count}} band)",
+      "employees_other": "Additional employees ({{count}} bands)",
+      "locations": "Additional location ({{count}})",
+      "locations_other": "Additional locations ({{count}})"
+    }
   }
 }

@@ -63,3 +63,70 @@
   border: 1px solid var(--color-border);
   border-radius: var(--radius-lg);
 }
+
+/* Mobile — switch from a horizontal-scroll table to a stacked card layout.
+   Each <tr> becomes a card; each <td> becomes a labelled row inside the
+   card. The column label is rendered via the data-label attribute set by
+   DataTable.jsx. Avoids the unusable horizontal-scroll experience on
+   phones. */
+@media (max-width: 768px) {
+  .data-table__wrapper {
+    overflow-x: visible;
+    border: none;
+    background: transparent;
+  }
+
+  .data-table,
+  .data-table thead,
+  .data-table tbody,
+  .data-table tr,
+  .data-table th,
+  .data-table td {
+    display: block;
+    width: 100%;
+  }
+
+  .data-table thead {
+    position: absolute;
+    left: -9999px;
+  }
+
+  .data-table__row {
+    background: var(--color-bg-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    padding: 12px 14px;
+    margin-bottom: 12px;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.02);
+  }
+
+  .data-table__row:not(:last-child) .data-table__td {
+    border-bottom: 1px dashed var(--color-border);
+  }
+
+  .data-table__td {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    padding: 8px 0;
+    white-space: normal;
+    border-bottom: 1px dashed var(--color-border);
+  }
+
+  .data-table__td:last-child {
+    border-bottom: none;
+  }
+
+  .data-table__td::before {
+    content: attr(data-label);
+    font-size: var(--font-size-xs);
+    font-weight: 600;
+    color: var(--color-text-tertiary);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    flex-shrink: 0;
+    max-width: 45%;
+    text-align: left;
+  }
+}

@@ -198,3 +198,27 @@
   color: var(--color-text-tertiary);
   text-align: center;
 }
+
+/* Mobile — full-width inputs, larger touch targets, wrappable button rows. */
+@media (max-width: 640px) {
+  .form-input,
+  .form-select,
+  .form-textarea {
+    padding: 12px 14px;
+    font-size: 16px; /* prevents iOS Safari zoom-on-focus */
+    width: 100%;
+  }
+
+  .form-btn {
+    white-space: normal;
+    min-height: 44px; /* iOS HIG / Material touch target */
+  }
+
+  .form-btn--md {
+    padding: 12px 18px;
+  }
+
+  .form-btn--sm {
+    min-height: 36px;
+  }
+}

@@ -184,3 +184,25 @@
   cursor: pointer;
   font-size: 0.75rem;
 }
+
+@media (max-width: 640px) {
+  .ms__control {
+    min-height: 48px;
+    font-size: 16px; /* prevents iOS zoom on focus */
+    padding: 8px 12px;
+  }
+
+  .ms__option {
+    padding: 12px;
+    font-size: 1rem;
+  }
+
+  .ms__search input {
+    font-size: 16px;
+    padding: 4px 0;
+  }
+
+  .ms__dropdown {
+    max-height: 60vh;
+  }
+}

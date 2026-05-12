@@ -64,6 +64,7 @@
     "startGapAnalysis": "ابدأ تحليل الفجوات المجاني",
     "dashboard": "لوحة التحكم",
     "newApplication": "طلب جديد",
+    "myCertificates": "شهاداتي",
     "applications": "الطلبات",
     "companies": "الشركات",
     "regionalAdmins": "المدراء الإقليميون",
@@ -821,6 +822,23 @@
     "northAmerica": "أمريكا الشمالية",
     "southAmerica": "أمريكا الجنوبية"
   },
+  "certificates": {
+    "title": "شهاداتي",
+    "subtitle": "شهادات ISO الصادرة لك، متاحة للعرض والتنزيل.",
+    "loading": "جارٍ تحميل الشهادات…",
+    "emptyTitle": "لا توجد شهادات بعد",
+    "emptyDesc": "بمجرد الموافقة على طلبك، ستظهر شهادتك هنا.",
+    "view": "عرض",
+    "download": "تنزيل",
+    "issued": "تاريخ الإصدار",
+    "expires": "تاريخ الانتهاء",
+    "fetchError": "تعذر تحميل الشهادة. يرجى المحاولة مرة أخرى.",
+    "status": {
+      "active": "نشطة",
+      "revoked": "ملغاة",
+      "expired": "منتهية"
+    }
+  },
   "coupons": {
     "title": "كوبونات الخصم",
     "subtitle": "{{count}} كوبون مُهيَّأ",
@@ -1023,6 +1041,24 @@
     "tierPremiumFeature2": "دليل الجودة (معد ومسلم)",
     "tierPremiumFeature3": "12 شهرًا من الدعم",
     "tierPremiumFeature4": "استجابة ذات أولوية",
-    "tierPremiumCta": "احصل على الحزمة 3"
+    "tierPremiumCta": "احصل على الحزمة 3",
+    "disclaimer": "تستند الأسعار إلى المؤسسات التي تضم ما يصل إلى 10 موظفين في موقع واحد. يمكن إضافة موظفين ومواقع إضافية أدناه.",
+    "orgSize": "حجم المؤسسة",
+    "additionalEmployees": "موظفون إضافيون",
+    "additionalLocations": "مواقع إضافية",
+    "employeesIncluded": "حتى {{count}} موظف مشمول",
+    "locationsIncluded": "{{count}} موقع مشمول",
+    "locationsExtra": "+{{count}} إضافي",
+    "decreaseEmployees": "إزالة مجموعة موظفين",
+    "increaseEmployees": "إضافة مجموعة موظفين",
+    "decreaseLocations": "إزالة موقع",
+    "increaseLocations": "إضافة موقع",
+    "lineItem": {
+      "base": "شهادة أساسية",
+      "employees": "موظفون إضافيون ({{count}} مجموعة)",
+      "employees_other": "موظفون إضافيون ({{count}} مجموعات)",
+      "locations": "موقع إضافي ({{count}})",
+      "locations_other": "مواقع إضافية ({{count}})"
+    }
   }
 }

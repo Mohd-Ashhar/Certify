@@ -29,7 +29,7 @@ export default function DataTable({ columns, data, onRowClick, emptyMessage = 'N
               onClick={() => onRowClick && onRowClick(row)}
             >
               {columns.map((col) => (
-                <td key={col.key} className="data-table__td">
+                <td key={col.key} className="data-table__td" data-label={col.label}>
                   {col.render ? col.render(row[col.key], row) : row[col.key]}
                 </td>
               ))}

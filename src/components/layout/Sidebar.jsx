@@ -41,6 +41,7 @@ export default function Sidebar({ isOpen, onClose, collapsed, onToggleCollapse }
   const navItems = [
     { path: '/dashboard', labelKey: 'nav.dashboard', icon: LayoutDashboard, permissions: [PERMISSIONS.VIEW_DASHBOARD] },
     { path: '/client/apply', labelKey: 'nav.newApplication', icon: PlusCircle, permissions: [PERMISSIONS.CREATE_CERTIFICATION] },
+    { path: '/client/certificates', labelKey: 'nav.myCertificates', icon: Award, allowedRoles: [ROLES.CLIENT], permissions: [PERMISSIONS.VIEW_DASHBOARD] },
     { path: '/admin/applications', labelKey: 'nav.applications', icon: FileCheck2, permissions: [PERMISSIONS.VIEW_ALL_CERTIFICATIONS] },
     { path: '/admin/companies', labelKey: 'nav.companies', icon: Building2, permissions: [PERMISSIONS.VIEW_COMPANIES] },
     { path: '/admin/regional-admins', labelKey: 'nav.regionalAdmins', icon: ShieldCheck, permissions: [PERMISSIONS.CREATE_ADMINS] },

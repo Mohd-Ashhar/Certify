@@ -165,9 +165,9 @@ export default function IsoLanding() {
           </div>
         </section>
 
-        {/* Pricing Tiers — Free / Standard ($799) / Premium */}
+        {/* Pricing Tiers — Free / Standard / Premium (priced per standard). */}
         <section className="iso-landing__section">
-          <PricingTiers />
+          <PricingTiers standardSlug={config.slug} />
         </section>
 
         {/* Payment Info */}

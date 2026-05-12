@@ -190,6 +190,19 @@
   border-color: var(--color-text-primary);
 }
 
+.pricing-tiers__disclaimer {
+  margin: var(--spacing-xl) auto 0;
+  max-width: 640px;
+  text-align: center;
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+  line-height: 1.55;
+  padding: 12px 16px;
+  background: rgba(62, 207, 142, 0.06);
+  border: 1px solid rgba(62, 207, 142, 0.18);
+  border-radius: var(--radius-base);
+}
+
 /* Compact variant — used inside the gap analysis results page where we already
    have a header above. */
 .pricing-tiers--compact .pricing-tiers__header {

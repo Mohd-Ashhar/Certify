@@ -64,6 +64,7 @@
     "startGapAnalysis": "Inicia tu análisis de brechas gratuito",
     "dashboard": "Panel de control",
     "newApplication": "Nueva solicitud",
+    "myCertificates": "Mis certificados",
     "applications": "Solicitudes",
     "companies": "Empresas",
     "regionalAdmins": "Admins regionales",
@@ -821,6 +822,23 @@
     "northAmerica": "América del Norte",
     "southAmerica": "América del Sur"
   },
+  "certificates": {
+    "title": "Mis certificados",
+    "subtitle": "Sus certificados ISO emitidos, disponibles para ver y descargar.",
+    "loading": "Cargando certificados…",
+    "emptyTitle": "Aún no hay certificados",
+    "emptyDesc": "Una vez aprobada su solicitud, su certificado aparecerá aquí.",
+    "view": "Ver",
+    "download": "Descargar",
+    "issued": "Emitido",
+    "expires": "Expira",
+    "fetchError": "No se pudo cargar el certificado. Inténtelo nuevamente.",
+    "status": {
+      "active": "Activo",
+      "revoked": "Revocado",
+      "expired": "Expirado"
+    }
+  },
   "coupons": {
     "title": "Cupones de descuento",
     "subtitle": "{{count}} cupón(es) configurado(s)",
@@ -1023,6 +1041,24 @@
     "tierPremiumFeature2": "Manual de Calidad (redactado y entregado)",
     "tierPremiumFeature3": "12 meses de soporte",
     "tierPremiumFeature4": "Respuesta prioritaria",
-    "tierPremiumCta": "Obtener Paquete 3"
+    "tierPremiumCta": "Obtener Paquete 3",
+    "disclaimer": "Los precios se basan en organizaciones con hasta 10 empleados en 1 ubicación. Se pueden agregar empleados y ubicaciones adicionales a continuación.",
+    "orgSize": "Tamaño de la organización",
+    "additionalEmployees": "Empleados adicionales",
+    "additionalLocations": "Ubicaciones adicionales",
+    "employeesIncluded": "Hasta {{count}} empleados incluidos",
+    "locationsIncluded": "{{count}} ubicación incluida",
+    "locationsExtra": "+{{count}} adicionales",
+    "decreaseEmployees": "Quitar un grupo de empleados",
+    "increaseEmployees": "Añadir un grupo de empleados",
+    "decreaseLocations": "Quitar una ubicación",
+    "increaseLocations": "Añadir una ubicación",
+    "lineItem": {
+      "base": "Certificación base",
+      "employees": "Empleados adicionales ({{count}} grupo)",
+      "employees_other": "Empleados adicionales ({{count}} grupos)",
+      "locations": "Ubicación adicional ({{count}})",
+      "locations_other": "Ubicaciones adicionales ({{count}})"
+    }
   }
 }

@@ -3,8 +3,14 @@ import { Link, useParams, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
-import { calculatePrice, getCountryTier, getFullPrice, getMonthlyPrice, PREMIUM_PRICE } from '../../utils/pricing';
-import { Lock, Shield, CreditCard, CalendarClock, CheckCircle2, Sparkles, Tag } from 'lucide-react';
+import {
+  computeTotal,
+  SURCHARGE_PER_EMPLOYEE_BAND,
+  SURCHARGE_PER_LOCATION,
+  INCLUDED_EMPLOYEES,
+  EMPLOYEES_PER_BAND,
+} from '../../utils/pricing';
+import { Lock, Shield, CreditCard, CalendarClock, CheckCircle2, Sparkles, Tag, Plus, Minus, Users, MapPin } from 'lucide-react';
 
 export default function PaymentPlaceholder() {
   const { applicationId } = useParams();
@@ -23,6 +29,12 @@ export default function PaymentPlaceholder() {
   const [coupon, setCoupon] = useState(null);
   const [couponError, setCouponError] = useState('');
   const [validatingCoupon, setValidatingCoupon] = useState(false);
+
+  // Phase B surcharges — buyer can add 50-employee bands above the included
+  // 10 and additional locations above the included 1. Each band/location
+  // adds a flat $200.
+  const [employeeBands, setEmployeeBands] = useState(0);
+  const [additionalLocations, setAdditionalLocations] = useState(0);
 
   useEffect(() => {
     let isMounted = true;
@@ -134,13 +146,32 @@ export default function PaymentPlaceholder() {
     setCouponError('');
   };
 
-  const countryTier = getCountryTier(user?.country);
-  const isoName = application?.recommended_iso || 'ISO 9001:2015 (Quality Management)';
-  // Package 3 (Premium) is flat $999 globally and one-time only — no monthly option.
+  const isoName = application?.recommended_iso || 'ISO 9001:2015';
+  // Premium tier (Package 3) is one-time only — the monthly tab stays hidden.
   const isPremium = application?.selected_package === 'Premium';
-  const fullPrice = isPremium ? PREMIUM_PRICE : getFullPrice(countryTier);
-  const monthlyPrice = getMonthlyPrice(countryTier);
+  const tier = isPremium ? 'premium' : 'standard';
+
+  // Both totals are computed unconditionally so each tile (Full / Monthly)
+  // can display its own price. computeTotal is the same helper used by
+  // api/checkout.js so client and server stay aligned.
+  const fullTotals = computeTotal({
+    standardSlug: isoName,
+    tier,
+    isMonthly: false,
+    employeeBands,
+    locations: additionalLocations,
+  });
+  const monthlyTotals = computeTotal({
+    standardSlug: isoName,
+    tier,
+    isMonthly: true,
+    employeeBands,
+    locations: additionalLocations,
+  });
+  const fullPrice = fullTotals.subtotal;
+  const monthlyPrice = monthlyTotals.subtotal;
   const originalPrice = isMonthly ? monthlyPrice : fullPrice;
+  const activeTotals = isMonthly ? monthlyTotals : fullTotals;
 
   // Coupon and referral discount do not stack — the larger wins.
   const couponPct = coupon ? Number(coupon.discount_percent) : 0;
@@ -150,6 +181,13 @@ export default function PaymentPlaceholder() {
     ? Math.round(originalPrice * (1 - appliedDiscountPct / 100) * 100) / 100
     : originalPrice;
   const currentPrice = discountedPrice;
+
+  const employeeRangeLabel = (bands) => {
+    if (bands === 0) return t('payment.employeesIncluded', { count: INCLUDED_EMPLOYEES });
+    const lower = INCLUDED_EMPLOYEES + (bands - 1) * EMPLOYEES_PER_BAND + 1;
+    const upper = INCLUDED_EMPLOYEES + bands * EMPLOYEES_PER_BAND;
+    return `${lower}–${upper}`;
+  };
 
   const handleCheckout = async () => {
     if (!application) return;
@@ -162,12 +200,13 @@ export default function PaymentPlaceholder() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           isoName,
-          tier: 'START',
+          tier,
           isMonthly,
-          price: originalPrice,
           applicationId,
           clientId: user?.id,
           couponCode: coupon?.code || null,
+          employeeBands,
+          additionalLocations,
         }),
       });
 
@@ -320,10 +359,94 @@ export default function PaymentPlaceholder() {
 
           <div style={{ padding: '28px' }}>
 
+            {/* PRICING DISCLAIMER */}
+            <div style={{ padding: '12px 14px', background: '#fffbeb', border: '1px solid #fde68a', borderRadius: '10px', marginBottom: '20px', fontSize: '0.8rem', color: '#92400e', lineHeight: 1.5 }}>
+              {t('pricing.disclaimer')}
+            </div>
+
+            {/* ORG SIZE — additional employees & locations surcharges */}
+            <h3 style={{ fontSize: '0.8rem', fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.1em', margin: '0 0 12px 0' }}>{t('pricing.orgSize')}</h3>
+
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '12px', marginBottom: '24px' }}>
+              {/* Additional Employees stepper */}
+              <div style={{ padding: '14px 16px', background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '12px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                    <Users size={18} color="#475569" />
+                    <div>
+                      <p style={{ margin: 0, fontSize: '0.92rem', fontWeight: 600, color: '#0f172a' }}>{t('pricing.additionalEmployees')}</p>
+                      <p style={{ margin: '2px 0 0', fontSize: '0.75rem', color: '#64748b' }}>
+                        {employeeRangeLabel(employeeBands)}
+                        {employeeBands > 0 && ` · +$${(employeeBands * SURCHARGE_PER_EMPLOYEE_BAND).toLocaleString()}`}
+                      </p>
+                    </div>
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <button
+                      type="button"
+                      onClick={() => setEmployeeBands(b => Math.max(0, b - 1))}
+                      disabled={employeeBands === 0}
+                      aria-label={t('pricing.decreaseEmployees')}
+                      style={{ width: 32, height: 32, borderRadius: 8, border: '1px solid #cbd5e1', background: 'white', cursor: employeeBands === 0 ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', opacity: employeeBands === 0 ? 0.5 : 1 }}
+                    >
+                      <Minus size={14} />
+                    </button>
+                    <span style={{ minWidth: 24, textAlign: 'center', fontWeight: 700, color: '#0f172a' }}>{employeeBands}</span>
+                    <button
+                      type="button"
+                      onClick={() => setEmployeeBands(b => b + 1)}
+                      aria-label={t('pricing.increaseEmployees')}
+                      style={{ width: 32, height: 32, borderRadius: 8, border: '1px solid #cbd5e1', background: 'white', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                    >
+                      <Plus size={14} />
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              {/* Additional Locations stepper */}
+              <div style={{ padding: '14px 16px', background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '12px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                    <MapPin size={18} color="#475569" />
+                    <div>
+                      <p style={{ margin: 0, fontSize: '0.92rem', fontWeight: 600, color: '#0f172a' }}>{t('pricing.additionalLocations')}</p>
+                      <p style={{ margin: '2px 0 0', fontSize: '0.75rem', color: '#64748b' }}>
+                        {additionalLocations === 0
+                          ? t('pricing.locationsIncluded', { count: 1 })
+                          : t('pricing.locationsExtra', { count: additionalLocations })}
+                        {additionalLocations > 0 && ` · +$${(additionalLocations * SURCHARGE_PER_LOCATION).toLocaleString()}`}
+                      </p>
+                    </div>
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <button
+                      type="button"
+                      onClick={() => setAdditionalLocations(n => Math.max(0, n - 1))}
+                      disabled={additionalLocations === 0}
+                      aria-label={t('pricing.decreaseLocations')}
+                      style={{ width: 32, height: 32, borderRadius: 8, border: '1px solid #cbd5e1', background: 'white', cursor: additionalLocations === 0 ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', opacity: additionalLocations === 0 ? 0.5 : 1 }}
+                    >
+                      <Minus size={14} />
+                    </button>
+                    <span style={{ minWidth: 24, textAlign: 'center', fontWeight: 700, color: '#0f172a' }}>{additionalLocations}</span>
+                    <button
+                      type="button"
+                      onClick={() => setAdditionalLocations(n => n + 1)}
+                      aria-label={t('pricing.increaseLocations')}
+                      style={{ width: 32, height: 32, borderRadius: 8, border: '1px solid #cbd5e1', background: 'white', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                    >
+                      <Plus size={14} />
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
             {/* PAYMENT OPTIONS */}
             <h3 style={{ fontSize: '0.8rem', fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.1em', margin: '0 0 16px 0' }}>{t('payment.choosePayment')}</h3>
 
-            <div style={{ display: 'grid', gridTemplateColumns: isPremium ? '1fr' : '1fr 1fr', gap: '14px', marginBottom: '28px' }}>
+            <div className="pay-options-grid" style={{ display: 'grid', gridTemplateColumns: isPremium ? '1fr' : '1fr 1fr', gap: '14px', marginBottom: '28px' }}>
 
               {/* FULL PAYMENT */}
               <button
@@ -416,6 +539,28 @@ export default function PaymentPlaceholder() {
 
             {/* DIVIDER */}
             <div style={{ height: '1px', background: 'linear-gradient(90deg, transparent, #e2e8f0 20%, #e2e8f0 80%, transparent)', margin: '0 0 24px 0' }} />
+
+            {/* LINE-ITEM BREAKDOWN — base + surcharges, only when surcharges apply */}
+            {(activeTotals.employeeSurchargePerPeriod > 0 || activeTotals.locationSurchargePerPeriod > 0) && (
+              <div style={{ marginBottom: '16px', padding: '14px 18px', background: '#f8fafc', borderRadius: '12px', border: '1px solid #e2e8f0' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.88rem', color: '#475569', marginBottom: 6 }}>
+                  <span>{t('pricing.lineItem.base')}</span>
+                  <span style={{ fontWeight: 600 }}>${activeTotals.base.toLocaleString()}{isMonthly ? '/mo' : ''}</span>
+                </div>
+                {activeTotals.employeeSurchargePerPeriod > 0 && (
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.88rem', color: '#475569', marginBottom: 6 }}>
+                    <span>{t('pricing.lineItem.employees', { count: employeeBands })}</span>
+                    <span style={{ fontWeight: 600 }}>+${activeTotals.employeeSurchargePerPeriod.toLocaleString()}{isMonthly ? '/mo' : ''}</span>
+                  </div>
+                )}
+                {activeTotals.locationSurchargePerPeriod > 0 && (
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.88rem', color: '#475569' }}>
+                    <span>{t('pricing.lineItem.locations', { count: additionalLocations })}</span>
+                    <span style={{ fontWeight: 600 }}>+${activeTotals.locationSurchargePerPeriod.toLocaleString()}{isMonthly ? '/mo' : ''}</span>
+                  </div>
+                )}
+              </div>
+            )}
 
             {/* TOTAL */}
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px', padding: '20px', background: '#f8fafc', borderRadius: '14px', border: '1px solid #e2e8f0' }}>
@@ -518,7 +663,12 @@ export default function PaymentPlaceholder() {
           </div>
         </div>
       </div>
-      <style>{`@keyframes spin { 100% { transform: rotate(360deg); } }`}</style>
+      <style>{`
+        @keyframes spin { 100% { transform: rotate(360deg); } }
+        @media (max-width: 640px) {
+          .pay-options-grid { grid-template-columns: 1fr !important; }
+        }
+      `}</style>
     </div>
   );
 }

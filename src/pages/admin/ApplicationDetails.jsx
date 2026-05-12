@@ -303,6 +303,29 @@ export default function ApplicationDetails() {
       setStatus(decision);
       closeDecisionModal();
       showToast(decision === 'approved' ? t('admin.certApprovedSuccess') : t('admin.certRejectedSuccess'));
+
+      // On approval, kick off certificate issuance. Failure here is
+      // non-blocking — staff can re-trigger from the application page.
+      if (decision === 'approved') {
+        try {
+          const { data: sess } = await supabase.auth.getSession();
+          const token = sess?.session?.access_token;
+          const resp = await fetch('/api/issue-certificate', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              ...(token ? { Authorization: `Bearer ${token}` } : {}),
+            },
+            body: JSON.stringify({ applicationId: id }),
+          });
+          if (!resp.ok) {
+            const body = await resp.json().catch(() => ({}));
+            console.error('Certificate issuance failed:', body.error || resp.status);
+          }
+        } catch (issueErr) {
+          console.error('Certificate issuance error (non-blocking):', issueErr);
+        }
+      }
     } catch (err) {
       console.error('Error submitting CB decision:', err);
       alert(t('admin.failedDecisionSubmit') + ' ' + err.message);

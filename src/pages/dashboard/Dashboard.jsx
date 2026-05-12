@@ -9,7 +9,7 @@ import { Button } from '../../components/ui/FormElements';
 import { supabase } from '../../lib/supabase';
 import { REGIONS, ROLES } from '../../utils/roles';
 import { useAuth } from '../../contexts/AuthContext';
-import { getPriceForISO, getCountryTier } from '../../utils/pricing';
+import { getPriceForStandard } from '../../utils/pricing';
 import './Dashboard.css';
 
 // Phase 1: hide the assigned Certification Body card from clients until we
@@ -403,7 +403,15 @@ export default function Dashboard() {
                           <div className="task-card action-required">
                             <h4>Complete Payment for {activeApp.recommended_iso || 'ISO Application'}</h4>
                             <p>Your application is ready for processing. Please complete the payment to proceed.</p>
-                            <Button style={{ width: '100%' }} onClick={() => navigate(`/client/checkout/${activeApp.id}`, { state: { price: getPriceForISO(activeApp.recommended_iso, getCountryTier(user?.country)), iso: activeApp.recommended_iso } })}>Pay ${getPriceForISO(activeApp.recommended_iso, getCountryTier(user?.country))?.toLocaleString()}</Button>
+                            {(() => {
+                              const tier = activeApp.selected_package === 'Premium' ? 'premium' : 'standard';
+                              const headlinePrice = getPriceForStandard(activeApp.recommended_iso, tier);
+                              return (
+                                <Button style={{ width: '100%' }} onClick={() => navigate(`/client/checkout/${activeApp.id}`, { state: { price: headlinePrice, iso: activeApp.recommended_iso } })}>
+                                  Pay ${headlinePrice?.toLocaleString()}
+                                </Button>
+                              );
+                            })()}
                           </div>
                         ) : activeApp.status === 'in_review' ? (
                           <div className="task-card action-required">
@@ -459,7 +467,14 @@ export default function Dashboard() {
                           <li>
                             <div className="message-icon success"><CheckCircle2 size={16}/></div>
                             <div className="message-content">
-                              <strong>Admin:</strong> Congratulations! You are now certified.
+                              <strong>Admin:</strong> Congratulations! You are now certified.{' '}
+                              <a
+                                onClick={(e) => { e.preventDefault(); navigate('/client/certificates'); }}
+                                href="/client/certificates"
+                                style={{ color: '#2563eb', fontWeight: 600 }}
+                              >
+                                View your certificate →
+                              </a>
                             </div>
                           </li>
                         )}

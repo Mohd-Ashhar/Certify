@@ -54,6 +54,7 @@ import ApplicationForm from './pages/client/ApplicationForm';
 import PaymentPlaceholder from './pages/client/PaymentPlaceholder';
 import StartPayment from './pages/client/StartPayment';
 import GapAnalysis from './pages/client/GapAnalysis';
+import MyCertificates from './pages/client/MyCertificates';
 import Referrals from './pages/referrals/Referrals';
 
 function AppRoutes() {
@@ -150,6 +151,11 @@ function AppRoutes() {
             <Route path="/client/checkout/:applicationId" element={
               <ProtectedRoute allowedRoles={[ROLES.CLIENT]}>
                 <PaymentPlaceholder />
+              </ProtectedRoute>
+            } />
+            <Route path="/client/certificates" element={
+              <ProtectedRoute allowedRoles={[ROLES.CLIENT]}>
+                <MyCertificates />
               </ProtectedRoute>
             } />
 
